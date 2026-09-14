@@ -11,7 +11,6 @@ namespace SchoolAccount.CollectionNotifications.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-
     public static IServiceCollection AddDatabase<TDb>(this IServiceCollection services, Func<string> connectionStringFactory)
     {
         var connectionString = connectionStringFactory();
@@ -23,12 +22,12 @@ public static class ServiceCollectionExtensions
     {
         var factory = () => configuration.GetConnectionString(identifier)
                             ?? throw new ArgumentException($"Connection string for {identifier} was not found.");
-        return AddDatabase<TDb>(services, factory);
+        return services.AddDatabase<TDb>(factory);
     }
 
     public static IServiceCollection AddDatabase<TDb>(this IServiceCollection services, IConfiguration configuration)
     {
-        return AddDatabase<TDb>(services, typeof(TDb).Name, configuration);
+        return services.AddDatabase<TDb>(typeof(TDb).Name, configuration);
     }
 
     public static IServiceCollection AddEnrollmentStores(this IServiceCollection services, IConfiguration configuration)

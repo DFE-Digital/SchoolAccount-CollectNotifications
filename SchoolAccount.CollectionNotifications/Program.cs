@@ -3,14 +3,19 @@ using Microsoft.Extensions.Hosting;
 using SchoolAccount.CollectionNotifications.Extensions;
 using SchoolAccount.CollectionNotifications.Models.Databases;
 using SchoolAccount.CollectionNotifications.Services;
+using SchoolAccount.CollectionNotifications.Stores;
 
 var builder = Host.CreateDefaultBuilder(args);
 
 builder.ConfigureServices((hostContext, services) =>
 {
     services.AddEnrollmentStores(hostContext.Configuration);
+    
     services.AddDatabase<LedgerDatabase>(hostContext.Configuration);
-    services.AddTransient<StatusChangedLegerMonitoringService>();
+    services.AddSingleton<LedgerStore>();
+    
+    services.AddSingleton<LastRanService>();
+    services.AddSingleton<StatusChangedLegerMonitoringService>();
 });
 
 var app = builder.Build();

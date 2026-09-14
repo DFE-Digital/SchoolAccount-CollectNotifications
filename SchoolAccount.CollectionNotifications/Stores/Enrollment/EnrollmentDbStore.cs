@@ -1,7 +1,6 @@
 using Dapper;
 using Microsoft.Extensions.Options;
 using SchoolAccount.CollectionNotifications.Interfaces;
-using SchoolAccount.CollectionNotifications.Models;
 using SchoolAccount.CollectionNotifications.Models.Databases;
 using SchoolAccount.CollectionNotifications.Models.Dtos;
 using SchoolAccount.CollectionNotifications.Models.Options;
@@ -9,7 +8,7 @@ using SchoolAccount.CollectionNotifications.Models.Options;
 namespace SchoolAccount.CollectionNotifications.Stores.Enrollment;
 
 public class EnrollmentDbStore(
-    DbConnectionFactory<EnrollmentDatabase> factory,
+    IDbConnectionFactory<EnrollmentDatabase> factory,
     IOptions<EnrollmentDbOptions> options
 ) : IEnrollmentStore
 {
