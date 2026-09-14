@@ -2,9 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SchoolAccount.CollectionNotifications.Models.Options;
 
-public sealed class EnrollmentExcelOptions
+public sealed class EnrollmentCsvOptions
 {
-    public const string SectionName = "Enrollment:Excel";
+    public const string SectionName = "Enrollment:Csv";
 
     [Required, MinLength(1)]
     public string FilePath { get; init; } = "";

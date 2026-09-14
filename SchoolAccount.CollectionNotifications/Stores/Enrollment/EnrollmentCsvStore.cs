@@ -7,7 +7,7 @@ using SchoolAccount.CollectionNotifications.Models.Options;
 namespace SchoolAccount.CollectionNotifications.Stores.Enrollment;
 
 public class EnrollmentCsvStore(
-    IOptions<EnrollmentExcelOptions> options
+    IOptions<EnrollmentCsvOptions> options
 ) : IEnrollmentStore
 {
     public async Task<List<EnrolledRecipient>> ReadAsync(CancellationToken cancellationToken = default)

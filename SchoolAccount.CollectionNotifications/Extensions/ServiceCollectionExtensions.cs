@@ -48,8 +48,8 @@ public static class ServiceCollectionExtensions
         }
         else
         {
-            services.AddOptions<EnrollmentExcelOptions>()
-                .Bind(configuration.GetSection(EnrollmentExcelOptions.SectionName))
+            services.AddOptions<EnrollmentCsvOptions>()
+                .Bind(configuration.GetSection(EnrollmentCsvOptions.SectionName))
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
 
