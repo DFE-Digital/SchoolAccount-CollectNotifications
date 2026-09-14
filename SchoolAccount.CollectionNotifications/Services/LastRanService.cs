@@ -12,6 +12,7 @@ public class LastRanService
 
     public async Task<Result> SetTimestamp(DateTime timestamp, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        // Todo: implement a source
+        return Result.Success();
     }
 }
