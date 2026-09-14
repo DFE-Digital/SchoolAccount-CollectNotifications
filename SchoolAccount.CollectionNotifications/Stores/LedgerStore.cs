@@ -9,7 +9,7 @@ public class LedgerStore(
     IDbConnectionFactory<LedgerDatabase> factory
 )
 {
-    public async Task<List<CollectReturnStatus>> GetWhatHasChangedAsync(DateTime lastRunDate, List<string> laeStabKeys,
+    public async Task<Result<List<CollectReturnStatus>>> GetWhatHasChangedAsync(DateTime lastRunDate, List<string> laeStabKeys,
         CancellationToken cancellationToken)
     {
         var sql = @$"
@@ -28,6 +28,7 @@ public class LedgerStore(
                     LastRunDate = lastRunDate,
                     LaeStabKeys = laeStabKeys
                 });
-        return query.ToList();
+        
+        return Result.Success(query.ToList());
     }
 }

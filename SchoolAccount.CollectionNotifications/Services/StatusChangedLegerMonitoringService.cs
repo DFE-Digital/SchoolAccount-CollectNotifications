@@ -1,4 +1,5 @@
 using SchoolAccount.CollectionNotifications.Interfaces;
+using SchoolAccount.CollectionNotifications.Models;
 using SchoolAccount.CollectionNotifications.Stores;
 
 namespace SchoolAccount.CollectionNotifications.Services;
@@ -9,14 +10,15 @@ public class StatusChangedLegerMonitoringService(
     LedgerStore ledgerStore
 )
 {
-    public async Task InvokeAsync(CancellationToken cancellationToken = default)
+    public async Task<Result> InvokeAsync(CancellationToken cancellationToken = default)
     {
         var recipients = await enrollmentStore.ListAsync(cancellationToken);
         var lastRan = await lastRanService.GetTimestamp(cancellationToken);
         var changes = await ledgerStore.GetWhatHasChangedAsync(
-            lastRan, 
-            recipients.Select(x => x.LAEStab).Distinct().ToList(), 
+            lastRan.Value, 
+            recipients.Value.Select(x => x.LAEStab).Distinct().ToList(), 
             cancellationToken);
-        return;
+        
+        return Result.Success();
     }
 }
