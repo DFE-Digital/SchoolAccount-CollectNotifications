@@ -18,6 +18,7 @@ public class EnrollmentCsvStore(
             .Query<EnrolledRecipient>(
                 sheetName: options.Value.SheetName,
                 startCell: options.Value.StartCell)
+            .Where(x => x.IsValid)
             .ToList();
         
         return Result.Success(records);

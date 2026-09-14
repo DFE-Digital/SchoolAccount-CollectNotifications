@@ -28,6 +28,7 @@ public static class HostBuilderExtensions
             services.AddDatabase<LedgerDatabase>(hostContext.Configuration);
             services.AddSingleton<LedgerStore>();
     
+            services.AddSingleton<ThreadingService>();
             services.AddSingleton<LastRanService>();
             services.AddSingleton<GovNotifyService>();
             services.AddSingleton<StatusChangedLegerMonitoringService>();
