@@ -8,7 +8,7 @@ public class StatusChangedLegerMonitoringService(
 {
     public async Task InvokeAsync(CancellationToken cancellationToken = default)
     {
-        var recipients = await enrollmentStore.ReadAsync(cancellationToken);
+        var recipients = await enrollmentStore.ListAsync(cancellationToken);
         return;
     }
 }

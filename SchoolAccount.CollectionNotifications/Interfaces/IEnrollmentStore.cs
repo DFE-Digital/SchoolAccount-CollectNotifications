@@ -4,5 +4,5 @@ namespace SchoolAccount.CollectionNotifications.Interfaces;
 
 public interface IEnrollmentStore
 {
-    Task<List<EnrolledRecipient>> ReadAsync(CancellationToken cancellationToken = default);
+    Task<List<EnrolledRecipient>> ListAsync(CancellationToken cancellationToken = default);
 }

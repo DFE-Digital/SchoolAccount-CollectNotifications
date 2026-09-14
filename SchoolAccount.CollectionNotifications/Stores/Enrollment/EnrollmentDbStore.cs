@@ -13,7 +13,7 @@ public class EnrollmentDbStore(
     IOptions<EnrollmentDbOptions> options
 ) : IEnrollmentStore
 {
-    public async Task<List<EnrolledRecipient>> ReadAsync(CancellationToken cancellationToken = default)
+    public async Task<List<EnrolledRecipient>> ListAsync(CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
         
