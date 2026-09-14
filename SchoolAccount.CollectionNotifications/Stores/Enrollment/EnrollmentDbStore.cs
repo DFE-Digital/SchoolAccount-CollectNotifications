@@ -15,6 +15,8 @@ public class EnrollmentDbStore(
 {
     public async Task<List<EnrolledRecipient>> ReadAsync(CancellationToken cancellationToken = default)
     {
+        throw new NotImplementedException();
+        
         var sql = """
                   SELECT * FROM Recipients
                   """;

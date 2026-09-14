@@ -12,15 +12,11 @@ public class EnrollmentCsvStore(
 {
     public async Task<List<EnrolledRecipient>> ReadAsync(CancellationToken cancellationToken = default)
     {
-        var recipients = new List<EnrolledRecipient>();
-        
         await using var stream = File.OpenRead(options.Value.FilePath);
-        foreach (var row in stream.Query<EnrolledRecipient>(sheetName: options.Value.SheetName))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            recipients.Add(row);
-        }
-
-        return recipients;
+        return stream
+            .Query<EnrolledRecipient>(
+                sheetName: options.Value.SheetName,
+                startCell: options.Value.StartCell)
+            .ToList();
     }
 }

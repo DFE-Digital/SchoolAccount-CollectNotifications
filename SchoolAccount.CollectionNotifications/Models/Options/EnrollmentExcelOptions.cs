@@ -10,4 +10,6 @@ public sealed class EnrollmentExcelOptions
     public string FilePath { get; init; } = "";
     
     public string? SheetName { get; init; }
+
+    public string StartCell { get; init; } = "A1";
 }
