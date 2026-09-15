@@ -140,12 +140,12 @@ If any send fails, the remaining batches are stopped.
 }
 ```
 
-> For local development with Azure Blob, there is [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite) 
-> currently investigating this (as of 15 Sep 26).
-
 ## Running locally
 
 ### Prerequisites
+
+> For local development with Azure Blob, there is [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite).
+> Currently still investigating this as of 15 Sep 26.
 
 #### Required
 
@@ -179,9 +179,61 @@ DOTNET_ENVIRONMENT=Development dotnet run --project SchoolAccount.CollectNotific
 
 > If you are using a run profile ensure you have `DOTNET_ENVIRONMENT=Development` set iwthin your enviroment variables.
 
-## Docker
+## Testing
 
-Build from the repository root, as the Dockerfile expects the solution folder as its build context:
+The solution includes a test suite in `SchoolAccount.CollectNotifications.Tests` covering service logic, error handling, rate limiting, and workflow orchestration.
+
+### Running tests
+
+Run all tests from the repository root:
+
+```bash
+dotnet test
+```
+
+### Prerequisites
+
+- `xunit`
+- `NSubsitute` for mocking dependencies and verifying interactions
+- `Shouldly` which is a fluent assertion library
+
+### Test coverage
+
+#### **`ThreadingService`** by `ThreadingServiceTests`
+- Processing all items across configured batch chunks and degrees of parallelism.
+- Aborting subsequent batches when a worker callback returns `false` (e.g. rate limiting or send failure).
+- Exception resilience within batches without unhandled worker crashes.
+- Handling cancellation tokens and throwing `OperationCanceledException`.
+
+#### **Workflow Orchestration** by `StatusChangedLegerMonitoringServiceTests`
+- Validating end-to-end processing pipeline from enrolment loading to blob tracking and database queries.
+- Skipping invalid or incomplete recipient records.
+- Matching changed schools to recipients and building notification payloads.
+- Passing notification batches into `IThreadingService` and executing GOV.UK Notify dispatches.
+
+#### **GOV.UK Notify Integration** by `GovNotifyServiceTests`
+- Template personalisation and reply-to configuration.
+- Error wrapping on Notify client failures.
+
+#### **Blob Storage & Run Tracking** by `AzureBlobStorageServiceTests` & `LastRanServiceTests`
+- Handling blob downloads, 404 missing states, JSON serialisation, and Azure authentication errors.
+- Fallback to minimum SQL Server timestamp on initial runs.
+
+#### **Test Data Builders** located in `Builders/`
+- Fluent builder helpers to create clean, reusable test fixtures:
+  - `CollectReturnStatusBuilder` to build a ledger row;
+  - `EnrolledRecipientBuilder` to build a record for a beta enrolled user;
+  - `NotificationBuilder` to allow us to emulate use sending a request to the GovNotify service.
+
+## Running & Consuming
+
+### Rider / IDEs
+
+You should be able to run this via a run profile which will be automatically built by your IDE.
+
+### Docker
+
+You can also do this via Docker by: Build from the repository root, as the Dockerfile expects the solution folder as its build context:
 
 ```bash
 docker build -f SchoolAccount.CollectNotifications/Dockerfile -t schoolaccount-collect-notifications .
@@ -211,7 +263,7 @@ The run date is stored in UTC, so the `UpdatedAt` values in the ledger are expec
 ```
 SchoolAccount.CollectNotifications/
 ├── Extensions/        # Dependency injection and options setup
-├── Interfaces/        # IBlobStorageService, IDbConnectionFactory, IEnrollmentStore
+├── Interfaces/        # IBlobStorageService, IDbConnectionFactory, IEnrollmentStore, IThreadingService
 ├── Models/
 │   ├── Databases/     # Marker types used to tell database connections apart
 │   ├── Dtos/          # EnrolledRecipient, Notification, NotificationResult
@@ -228,6 +280,10 @@ SchoolAccount.CollectNotifications/
 │   └── LedgerStore.cs # Status change query
 ├── Dockerfile
 └── Program.cs
+
+SchoolAccount.CollectNotifications.Tests/
+├── Builders/          # Fluent test object builders
+└── Services/          # Test each service
 ```
 
 ### Key packages
