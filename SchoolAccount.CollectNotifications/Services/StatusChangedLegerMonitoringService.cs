@@ -31,7 +31,7 @@ public class StatusChangedLegerMonitoringService(
 
         logger.LogInformation("Received {count} of recipients", recipients.Value.Count);
 
-        var lastRan = await lastRanService.GetTimestamp(cancellationToken);
+        var lastRan = await lastRanService.GetTimestampAsync(cancellationToken);
 
         if (lastRan.IsFailure)
         {
@@ -73,8 +73,15 @@ public class StatusChangedLegerMonitoringService(
             }
         }
 
-        await lastRanService.SetTimestamp(runningAt, cancellationToken);
+        var timestampUpdate = await lastRanService.SetTimestampAsync(runningAt, cancellationToken);
 
+        if (timestampUpdate.IsFailure)
+        {
+            logger.LogWarning("Updating last ran date failed: {error}", timestampUpdate.Error);
+        }
+
+        return;
+        
         await threadingService.Batch(
             whatToNotify, 
             cancellationToken,

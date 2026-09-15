@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace SchoolAccount.CollectNotifications.Models;
 
 public class Result
@@ -33,7 +31,6 @@ public class Result<TValue> : Result
         Value = value;
     }
 
-    [NotNull]
     public TValue Value =>
         IsSuccess
             ? field!

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services;
+using SchoolAccount.CollectNotifications.Services.BlobStorage;
 using SchoolAccount.CollectNotifications.Stores;
 
 namespace SchoolAccount.CollectNotifications.Extensions;
@@ -24,6 +25,7 @@ public static class HostBuilderExtensions
                 .ValidateOnStart();
     
             services.AddEnrollmentStores(hostContext.Configuration);
+            services.AddAzureBlobStorage(hostContext.Configuration);
     
             services.AddDatabase<LedgerDatabase>(hostContext.Configuration);
             services.AddSingleton<LedgerStore>();

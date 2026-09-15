@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Models.Options;
 
 namespace SchoolAccount.CollectNotifications.Services;

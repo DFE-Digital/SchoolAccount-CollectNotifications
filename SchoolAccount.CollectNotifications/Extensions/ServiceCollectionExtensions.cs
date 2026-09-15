@@ -1,3 +1,5 @@
+using Azure.Identity;
+using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -5,6 +7,7 @@ using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Models.Options;
+using SchoolAccount.CollectNotifications.Services.BlobStorage;
 using SchoolAccount.CollectNotifications.Stores.Enrollment;
 
 namespace SchoolAccount.CollectNotifications.Extensions;
@@ -63,6 +66,47 @@ public static class ServiceCollectionExtensions
                 : sp.GetRequiredService<EnrollmentCsvStore>();
         });
 
+        return services;
+    }
+    
+    public static IServiceCollection AddAzureBlobStorage(this IServiceCollection services, IConfiguration configuration)
+    {
+        var section = configuration.GetSection(AzureBlobStorageOptions.SectionName);
+        var options = section.Get<AzureBlobStorageOptions>() ?? new AzureBlobStorageOptions();
+
+        if (options.IsConfigured)
+        {
+            services.AddOptions<AzureBlobStorageOptions>()
+                .Bind(section)
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+            
+            services.AddSingleton(sp =>
+            {
+                var storageOptions = sp.GetRequiredService<IOptions<AzureBlobStorageOptions>>().Value;
+
+                if (!string.IsNullOrWhiteSpace(storageOptions.ConnectionString))
+                {
+                    return new BlobServiceClient(storageOptions.ConnectionString);
+                }
+
+                if (string.IsNullOrWhiteSpace(storageOptions.ServiceUri))
+                {
+                    throw new InvalidOperationException(
+                        $"Set either {AzureBlobStorageOptions.SectionName}:ConnectionString or " +
+                        $"{AzureBlobStorageOptions.SectionName}:ServiceUri.");
+                }
+
+                return new BlobServiceClient(new Uri(storageOptions.ServiceUri), new DefaultAzureCredential());
+            });
+ 
+            services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
+        }
+        else
+        {
+            services.AddSingleton<IBlobStorageService, BlankedBlobStorageService>();
+        }
+ 
         return services;
     }
 }
