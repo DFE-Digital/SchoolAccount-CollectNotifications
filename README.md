@@ -190,8 +190,6 @@ docker run --rm \
   -e ConnectionStrings__LedgerDatabase="<connection-string>" \
   -e GovNotify__ApiKey="<your-key>" \
   -e Enrollment__Csv__FilePath="/data/recipients.csv" \
-  -e AzureBlobStorage__ServiceUri="https://<account>.blob.core.windows.net" \
-  -e AzureBlobStorage__ContainerName="notifications" \
   -v "$(pwd)/data:/data:ro" \
   schoolaccount-collect-notifications
 ```
