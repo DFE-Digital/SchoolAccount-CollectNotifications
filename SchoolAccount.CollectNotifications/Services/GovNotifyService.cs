@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Options;
 using Notify.Client;
 using Notify.Exceptions;
+using Notify.Interfaces;
+using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Models.Dtos;
 using SchoolAccount.CollectNotifications.Models.Options;
@@ -8,10 +10,11 @@ using SchoolAccount.CollectNotifications.Models.Options;
 namespace SchoolAccount.CollectNotifications.Services;
 
 public class GovNotifyService(
-    IOptions<GovNotifyOptions> settings
-)
+    IOptions<GovNotifyOptions> settings,
+    IAsyncNotificationClient? client = null
+) : IGovNotifyService
 {
-    private readonly NotificationClient _client = new(settings.Value.ApiKey);
+    private readonly IAsyncNotificationClient _client = client ?? new NotificationClient(settings.Value.ApiKey);
 
     public async Task<Result<NotificationResult>> SendMessage(
         string templateId, 
@@ -28,7 +31,7 @@ public class GovNotifyService(
                 clientReference: options?.Reference,
                 emailReplyToId: options?.ReplyTo ?? settings.Value.FromAddress);
             
-            return Result.Success(new NotificationResult { Outcome = result});
+            return Result.Success(new NotificationResult { Outcome = result });
         }
         catch (NotifyClientException ex)
         {

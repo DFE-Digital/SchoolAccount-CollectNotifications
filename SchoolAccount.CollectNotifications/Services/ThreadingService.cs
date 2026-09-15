@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models.Options;
 
 namespace SchoolAccount.CollectNotifications.Services;
@@ -7,12 +8,12 @@ namespace SchoolAccount.CollectNotifications.Services;
 public class ThreadingService(
     ILogger<ThreadingService> logger,
     IOptions<ThreadingOptions> threadingOptions
-)
+) : IThreadingService
 {
     public async Task Batch<TSource>(IEnumerable<TSource> items, CancellationToken cancellationToken, Func<TSource, CancellationToken, Task<bool>> func)
     {
         var batches = items.Chunk(threadingOptions.Value.BatchAmount).ToList();
-        var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = threadingOptions.Value.MaxDegreeOfParallelism };
+        var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = threadingOptions.Value.MaxDegreeOfParallelism, CancellationToken = cancellationToken };
         var shouldContinue = true;
 
         for (var b = 0; b < batches.Count; b++)
@@ -55,7 +56,7 @@ public class ThreadingService(
                 logger.LogDebug(
                     $"Batch finished. Pausing for {i}/{threadingOptions.Value.BatchWaitAmountInSec} seconds to respect rate limits...");
 
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
             }
         }
     }

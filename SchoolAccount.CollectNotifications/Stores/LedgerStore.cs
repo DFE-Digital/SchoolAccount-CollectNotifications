@@ -7,10 +7,10 @@ namespace SchoolAccount.CollectNotifications.Stores;
 
 public class LedgerStore(
     IDbConnectionFactory<LedgerDatabase> factory
-)
+) : ILedgerStore
 {
     public async Task<Result<List<CollectReturnStatus>>> GetWhatHasChangedAsync(DateTime lastRunDate, List<string> laeStabKeys,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         var sql = $"""
                   WITH Latest AS (

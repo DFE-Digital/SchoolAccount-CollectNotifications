@@ -6,13 +6,13 @@ namespace SchoolAccount.CollectNotifications.Services;
 
 public class LastRanService(
     IBlobStorageService blobStorageService
-)
+) : ILastRanService
 {
     private const string BlobName = "schoolaccount/collect/lastran.json";
 
     public record LastRanBlobObject(double RunDate);
 
-    public async Task<Result<DateTime>> GetTimestampAsync(CancellationToken cancellationToken)
+    public async Task<Result<DateTime>> GetTimestampAsync(CancellationToken cancellationToken = default)
     {
         var blob = await blobStorageService.GetAsync<LastRanBlobObject>(BlobName, cancellationToken);
 
@@ -28,7 +28,7 @@ public class LastRanService(
         return Result.Success(runDate);
     }
 
-    public async Task<Result> SetTimestampAsync(DateTime timestamp, CancellationToken cancellationToken)
+    public async Task<Result> SetTimestampAsync(DateTime timestamp, CancellationToken cancellationToken = default)
     {
         var blob = new LastRanBlobObject(timestamp.ToOADate());
         return await blobStorageService.SaveAsync(BlobName, blob, cancellationToken);

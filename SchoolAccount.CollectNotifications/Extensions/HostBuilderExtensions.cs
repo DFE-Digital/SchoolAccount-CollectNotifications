@@ -1,9 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services;
-using SchoolAccount.CollectNotifications.Services.BlobStorage;
 using SchoolAccount.CollectNotifications.Stores;
 
 namespace SchoolAccount.CollectNotifications.Extensions;
@@ -28,11 +28,11 @@ public static class HostBuilderExtensions
             services.AddAzureBlobStorage(hostContext.Configuration);
     
             services.AddDatabase<LedgerDatabase>(hostContext.Configuration);
-            services.AddSingleton<LedgerStore>();
+            services.AddSingleton<ILedgerStore, LedgerStore>();
     
-            services.AddSingleton<ThreadingService>();
-            services.AddSingleton<LastRanService>();
-            services.AddSingleton<GovNotifyService>();
+            services.AddSingleton<IThreadingService, ThreadingService>();
+            services.AddSingleton<ILastRanService, LastRanService>();
+            services.AddSingleton<IGovNotifyService, GovNotifyService>();
             services.AddSingleton<StatusChangedLegerMonitoringService>();
         });
 
