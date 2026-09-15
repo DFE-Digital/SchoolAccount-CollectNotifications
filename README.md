@@ -1,0 +1,242 @@
+# SchoolAccount – Collect Notifications
+
+A .NET 10 console app that watches the Census ledger for changes to a school's return status and emails the people 
+enrolled for that school using GOV.UK Notify. It runs once and then exits, so it's designed to be triggered on a 
+schedule, running on a Azure Container App Jobs.
+
+## How it works
+
+Each run does the following:
+
+1. **Load recipients.** Reads the list of enrolled recipients (`LaeStab` + `Email`) from the enrolment store. Rows 
+missing either value are skipped.
+2. **Get the last run time.** Reads `{containerName}/collect/lastran.json` from Azure Blob Storage. If there isn't one, 
+it falls back to `1753-01-01` (the SQL Server minimum date).
+3. **Find status changes.** Queries the `CollectReturnStatus` table in the ledger database for the enrolled LAESTABs. 
+For each school, the latest row updated since the last run is compared with the latest row from before the last run. 
+A school counts as changed if its `ReturnStatusCode` is different, or if it has no earlier row at all.
+4. **Build notifications.** Creates one notification per recipient per changed school.
+5. **Save the run time.** Writes the time this run started (UTC) back to blob storage.
+6. **Send emails.** Sends the notifications through GOV.UK Notify in rate-limited, parallel batches using the 
+`CensusStatusChange` template.
+
+```mermaid
+flowchart LR
+    A[Enrolment Store<br/>CSV or Db] --> D[StatusChangedLegerMonitoringService]
+    B[(Azure Blob<br/>lastran.json)] <--> D
+    C[(Ledger DB<br/>CollectReturnStatus)] --> D
+    D --> E[ThreadingService<br/>batched + parallel]
+    E --> F[GOV.UK Notify]
+```
+
+### GOV.UK Notify template
+
+The template (`GovNotifyTemplates.CensusStatusChange`) is sent with these personalisation fields:
+
+| Field         | Value                                                 |
+|---------------|-------------------------------------------------------|
+| `status`      | The new `ReturnStatusCode` (currently the raw number) |
+| `school_name` | The school name from the ledger row                   |
+
+## Configuration
+
+Configuration uses the standard .NET host setup, so values can come from `appsettings.json`, environment variables or 
+user secrets. Options marked as required are validated when the app starts, so it will fail fast if they are missing.
+
+### Ledger database (required)
+
+| Key                                | Description                                        |
+|------------------------------------|----------------------------------------------------|
+| `ConnectionStrings:LedgerDatabase` | SQL Server connection string for the Census ledger |
+
+### Enrolment store
+
+The app chooses the store based on what is configured. If `Enrollment:Db:ConnectionString` is set it uses the database 
+store, otherwise it uses the file store.
+
+#### File store (CSV or Excel)
+
+| Key                         | Default | Description |
+| --------------------------- | ------- | ----------- |
+| `Enrollment:Csv:FilePath`   | –       | Path to the file. Required when the database store isn't configured |
+| `Enrollment:Csv:SheetName`  | First sheet | Sheet to read (Excel only) |
+| `Enrollment:Csv:StartCell`  | `A1`    | Cell where the header row starts (Excel only) |
+
+The file needs a header row with these columns:
+
+```csv
+LaeStab,Email
+1234567,head@example-school.sch.uk
+1234567,office@example-school.sch.uk
+```
+
+#### Database store
+
+| Key                                    | Default | Description |
+| -------------------------------------- | ------- | ----------- |
+| `Enrollment:Db:ConnectionString`       | –       | SQL Server connection string |
+| `Enrollment:Db:CommandTimeoutSeconds`  | `30`    | Command timeout |
+
+> The database store isn't implemented yet, there is a example of how that would look, but no table has been tested
+> against it yet.
+
+### GOV.UK Notify (required)
+
+| Key                     | Required | Description |
+| ----------------------- | -------- | ----------- |
+| `GovNotify:ApiKey`      | Yes      | Notify API key |
+| `GovNotify:FromAddress` | No       | Passed to Notify as the reply-to value |
+
+### Azure Blob Storage (optional)
+
+Used to remember when the app last ran. Set **either** a connection string **or** a service URI. With a service URI, the 
+app signs in using `DefaultAzureCredential` (managed identity, Azure CLI login, and so on).
+
+| Key                                 | Description |
+| ----------------------------------- | ----------- |
+| `AzureBlobStorage:ConnectionString` | Storage account connection string |
+| `AzureBlobStorage:ServiceUri`       | For example `https://<account>.blob.core.windows.net` |
+| `AzureBlobStorage:ContainerName`    | Container that holds `schoolaccount/collect/lastran.json` |
+
+If neither value is set, the app uses a blank storage service instead of failing. Nothing is saved, and every run is 
+treated as a first run (see [first run behaviour](#first-run-behaviour)).
+
+### Threading
+
+Controls how emails are sent so we stay within Notify's rate limits.
+
+| Key                               | Default | Description |
+| --------------------------------- | ------- | ----------- |
+| `Threading:MaxDegreeOfParallelism` | `10`   | Emails sent at the same time within a batch |
+| `Threading:BatchAmount`           | `50`    | Emails per batch |
+| `Threading:BatchWaitAmountInSec`  | `10`    | Pause between batches |
+| `Threading:ItemWaitAmountInSec`   | `1`     | Not used yet |
+
+If any send fails, the remaining batches are stopped.
+
+### Example `appsettings.Development.json`
+
+```json
+{
+  "ConnectionStrings": {
+    "LedgerDatabase": ""
+  },
+  "GovNotify": {
+    "ApiKey": ""
+  },
+  "Enrollment": {
+    "Csv": {
+      "FilePath": ""
+    }
+  },
+  "AzureBlobStorage": {
+    "ConnectionString": "",
+    "ContainerName": ""
+  },
+  "Threading": {
+    "BatchAmount": 50,
+    "BatchWaitAmountInSec": 10
+  }
+}
+```
+
+> For local development with Azure Blob, there is [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite) 
+> currently investigating this (as of 15 Sep 26).
+
+## Running locally
+
+### Prerequisites
+
+#### Required
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- Access to a ledger database with the `CollectReturnStatus` table, see 
+[SchoolAccount-CollectStateLedgerDatabase](https://github.com/DFE-Digital/SchoolAccount-CollectStateLedgerDatabase) for
+a local setup.
+- A GOV.UK Notify API key (use a **test** or **team** key when developing)
+
+#### Optional
+- Docker
+- Using the [SchoolAccount-LocalDevTools](https://github.com/DFE-Digital/SchoolAccount-LocalDevTools) would benefit 
+creating and managing your local db via Docker.
+
+### Secrets
+
+The project has user secrets enabled. Keep API keys and connection strings out of source control by setting them there:
+
+```bash
+dotnet user-secrets --project SchoolAccount.CollectNotifications set "GovNotify:ApiKey" "<your-key>"
+dotnet user-secrets --project SchoolAccount.CollectNotifications set "ConnectionStrings:LedgerDatabase" "<connection-string>"
+```
+
+> User secrets are only loaded when the environment is `Development`. 
+
+### Run
+
+```bash
+DOTNET_ENVIRONMENT=Development dotnet run --project SchoolAccount.CollectNotifications
+```
+
+> If you are using a run profile ensure you have `DOTNET_ENVIRONMENT=Development` set iwthin your enviroment variables.
+
+## Docker
+
+Build from the repository root, as the Dockerfile expects the solution folder as its build context:
+
+```bash
+docker build -f SchoolAccount.CollectNotifications/Dockerfile -t schoolaccount-collect-notifications .
+
+docker run --rm \
+  -e ConnectionStrings__LedgerDatabase="<connection-string>" \
+  -e GovNotify__ApiKey="<your-key>" \
+  -e Enrollment__Csv__FilePath="/data/recipients.csv" \
+  -e AzureBlobStorage__ServiceUri="https://<account>.blob.core.windows.net" \
+  -e AzureBlobStorage__ContainerName="notifications" \
+  -v "$(pwd)/data:/data:ro" \
+  schoolaccount-collect-notifications
+```
+
+## First run behaviour
+
+When there is no `lastran.json` (or blob storage isn't configured), the last run date falls back to `1753-01-01`. This means **every enrolled school with a ledger row counts as changed, so every recipient gets an email.**
+
+To avoid this, create the blob before the first real run. `runDate` is an OLE Automation date (days since 30 December 1899), for example `46280.0` is 15 September 2026:
+
+```json
+{ "runDate": 46280.0 }
+```
+
+The run date is stored in UTC, so the `UpdatedAt` values in the ledger are expected to be in UTC too.
+
+## Project structure
+
+```
+SchoolAccount.CollectNotifications/
+├── Extensions/        # Dependency injection and options setup
+├── Interfaces/        # IBlobStorageService, IDbConnectionFactory, IEnrollmentStore
+├── Models/
+│   ├── Databases/     # Marker types used to tell database connections apart
+│   ├── Dtos/          # EnrolledRecipient, Notification, NotificationResult
+│   ├── Options/       # Strongly typed configuration
+│   └── Result.cs      # Result / Result<T> for handling errors without exceptions
+├── Services/
+│   ├── BlobStorage/   # Azure implementation and a blank fallback
+│   ├── GovNotifyService.cs
+│   ├── LastRanService.cs
+│   ├── StatusChangedLegerMonitoringService.cs   # Main workflow
+│   └── ThreadingService.cs                      # Batched, parallel processing
+├── Stores/
+│   ├── Enrollment/    # CSV/Excel and database recipient stores
+│   └── LedgerStore.cs # Status change query
+├── Dockerfile
+└── Program.cs
+```
+
+### Key packages
+
+| Package | Used for |
+| ------- | -------- |
+| `Dapper` + `Microsoft.Data.SqlClient` | Querying SQL Server |
+| `GovukNotify` | Sending emails |
+| `MiniExcel` | Reading the recipients file (CSV or Excel) |
+| `Azure.Storage.Blobs` + `Azure.Identity` | Storing the last run date |
