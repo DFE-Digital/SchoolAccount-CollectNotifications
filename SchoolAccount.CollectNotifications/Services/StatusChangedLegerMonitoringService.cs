@@ -43,6 +43,7 @@ public class StatusChangedLegerMonitoringService(
         var changes = await ledgerStore.GetWhatHasChangedAsync(
             lastRan.Value,
             recipients.Value.Where(x => x.LaeStab != null).Select(x => x.LaeStab!).Distinct().ToList(),
+            true,
             cancellationToken);
 
         if (changes.IsFailure)

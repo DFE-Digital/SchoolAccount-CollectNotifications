@@ -4,8 +4,9 @@ namespace SchoolAccount.CollectNotifications.Interfaces;
 
 public interface ILedgerStore
 {
-    Task<Result<List<CollectReturnStatus>>> GetWhatHasChangedAsync(
+    Task<Result<List<ComparableCollectReturnStatus>>> GetWhatHasChangedAsync(
         DateTime lastRunDate,
         List<string> laeStabKeys,
+        bool limitToApprovedStatuses = true,
         CancellationToken cancellationToken = default);
 }

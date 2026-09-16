@@ -1,4 +1,6 @@
 using SchoolAccount.CollectNotifications.Models;
+using SchoolAccount.CollectNotifications.Models.Dtos;
+using SchoolAccount.CollectNotifications.Models.Enums;
 
 namespace SchoolAccount.CollectNotifications.Tests.Builders;
 
@@ -7,7 +9,9 @@ public class CollectReturnStatusBuilder
     private int _id = 1;
     private string _schoolName = "Default Test School";
     private string _laeStab = "1234567";
-    private int _returnStatusCode = 10;
+    private ReturnStatusCodes _returnStatusCode = ReturnStatusCodes.Authorised;
+    private ReturnStatusCodes? _firstReturnStatusCode;
+    private ReturnStatusCodes? _baselineReturnStatusCode;
     private int _errors = 0;
     private int _queries = 0;
     private int _okdErrorsQueries = 0;
@@ -40,9 +44,27 @@ public class CollectReturnStatusBuilder
         return this;
     }
 
-    public CollectReturnStatusBuilder WithReturnStatusCode(int returnStatusCode)
+    public CollectReturnStatusBuilder WithReturnStatusCode(ReturnStatusCodes returnStatusCode)
     {
         _returnStatusCode = returnStatusCode;
+        return this;
+    }
+
+    public CollectReturnStatusBuilder WithReturnStatusCode(int returnStatusCode)
+    {
+        _returnStatusCode = (ReturnStatusCodes)returnStatusCode;
+        return this;
+    }
+
+    public CollectReturnStatusBuilder WithFirstReturnStatusCode(ReturnStatusCodes? firstReturnStatusCode)
+    {
+        _firstReturnStatusCode = firstReturnStatusCode;
+        return this;
+    }
+
+    public CollectReturnStatusBuilder WithBaselineReturnStatusCode(ReturnStatusCodes? baselineReturnStatusCode)
+    {
+        _baselineReturnStatusCode = baselineReturnStatusCode;
         return this;
     }
 
@@ -94,14 +116,16 @@ public class CollectReturnStatusBuilder
         return this;
     }
 
-    public CollectReturnStatus Build()
+    public ComparableCollectReturnStatus Build()
     {
-        return new CollectReturnStatus
+        return new ComparableCollectReturnStatus
         {
             Id = _id,
             SchoolName = _schoolName,
             LaeStab = _laeStab,
             ReturnStatusCode = _returnStatusCode,
+            FirstReturnStatusCode = _firstReturnStatusCode,
+            BaselineReturnStatusCode = _baselineReturnStatusCode,
             Errors = _errors,
             Queries = _queries,
             OkdErrorsQueries = _okdErrorsQueries,
@@ -111,6 +135,11 @@ public class CollectReturnStatusBuilder
             Collection = _collection,
             DataReturnId = _dataReturnId
         };
+    }
+
+    public static implicit operator ComparableCollectReturnStatus(CollectReturnStatusBuilder builder)
+    {
+        return builder.Build();
     }
 
     public static implicit operator CollectReturnStatus(CollectReturnStatusBuilder builder)

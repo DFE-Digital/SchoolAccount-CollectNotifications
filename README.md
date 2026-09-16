@@ -114,6 +114,12 @@ Controls how emails are sent so we stay within Notify's rate limits.
 
 If any send fails, the remaining batches are stopped.
 
+### Census
+
+| Key                      | Default | Description |
+| ------------------------ | ------- | ----------- |
+| `Census:AllowedStatuses` | `[]`    | Optional list of approved return status codes (`ReturnStatusCodes`) to filter notifications against |
+
 ### Example `appsettings.Development.json`
 
 ```json
@@ -136,6 +142,9 @@ If any send fails, the remaining batches are stopped.
   "Threading": {
     "BatchAmount": 50,
     "BatchWaitAmountInSec": 10
+  },
+  "Census": {
+    "AllowedStatuses": []
   }
 }
 ```
@@ -165,8 +174,8 @@ creating and managing your local db via Docker.
 The project has user secrets enabled. Keep API keys and connection strings out of source control by setting them there:
 
 ```bash
-dotnet user-secrets --project SchoolAccount.CollectNotifications set "GovNotify:ApiKey" "<your-key>"
-dotnet user-secrets --project SchoolAccount.CollectNotifications set "ConnectionStrings:LedgerDatabase" "<connection-string>"
+dotnet user-secrets --project SchoolAccount.CollectNotifications set \"GovNotify:ApiKey\" \"<your-key>\"
+dotnet user-secrets --project SchoolAccount.CollectNotifications set \"ConnectionStrings:LedgerDatabase\" \"<connection-string>\"
 ```
 
 > User secrets are only loaded when the environment is `Development`. 
@@ -203,13 +212,16 @@ dotnet test
 - Processing all items across configured batch chunks and degrees of parallelism.
 - Aborting subsequent batches when a worker callback returns `false` (e.g. rate limiting or send failure).
 - Exception resilience within batches without unhandled worker crashes.
-- Handling cancellation tokens and throwing `OperationCanceledException`.
+- Handling cancellation tokens and throwing `OperationCanceledException` directions.
 
 #### **Workflow Orchestration** by `StatusChangedLegerMonitoringServiceTests`
 - Validating end-to-end processing pipeline from enrolment loading to blob tracking and database queries.
 - Skipping invalid or incomplete recipient records.
 - Matching changed schools to recipients and building notification payloads.
 - Passing notification batches into `IThreadingService` and executing GOV.UK Notify dispatches.
+
+#### **Store Filtering & Ledger Extensions** by `LedgerStoreExtensionsTests`
+- Filtering ledger return status records against configured approved census statuses (matching current, first, or baseline status codes).
 
 #### **GOV.UK Notify Integration** by `GovNotifyServiceTests`
 - Template personalisation and reply-to configuration.
@@ -221,9 +233,9 @@ dotnet test
 
 #### **Test Data Builders** located in `Builders/`
 - Fluent builder helpers to create clean, reusable test fixtures:
-  - `CollectReturnStatusBuilder` to build a ledger row;
+  - `CollectReturnStatusBuilder` to build a ledger row (`ComparableCollectReturnStatus`);
   - `EnrolledRecipientBuilder` to build a record for a beta enrolled user;
-  - `NotificationBuilder` to allow us to emulate use sending a request to the GovNotify service.
+  - `NotificationBuilder` to allow us to emulate sending a request to the GovNotify service.
 
 ## Running & Consuming
 
@@ -239,10 +251,10 @@ You can also do this via Docker by: Build from the repository root, as the Docke
 docker build -f SchoolAccount.CollectNotifications/Dockerfile -t schoolaccount-collect-notifications .
 
 docker run --rm \
-  -e ConnectionStrings__LedgerDatabase="<connection-string>" \
-  -e GovNotify__ApiKey="<your-key>" \
-  -e Enrollment__Csv__FilePath="/data/recipients.csv" \
-  -v "$(pwd)/data:/data:ro" \
+  -e ConnectionStrings__LedgerDatabase=\"<connection-string>\" \
+  -e GovNotify__ApiKey=\"<your-key>\" \
+  -e Enrollment__Csv__FilePath=\"/data/recipients.csv\" \
+  -v \"$(pwd)/data:/data:ro\" \
   schoolaccount-collect-notifications
 ```
 
@@ -267,6 +279,7 @@ SchoolAccount.CollectNotifications/
 ├── Models/
 │   ├── Databases/     # Marker types used to tell database connections apart
 │   ├── Dtos/          # EnrolledRecipient, Notification, NotificationResult
+│   ├── Enums/         
 │   ├── Options/       # Strongly typed configuration
 │   └── Result.cs      # Result / Result<T> for handling errors without exceptions
 ├── Services/
@@ -277,13 +290,14 @@ SchoolAccount.CollectNotifications/
 │   └── ThreadingService.cs                      # Batched, parallel processing
 ├── Stores/
 │   ├── Enrollment/    # CSV/Excel and database recipient stores
-│   └── LedgerStore.cs # Status change query
+│   └── LedgerStore.cs # Status change query and status filter extensions
 ├── Dockerfile
 └── Program.cs
 
 SchoolAccount.CollectNotifications.Tests/
 ├── Builders/          # Fluent test object builders
-└── Services/          # Test each service
+├── Services/          # Test each service
+└── Stores/            # Test store operations and extension filters
 ```
 
 ### Key packages

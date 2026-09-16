@@ -24,6 +24,11 @@ public static class HostBuilderExtensions
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
     
+            services.AddOptions<CensusOptions>()
+                .Bind(hostContext.Configuration.GetSection(CensusOptions.SectionName))
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+    
             services.AddEnrollmentStores(hostContext.Configuration);
             services.AddAzureBlobStorage(hostContext.Configuration);
     

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Models.Dtos;
+using SchoolAccount.CollectNotifications.Models.Enums;
 using SchoolAccount.CollectNotifications.Services;
 using static SchoolAccount.CollectNotifications.Tests.Builders.CollectReturnStatusBuilder;
 using static SchoolAccount.CollectNotifications.Tests.Builders.EnrolledRecipientBuilder;
@@ -42,7 +43,11 @@ public class StatusChangedLegerMonitoringServiceTests
 
         // Assert
         await _lastRanService.DidNotReceive().GetTimestampAsync(Arg.Any<CancellationToken>());
-        await _ledgerStore.DidNotReceive().GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<List<string>>(), Arg.Any<CancellationToken>());
+        await _ledgerStore.DidNotReceive().GetWhatHasChangedAsync(
+            Arg.Any<DateTime>(),
+            Arg.Any<List<string>>(),
+            Arg.Any<bool>(),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -66,7 +71,11 @@ public class StatusChangedLegerMonitoringServiceTests
         await _sut.InvokeAsync();
 
         // Assert
-        await _ledgerStore.DidNotReceive().GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<List<string>>(), Arg.Any<CancellationToken>());
+        await _ledgerStore.DidNotReceive().GetWhatHasChangedAsync(
+            Arg.Any<DateTime>(),
+            Arg.Any<List<string>>(),
+            Arg.Any<bool>(),
+            Arg.Any<CancellationToken>());
         await _lastRanService.DidNotReceive().SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
     }
 
@@ -88,8 +97,12 @@ public class StatusChangedLegerMonitoringServiceTests
             .Returns(Result.Success(new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc)));
 
         _ledgerStore
-            .GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<List<string>>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Failure<List<CollectReturnStatus>>("Database connection timeout"));
+            .GetWhatHasChangedAsync(
+                Arg.Any<DateTime>(),
+                Arg.Any<List<string>>(),
+                Arg.Any<bool>(),
+                Arg.Any<CancellationToken>())
+            .Returns(Result.Failure<List<ComparableCollectReturnStatus>>("Database connection timeout"));
 
         // Act
         await _sut.InvokeAsync();
@@ -116,15 +129,15 @@ public class StatusChangedLegerMonitoringServiceTests
 
         var lastRan = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        var changes = new List<CollectReturnStatus>
+        var changes = new List<ComparableCollectReturnStatus>
         {
-            ACollectReturnStatus().WithLaeStab("1111111").WithSchoolName("School One").WithReturnStatusCode(10),
-            ACollectReturnStatus().WithLaeStab("2222222").WithSchoolName("School Two").WithReturnStatusCode(20)
+            ACollectReturnStatus().WithLaeStab("1111111").WithSchoolName("School One").WithReturnStatusCode(ReturnStatusCodes.Authorised),
+            ACollectReturnStatus().WithLaeStab("2222222").WithSchoolName("School Two").WithReturnStatusCode(ReturnStatusCodes.Submitted)
         };
 
         _enrollmentStore.ListAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(recipients));
         _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(lastRan));
-        _ledgerStore.GetWhatHasChangedAsync(lastRan, Arg.Any<List<string>>(), Arg.Any<CancellationToken>()).Returns(Result.Success(changes));
+        _ledgerStore.GetWhatHasChangedAsync(lastRan, Arg.Any<List<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(Result.Success(changes));
         _lastRanService.SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(Result.Success());
 
         // Act
@@ -145,19 +158,19 @@ public class StatusChangedLegerMonitoringServiceTests
         capturedNotifications.ShouldContain(n =>
             n.LaeStab == "1111111" &&
             n.Recipient == "head@school1.sch.uk" &&
-            n.Status == "10" &&
+            n.Status == "Authorised" &&
             n.School == "School One");
 
         capturedNotifications.ShouldContain(n =>
             n.LaeStab == "1111111" &&
             n.Recipient == "office@school1.sch.uk" &&
-            n.Status == "10" &&
+            n.Status == "Authorised" &&
             n.School == "School One");
 
         capturedNotifications.ShouldContain(n =>
             n.LaeStab == "2222222" &&
             n.Recipient == "admin@school2.sch.uk" &&
-            n.Status == "20" &&
+            n.Status == "Submitted" &&
             n.School == "School Two");
 
         capturedNotifications.ShouldNotContain(n => n.LaeStab == "3333333");
@@ -173,14 +186,14 @@ public class StatusChangedLegerMonitoringServiceTests
             AnEnrolledRecipient().WithLaeStab("1111111").WithEmail("valid@school1.sch.uk")
         };
 
-        var changes = new List<CollectReturnStatus>
+        var changes = new List<ComparableCollectReturnStatus>
         {
-            ACollectReturnStatus().WithLaeStab("1111111").WithSchoolName("School One").WithReturnStatusCode(10)
+            ACollectReturnStatus().WithLaeStab("1111111").WithSchoolName("School One").WithReturnStatusCode(ReturnStatusCodes.Authorised)
         };
 
         _enrollmentStore.ListAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(recipients));
         _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(DateTime.UtcNow.AddDays(-1)));
-        _ledgerStore.GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<List<string>>(), Arg.Any<CancellationToken>()).Returns(Result.Success(changes));
+        _ledgerStore.GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<List<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(Result.Success(changes));
         _lastRanService.SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(Result.Success());
 
         // Act
@@ -206,14 +219,14 @@ public class StatusChangedLegerMonitoringServiceTests
         {
             AnEnrolledRecipient().WithLaeStab("1111111").WithEmail("head@school1.sch.uk")
         };
-        var changes = new List<CollectReturnStatus>
+        var changes = new List<ComparableCollectReturnStatus>
         {
-            ACollectReturnStatus().WithLaeStab("1111111").WithSchoolName("School One").WithReturnStatusCode(10)
+            ACollectReturnStatus().WithLaeStab("1111111").WithSchoolName("School One").WithReturnStatusCode(ReturnStatusCodes.Authorised)
         };
 
         _enrollmentStore.ListAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(recipients));
         _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(DateTime.UtcNow.AddDays(-1)));
-        _ledgerStore.GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<List<string>>(), Arg.Any<CancellationToken>()).Returns(Result.Success(changes));
+        _ledgerStore.GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<List<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(Result.Success(changes));
         _lastRanService.SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(Result.Success());
 
         // Act
@@ -239,7 +252,7 @@ public class StatusChangedLegerMonitoringServiceTests
         var notification = ANotification()
             .WithLaeStab("1111111")
             .WithRecipient("head@school1.sch.uk")
-            .WithStatus("10")
+            .WithStatus("Authorised")
             .WithSchool("School One")
             .Build();
 
@@ -249,7 +262,7 @@ public class StatusChangedLegerMonitoringServiceTests
         await _govNotifyService.Received(1).SendMessage(
             GovNotifyTemplates.CensusStatusChange,
             "head@school1.sch.uk",
-            Arg.Is<Dictionary<string, dynamic>>(d => MatchesPersonalisation(d, "10", "School One")));
+            Arg.Is<Dictionary<string, dynamic>>(d => MatchesPersonalisation(d, "Authorised", "School One")));
     }
 
     [Fact]
@@ -260,14 +273,14 @@ public class StatusChangedLegerMonitoringServiceTests
         {
             AnEnrolledRecipient().WithLaeStab("1111111").WithEmail("head@school1.sch.uk")
         };
-        var changes = new List<CollectReturnStatus>
+        var changes = new List<ComparableCollectReturnStatus>
         {
-            ACollectReturnStatus().WithLaeStab("1111111").WithSchoolName("School One").WithReturnStatusCode(10)
+            ACollectReturnStatus().WithLaeStab("1111111").WithSchoolName("School One").WithReturnStatusCode(ReturnStatusCodes.Authorised)
         };
 
         _enrollmentStore.ListAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(recipients));
         _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(DateTime.UtcNow.AddDays(-1)));
-        _ledgerStore.GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<List<string>>(), Arg.Any<CancellationToken>()).Returns(Result.Success(changes));
+        _ledgerStore.GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<List<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(Result.Success(changes));
         _lastRanService.SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(Result.Success());
 
         // Act
@@ -290,7 +303,7 @@ public class StatusChangedLegerMonitoringServiceTests
         var notification = ANotification()
             .WithLaeStab("1111111")
             .WithRecipient("head@school1.sch.uk")
-            .WithStatus("10")
+            .WithStatus("Authorised")
             .WithSchool("School One")
             .Build();
 

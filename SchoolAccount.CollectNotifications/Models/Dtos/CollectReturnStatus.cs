@@ -1,4 +1,6 @@
-namespace SchoolAccount.CollectNotifications.Models;
+using SchoolAccount.CollectNotifications.Models.Enums;
+
+namespace SchoolAccount.CollectNotifications.Models.Dtos;
 
 public class CollectReturnStatus
 {
@@ -8,7 +10,7 @@ public class CollectReturnStatus
     
     public required string LaeStab { get; init; }
     
-    public required int ReturnStatusCode { get; init; }
+    public required ReturnStatusCodes ReturnStatusCode { get; init; }
     
     public required int Errors { get; init; }
     
