@@ -5,7 +5,7 @@ namespace SchoolAccount.CollectNotifications.Models;
 
 public sealed class ComparableCollectReturnStatus : CollectReturnStatus
 {
-    public ReturnStatusCodes? FirstReturnStatusCode { get; init; }
+    public ReturnStatusCodes? PreviousReturnStatusCode { get; init; }
     
-    public ReturnStatusCodes? BaselineReturnStatusCode { get; init; }
+    public ReturnStatusCodes? InitialReturnStatusCode { get; init; }
 }

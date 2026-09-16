@@ -21,17 +21,13 @@ public class LedgerStore(
         CancellationToken cancellationToken = default)
     {
         var sql = $"""
-                  WITH Windowed AS (
+                  WITH Latest AS (
                     SELECT 
                         *,
                         ROW_NUMBER() OVER (
                             PARTITION BY {nameof(CollectReturnStatus.LaeStab)} 
                             ORDER BY {nameof(CollectReturnStatus.UpdatedAt)} DESC, {nameof(CollectReturnStatus.Id)} DESC
-                        ) AS RnLast,
-                        ROW_NUMBER() OVER (
-                            PARTITION BY {nameof(CollectReturnStatus.LaeStab)} 
-                            ORDER BY {nameof(CollectReturnStatus.UpdatedAt)} ASC, {nameof(CollectReturnStatus.Id)} ASC
-                        ) AS RnFirst
+                        ) AS Rn
                     FROM {nameof(CollectReturnStatus)}
                     WHERE {nameof(CollectReturnStatus.LaeStab)} IN @LaeStabKeys
                     AND {nameof(CollectReturnStatus.UpdatedAt)} >= @LastRunDate
@@ -43,28 +39,32 @@ public class LedgerStore(
                         ROW_NUMBER() OVER (
                             PARTITION BY {nameof(CollectReturnStatus.LaeStab)} 
                             ORDER BY {nameof(CollectReturnStatus.UpdatedAt)} DESC, {nameof(CollectReturnStatus.Id)} DESC
-                        ) AS Rn
+                        ) AS RnLast,
+                        ROW_NUMBER() OVER (
+                          PARTITION BY {nameof(CollectReturnStatus.LaeStab)}
+                          ORDER BY {nameof(CollectReturnStatus.UpdatedAt)} ASC, {nameof(CollectReturnStatus.Id)} ASC
+                        ) AS RnFirst
                     FROM {nameof(CollectReturnStatus)}
                     WHERE {nameof(CollectReturnStatus.LaeStab)} IN @LaeStabKeys
                     AND {nameof(CollectReturnStatus.UpdatedAt)} < @LastRunDate
                   )
                   SELECT 
                     l.*,
-                    f.{nameof(CollectReturnStatus.ReturnStatusCode)} AS {nameof(ComparableCollectReturnStatus.FirstReturnStatusCode)},
-                    b.{nameof(CollectReturnStatus.ReturnStatusCode)} AS {nameof(ComparableCollectReturnStatus.BaselineReturnStatusCode)}
+                    p.{nameof(CollectReturnStatus.ReturnStatusCode)} AS {nameof(ComparableCollectReturnStatus.PreviousReturnStatusCode)},
+                    b.{nameof(CollectReturnStatus.ReturnStatusCode)} AS {nameof(ComparableCollectReturnStatus.InitialReturnStatusCode)}
                   FROM 
-                    Windowed l
-                    INNER JOIN Windowed f 
-                        ON f.{nameof(CollectReturnStatus.LaeStab)} = l.{nameof(CollectReturnStatus.LaeStab)} 
-                        AND f.RnFirst = 1
+                    Latest l
+                    LEFT JOIN Baseline p
+                        ON p.{nameof(CollectReturnStatus.LaeStab)} = l.{nameof(CollectReturnStatus.LaeStab)} 
+                        AND p.RnLast = 1
                     LEFT JOIN Baseline b 
                         ON b.{nameof(CollectReturnStatus.LaeStab)} = l.{nameof(CollectReturnStatus.LaeStab)} 
-                        AND b.Rn = 1
+                        AND b.RnFirst = 1
                   WHERE 
-                    l.RnLast = 1
+                    l.Rn = 1
                     AND (
-                        b.{nameof(CollectReturnStatus.LaeStab)} IS NULL 
-                        OR l.{nameof(CollectReturnStatus.ReturnStatusCode)} <> b.{nameof(CollectReturnStatus.ReturnStatusCode)}
+                        p.{nameof(CollectReturnStatus.LaeStab)} IS NULL 
+                        OR l.{nameof(CollectReturnStatus.ReturnStatusCode)} <> p.{nameof(CollectReturnStatus.ReturnStatusCode)}
                     )
                   ORDER BY l.{nameof(CollectReturnStatus.LaeStab)};
                   """;
@@ -78,7 +78,7 @@ public class LedgerStore(
                     LastRunDate = lastRunDate,
                     LaeStabKeys = laeStabKeys
                 });
-
+        
         if (!limitToApprovedStatuses)
         {
             return Result.Success(query.ToList());
@@ -96,9 +96,9 @@ public static class LedgerStoreExtensions
         List<ReturnStatusCodes> approvedStatuses)
     {
         return collection
-            .Where(x => HasValidStatus(x.FirstReturnStatusCode, approvedStatuses)
+            .Where(x => HasValidStatus(x.PreviousReturnStatusCode, approvedStatuses)
                         || approvedStatuses.Contains(x.ReturnStatusCode)
-                        || HasValidStatus(x.BaselineReturnStatusCode, approvedStatuses));
+                        || HasValidStatus(x.InitialReturnStatusCode, approvedStatuses));
     }
 
     private static bool HasValidStatus(ReturnStatusCodes? status, List<ReturnStatusCodes> approvedStatuses)
