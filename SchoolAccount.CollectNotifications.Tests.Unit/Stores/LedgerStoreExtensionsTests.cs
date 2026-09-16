@@ -15,8 +15,8 @@ public class LedgerStoreExtensionsTests
 
         var item = ACollectReturnStatus()
             .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithFirstReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
-            .WithBaselineReturnStatusCode(ReturnStatusCodes.NoData)
+            .WithPreviousReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
+            .WithInitialReturnStatusCode(ReturnStatusCodes.NoData)
             .Build();
 
         var list = new List<ComparableCollectReturnStatus> { item };
@@ -37,8 +37,8 @@ public class LedgerStoreExtensionsTests
 
         var item = ACollectReturnStatus()
             .WithReturnStatusCode(ReturnStatusCodes.Rejected)
-            .WithFirstReturnStatusCode(ReturnStatusCodes.Submitted)
-            .WithBaselineReturnStatusCode(ReturnStatusCodes.NoData)
+            .WithPreviousReturnStatusCode(ReturnStatusCodes.Submitted)
+            .WithInitialReturnStatusCode(ReturnStatusCodes.NoData)
             .Build();
 
         var list = new List<ComparableCollectReturnStatus> { item };
@@ -59,8 +59,8 @@ public class LedgerStoreExtensionsTests
 
         var item = ACollectReturnStatus()
             .WithReturnStatusCode(ReturnStatusCodes.Rejected)
-            .WithFirstReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
-            .WithBaselineReturnStatusCode(ReturnStatusCodes.Approved)
+            .WithPreviousReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
+            .WithInitialReturnStatusCode(ReturnStatusCodes.Approved)
             .Build();
 
         var list = new List<ComparableCollectReturnStatus> { item };
@@ -81,8 +81,8 @@ public class LedgerStoreExtensionsTests
 
         var nonMatching = ACollectReturnStatus()
             .WithReturnStatusCode(ReturnStatusCodes.Rejected)
-            .WithFirstReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
-            .WithBaselineReturnStatusCode(ReturnStatusCodes.NoData)
+            .WithPreviousReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
+            .WithInitialReturnStatusCode(ReturnStatusCodes.NoData)
             .Build();
 
         var matching = ACollectReturnStatus()
@@ -107,8 +107,8 @@ public class LedgerStoreExtensionsTests
 
         var item = ACollectReturnStatus()
             .WithReturnStatusCode(ReturnStatusCodes.Rejected)
-            .WithFirstReturnStatusCode(null)
-            .WithBaselineReturnStatusCode(null)
+            .WithPreviousReturnStatusCode(null)
+            .WithInitialReturnStatusCode(null)
             .Build();
 
         var list = new List<ComparableCollectReturnStatus> { item };
@@ -128,8 +128,8 @@ public class LedgerStoreExtensionsTests
 
         var item = ACollectReturnStatus()
             .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithFirstReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithBaselineReturnStatusCode(ReturnStatusCodes.Authorised)
+            .WithPreviousReturnStatusCode(ReturnStatusCodes.Authorised)
+            .WithInitialReturnStatusCode(ReturnStatusCodes.Authorised)
             .Build();
 
         var list = new List<ComparableCollectReturnStatus> { item };

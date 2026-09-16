@@ -10,8 +10,8 @@ public class CollectReturnStatusBuilder
     private string _schoolName = "Default Test School";
     private string _laeStab = "1234567";
     private ReturnStatusCodes _returnStatusCode = ReturnStatusCodes.Authorised;
-    private ReturnStatusCodes? _firstReturnStatusCode;
-    private ReturnStatusCodes? _baselineReturnStatusCode;
+    private ReturnStatusCodes? _previousReturnStatusCode;
+    private ReturnStatusCodes? _initialReturnStatusCode;
     private int _errors = 0;
     private int _queries = 0;
     private int _okdErrorsQueries = 0;
@@ -44,9 +44,9 @@ public class CollectReturnStatusBuilder
         return this;
     }
 
-    public CollectReturnStatusBuilder WithReturnStatusCode(ReturnStatusCodes returnStatusCode)
+    public CollectReturnStatusBuilder WithReturnStatusCode(ReturnStatusCodes statusCode)
     {
-        _returnStatusCode = returnStatusCode;
+        _returnStatusCode = statusCode;
         return this;
     }
 
@@ -56,15 +56,15 @@ public class CollectReturnStatusBuilder
         return this;
     }
 
-    public CollectReturnStatusBuilder WithFirstReturnStatusCode(ReturnStatusCodes? firstReturnStatusCode)
+    public CollectReturnStatusBuilder WithPreviousReturnStatusCode(ReturnStatusCodes? statusCode)
     {
-        _firstReturnStatusCode = firstReturnStatusCode;
+        _previousReturnStatusCode = statusCode;
         return this;
     }
 
-    public CollectReturnStatusBuilder WithBaselineReturnStatusCode(ReturnStatusCodes? baselineReturnStatusCode)
+    public CollectReturnStatusBuilder WithInitialReturnStatusCode(ReturnStatusCodes? statusCode)
     {
-        _baselineReturnStatusCode = baselineReturnStatusCode;
+        _initialReturnStatusCode = statusCode;
         return this;
     }
 
@@ -124,8 +124,8 @@ public class CollectReturnStatusBuilder
             SchoolName = _schoolName,
             LaeStab = _laeStab,
             ReturnStatusCode = _returnStatusCode,
-            FirstReturnStatusCode = _firstReturnStatusCode,
-            BaselineReturnStatusCode = _baselineReturnStatusCode,
+            PreviousReturnStatusCode = _previousReturnStatusCode,
+            InitialReturnStatusCode = _initialReturnStatusCode,
             Errors = _errors,
             Queries = _queries,
             OkdErrorsQueries = _okdErrorsQueries,
