@@ -166,8 +166,8 @@ a local setup.
 
 #### Optional
 - Docker
-- Using the [SchoolAccount-LocalDevTools](https://github.com/DFE-Digital/SchoolAccount-LocalDevTools) would benefit 
-creating and managing your local db via Docker.
+- Using the [SchoolAccount-LocalDevTools](https://github.com/DFE-Digital/SchoolAccount-LocalDevTools) would benefit creating and managing your local db via Docker. This is 
+needed to run the integration tests.
 
 ### Secrets
 
@@ -190,21 +190,38 @@ DOTNET_ENVIRONMENT=Development dotnet run --project SchoolAccount.CollectNotific
 
 ## Testing
 
-The solution includes a test suite in `SchoolAccount.CollectNotifications.Tests` covering service logic, error handling, rate limiting, and workflow orchestration.
+The solution is divided into three test projects:
+
+- **`SchoolAccount.CollectNotifications.Tests.Common`** is shared test fixtures, mock helpers, and fluent builders.
+- **`SchoolAccount.CollectNotifications.Tests.Unit`** is for fast, isolated unit tests mocking external I/O and dependencies.
+- **`SchoolAccount.CollectNotifications.Tests.Integration`** is the integration tests running against a local SQL Server Docker container (`localhost:1433`).
 
 ### Running tests
 
-Run all tests from the repository root:
+#### Prerequisites
+
+- `xunit`
+- `NSubsitute` for mocking dependencies and verifying interactions
+- `Shouldly` which is a fluent assertion library
+
+If you want to run the integration tests you will need a local database running, as a reminder this can be easily done 
+via the [SchoolAccount-LocalDevTools](https://github.com/DFE-Digital/SchoolAccount-LocalDevTools) repo.
+
+#### Run all tests across the solution:
 
 ```bash
 dotnet test
 ```
 
-### Prerequisites
+#### Run only unit tests:
+```bash
+dotnet test SchoolAccount.CollectNotifications.Tests.Unit
+```
 
-- `xunit`
-- `NSubsitute` for mocking dependencies and verifying interactions
-- `Shouldly` which is a fluent assertion library
+#### Run only integration tests:
+```bash
+dotnet test SchoolAccount.CollectNotifications.Tests.Integration
+```
 
 ### Test coverage
 
@@ -236,6 +253,17 @@ dotnet test
   - `CollectReturnStatusBuilder` to build a ledger row (`ComparableCollectReturnStatus`);
   - `EnrolledRecipientBuilder` to build a record for a beta enrolled user;
   - `NotificationBuilder` to allow us to emulate sending a request to the GovNotify service.
+
+#### **App Initialisation Tests** by `InitialisationTests`
+  - `InitialisationTests.ServiceResolution.cs`: Host container bootstrapping, environment verification, and core service resolution.
+  - `InitialisationTests.EnrollmentRegistration.cs`: Conditional dependency injection switching between DB and CSV enrolment stores.
+  - `InitialisationTests.BlobStorageRegistration.cs`: Blob storage service registration (ConnectionString vs ServiceUri vs Blanked fallback).
+  - `InitialisationTests.OptionsValidation.cs`: Fail-fast startup validation for required API keys, paths, and options binding.
+
+#### **Ledger database integration+** by `LedgerStoreIntegrationTests`
+  - `LedgerStoreIntegrationTests.WindowingAndBaselines.cs`: SQL Server windowing functions, initial baseline detection, previous baseline tracking, and unchanged return status filtering.
+  - `LedgerStoreIntegrationTests.FilteringAndScenarios.cs`: Empty key handling, LAESTAB key filtering, approved status filtering, and multi-school mixed scenarios.
+
 
 ## Running & Consuming
 
@@ -294,10 +322,18 @@ SchoolAccount.CollectNotifications/
 ├── Dockerfile
 └── Program.cs
 
-SchoolAccount.CollectNotifications.Tests/
-├── Builders/          # Fluent test object builders
-├── Services/          # Test each service
-└── Stores/            # Test store operations and extension filters
+SchoolAccount.CollectNotifications.Tests.Common/
+└── Builders/          # Fluent test object builders
+
+SchoolAccount.CollectNotifications.Tests.Unit/
+├── Extensions/        # Options and validation unit tests
+├── Services/          # Unit tests for domain services
+└── Stores/            # Unit tests for store operations and extension filters
+
+SchoolAccount.CollectNotifications.Tests.Integration/
+├── Helpers/           # Database test connection, schema seeding, and cleanup helpers
+├── Initialisation/    # Host bootstrapping, DI resolution, and fail-fast validation tests
+└── Stores/            # Integration tests against local Docker SQL Server instance
 ```
 
 ### Key packages
