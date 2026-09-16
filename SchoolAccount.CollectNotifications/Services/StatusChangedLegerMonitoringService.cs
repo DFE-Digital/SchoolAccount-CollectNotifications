@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using SchoolAccount.CollectNotifications.Extensions;
 using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Models.Dtos;
@@ -68,7 +69,7 @@ public class StatusChangedLegerMonitoringService(
                     new Notification(
                         change.LaeStab,
                         notify.Email!,
-                        change.ReturnStatusCode.ToString(),
+                        change.ReturnStatusCode.GetHumanName(),
                         change.SchoolName));
             }
         }
