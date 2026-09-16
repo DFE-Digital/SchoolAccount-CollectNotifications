@@ -42,6 +42,7 @@ public static class ServiceCollectionExtensions
 
             services.AddDatabase<EnrollmentDatabase>(() => dbSection[nameof(EnrollmentDbOptions.ConnectionString)]!);
             services.AddSingleton<EnrollmentDbStore>();
+            services.AddSingleton<IEnrollmentStore>(sp => sp.GetRequiredService<EnrollmentDbStore>());
         }
         else
         {
@@ -51,15 +52,8 @@ public static class ServiceCollectionExtensions
                 .ValidateOnStart();
 
             services.AddSingleton<EnrollmentCsvStore>();
+            services.AddSingleton<IEnrollmentStore>(sp => sp.GetRequiredService<EnrollmentCsvStore>());
         }
-
-        services.AddSingleton<IEnrollmentStore>(sp =>
-        {
-            var db = sp.GetRequiredService<IOptions<EnrollmentDbOptions>>().Value;
-            return !string.IsNullOrWhiteSpace(db.ConnectionString)
-                ? sp.GetRequiredService<EnrollmentDbStore>()
-                : sp.GetRequiredService<EnrollmentCsvStore>();
-        });
 
         return services;
     }
@@ -69,39 +63,43 @@ public static class ServiceCollectionExtensions
         var section = configuration.GetSection(AzureBlobStorageOptions.SectionName);
         var options = section.Get<AzureBlobStorageOptions>() ?? new AzureBlobStorageOptions();
 
-        if (options.IsConfigured)
-        {
-            services.AddOptions<AzureBlobStorageOptions>()
-                .Bind(section)
-                .ValidateDataAnnotations()
-                .ValidateOnStart();
-            
-            services.AddSingleton(sp =>
-            {
-                var storageOptions = sp.GetRequiredService<IOptions<AzureBlobStorageOptions>>().Value;
-
-                if (!string.IsNullOrWhiteSpace(storageOptions.ConnectionString))
-                {
-                    return new BlobServiceClient(storageOptions.ConnectionString);
-                }
-
-                if (string.IsNullOrWhiteSpace(storageOptions.ServiceUri))
-                {
-                    throw new InvalidOperationException(
-                        $"Set either {AzureBlobStorageOptions.SectionName}:ConnectionString or " +
-                        $"{AzureBlobStorageOptions.SectionName}:ServiceUri.");
-                }
-
-                return new BlobServiceClient(new Uri(storageOptions.ServiceUri), new DefaultAzureCredential());
-            });
- 
-            services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
-        }
-        else
+        if (!options.IsConfigured)
         {
             services.AddSingleton<IBlobStorageService, BlankedBlobStorageService>();
+            return services;
         }
- 
+
+        services.AddOptions<AzureBlobStorageOptions>()
+            .Bind(section)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddSingleton(CreateBlobServiceClient);
+        services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
+
         return services;
+    }
+
+    internal static BlobServiceClient CreateBlobServiceClient(IServiceProvider sp)
+    {
+        var storageOptions = sp.GetRequiredService<IOptions<AzureBlobStorageOptions>>().Value;
+        return CreateBlobServiceClient(storageOptions);
+    }
+
+    internal static BlobServiceClient CreateBlobServiceClient(AzureBlobStorageOptions storageOptions)
+    {
+        if (!string.IsNullOrWhiteSpace(storageOptions.ConnectionString))
+        {
+            return new BlobServiceClient(storageOptions.ConnectionString);
+        }
+
+        if (string.IsNullOrWhiteSpace(storageOptions.ServiceUri))
+        {
+            throw new InvalidOperationException(
+                $"Set either {AzureBlobStorageOptions.SectionName}:ConnectionString or " +
+                $"{AzureBlobStorageOptions.SectionName}:ServiceUri.");
+        }
+
+        return new BlobServiceClient(new Uri(storageOptions.ServiceUri), new DefaultAzureCredential());
     }
 }
