@@ -23,7 +23,7 @@ public class Result
     public static Result<TValue> Failure<TValue>(string? error = null) => new(default, false, error);
 }
 
-public class Result<TValue> : Result
+public sealed class Result<TValue> : Result
 {
     public Result(TValue? value, bool isSuccess, string? error)
         : base(isSuccess, error)

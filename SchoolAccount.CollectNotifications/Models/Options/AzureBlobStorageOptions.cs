@@ -1,6 +1,6 @@
 namespace SchoolAccount.CollectNotifications.Models.Options;
 
-public class AzureBlobStorageOptions
+public sealed class AzureBlobStorageOptions
 {
     public const string SectionName = "AzureBlobStorage";
  

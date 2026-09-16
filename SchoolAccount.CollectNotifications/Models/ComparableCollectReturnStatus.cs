@@ -3,7 +3,7 @@ using SchoolAccount.CollectNotifications.Models.Enums;
 
 namespace SchoolAccount.CollectNotifications.Models;
 
-public class ComparableCollectReturnStatus : CollectReturnStatus
+public sealed class ComparableCollectReturnStatus : CollectReturnStatus
 {
     public ReturnStatusCodes? FirstReturnStatusCode { get; init; }
     

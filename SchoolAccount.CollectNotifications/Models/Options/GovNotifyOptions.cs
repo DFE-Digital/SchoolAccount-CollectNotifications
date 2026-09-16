@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SchoolAccount.CollectNotifications.Models.Options;
 
-public class GovNotifyOptions
+public sealed class GovNotifyOptions
 {
     public const string SectionName = "GovNotify";
     

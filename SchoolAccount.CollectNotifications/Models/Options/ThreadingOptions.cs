@@ -1,6 +1,6 @@
 namespace SchoolAccount.CollectNotifications.Models.Options;
 
-public class ThreadingOptions
+public sealed class ThreadingOptions
 {
     public const string SectionName = "Threading";
     

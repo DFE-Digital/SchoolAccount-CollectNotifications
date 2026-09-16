@@ -1,6 +1,6 @@
 namespace SchoolAccount.CollectNotifications.Models.Dtos;
 
-public class EnrolledRecipient
+public sealed class EnrolledRecipient
 {
     public string? LaeStab { get; init; }
     public string? Email { get; init; }
