@@ -344,3 +344,21 @@ SchoolAccount.CollectNotifications.Tests.Integration/
 | `GovukNotify` | Sending emails |
 | `MiniExcel` | Reading the recipients file (CSV or Excel) |
 | `Azure.Storage.Blobs` + `Azure.Identity` | Storing the last run date |
+
+### Code Coverage
+
+You can manually generate a test coverage report. Which files are included is
+controlled by [coverage.config](.config/coverage.config). To generate the same report locally, run 
+[coverage.sh](coverage.sh) from the repository root:
+
+```bash
+./coverage.sh
+```
+
+The script runs all tests with coverage enabled, merges the per-project results with ReportGenerator, and writes an
+HTML report to `TestResults/CoverageReport/index.html`. Pass `--open` to open the report in your browser when it
+finishes:
+
+```bash
+./coverage.sh --open
+```
