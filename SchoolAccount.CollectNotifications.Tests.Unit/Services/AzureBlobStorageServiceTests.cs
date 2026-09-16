@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services.BlobStorage;
 
-namespace SchoolAccount.CollectNotifications.Tests.Services;
+namespace SchoolAccount.CollectNotifications.Tests.Unit.Services;
 
 public class AzureBlobStorageServiceTests
 {

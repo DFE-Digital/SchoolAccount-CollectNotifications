@@ -4,11 +4,11 @@ using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Models.Dtos;
 using SchoolAccount.CollectNotifications.Models.Enums;
 using SchoolAccount.CollectNotifications.Services;
-using static SchoolAccount.CollectNotifications.Tests.Builders.CollectReturnStatusBuilder;
-using static SchoolAccount.CollectNotifications.Tests.Builders.EnrolledRecipientBuilder;
-using static SchoolAccount.CollectNotifications.Tests.Builders.NotificationBuilder;
+using static SchoolAccount.CollectNotifications.Tests.Common.Builders.CollectReturnStatusBuilder;
+using static SchoolAccount.CollectNotifications.Tests.Common.Builders.EnrolledRecipientBuilder;
+using static SchoolAccount.CollectNotifications.Tests.Common.Builders.NotificationBuilder;
 
-namespace SchoolAccount.CollectNotifications.Tests.Services;
+namespace SchoolAccount.CollectNotifications.Tests.Unit.Services;
 
 public class StatusChangedLegerMonitoringServiceTests
 {

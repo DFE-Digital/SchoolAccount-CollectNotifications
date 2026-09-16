@@ -1,9 +1,9 @@
 using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Models.Enums;
 using SchoolAccount.CollectNotifications.Stores;
-using static SchoolAccount.CollectNotifications.Tests.Builders.CollectReturnStatusBuilder;
+using static SchoolAccount.CollectNotifications.Tests.Common.Builders.CollectReturnStatusBuilder;
 
-namespace SchoolAccount.CollectNotifications.Tests.Stores;
+namespace SchoolAccount.CollectNotifications.Tests.Unit.Stores;
 
 public class LedgerStoreExtensionsTests
 {

@@ -1,6 +1,6 @@
 using SchoolAccount.CollectNotifications.Models.Dtos;
 
-namespace SchoolAccount.CollectNotifications.Tests.Builders;
+namespace SchoolAccount.CollectNotifications.Tests.Common.Builders;
 
 public class NotificationBuilder
 {

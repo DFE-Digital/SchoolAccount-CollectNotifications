@@ -3,7 +3,7 @@ using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Services;
 
-namespace SchoolAccount.CollectNotifications.Tests.Services;
+namespace SchoolAccount.CollectNotifications.Tests.Unit.Services;
 
 public class LastRanServiceTests
 {

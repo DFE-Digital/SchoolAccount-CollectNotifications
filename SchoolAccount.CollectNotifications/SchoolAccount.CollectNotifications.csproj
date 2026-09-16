@@ -10,7 +10,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <InternalsVisibleTo Include="SchoolAccount.CollectNotifications.Tests" />
+      <InternalsVisibleTo Include="SchoolAccount.CollectNotifications.Tests.Common" />
+      <InternalsVisibleTo Include="SchoolAccount.CollectNotifications.Tests.Unit" />
     </ItemGroup>
 
     <ItemGroup>

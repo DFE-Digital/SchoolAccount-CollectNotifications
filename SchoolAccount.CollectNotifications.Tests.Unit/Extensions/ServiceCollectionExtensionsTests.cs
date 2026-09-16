@@ -11,7 +11,7 @@ using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services.BlobStorage;
 using SchoolAccount.CollectNotifications.Stores.Enrollment;
 
-namespace SchoolAccount.CollectNotifications.Tests.Extensions;
+namespace SchoolAccount.CollectNotifications.Tests.Unit.Extensions;
 
 public class ServiceCollectionExtensionsTests
 {

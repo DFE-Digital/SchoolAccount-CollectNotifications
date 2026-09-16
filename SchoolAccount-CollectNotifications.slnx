@@ -3,7 +3,8 @@
     <Project Path="SchoolAccount.CollectNotifications/SchoolAccount.CollectNotifications.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="SchoolAccount.CollectNotifications.Tests/SchoolAccount.CollectNotifications.Tests.csproj" />
+    <Project Path="SchoolAccount.CollectNotifications.Tests.Common/SchoolAccount.CollectNotifications.Tests.Common.csproj" />
+    <Project Path="SchoolAccount.CollectNotifications.Tests.Unit/SchoolAccount.CollectNotifications.Tests.Unit.csproj" />
   </Folder>
   <Folder Name="/solution/">
     <File Path=".gitignore" />
