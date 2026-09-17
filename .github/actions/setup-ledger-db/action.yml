@@ -1,0 +1,90 @@
+name: "Setup Ledger Database"
+description: "Checks out the SchoolAccount-CollectStateLedgerDatabase schema repo and applies database scripts to MSSQL"
+
+inputs:
+  db-server:
+    description: "Database host/server address and port"
+    required: false
+    default: "localhost,1433"
+  db-user:
+    description: "MSSQL admin username"
+    required: false
+    default: "sa"
+  db-password:
+    description: "MSSQL admin password"
+    required: false
+    default: "MyStrongPassword123!"
+  repo:
+    description: "Repository containing the database schema and SQL scripts"
+    required: false
+    default: "DFE-Digital/SchoolAccount-CollectStateLedgerDatabase"
+  ref:
+    description: "Branch, tag, or SHA of the database repo"
+    required: false
+    default: "main"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout database repository
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repo }}
+        ref: ${{ inputs.ref }}
+        path: .db-scripts
+
+    - name: Wait for SQL Server and apply scripts
+      shell: bash
+      run: |
+        export PATH="$PATH:/opt/mssql-tools18/bin:/opt/mssql-tools/bin"
+
+        if ! command -v sqlcmd &> /dev/null; then
+          echo "sqlcmd not found in system paths. Installing standalone sqlcmd..."
+          ARCH=$(uname -m)
+          case "$ARCH" in
+            x86_64|amd64) SQLCMD_ARCH="amd64" ;;
+            aarch64|arm64) SQLCMD_ARCH="arm64" ;;
+            *) SQLCMD_ARCH="amd64" ;;
+          esac
+
+          if command -v apt-get &> /dev/null; then
+            (apt-get update -qq && apt-get install -y -qq bzip2 curl) > /dev/null 2>&1 || true
+          fi
+
+          mkdir -p /tmp/sqlcmd-bin
+          if curl -sSL "https://github.com/microsoft/go-sqlcmd/releases/download/v1.8.2/sqlcmd-linux-${SQLCMD_ARCH}.tar.bz2" -o /tmp/sqlcmd.tar.bz2; then
+            tar -xjf /tmp/sqlcmd.tar.bz2 -C /tmp/sqlcmd-bin
+            chmod +x /tmp/sqlcmd-bin/sqlcmd
+            export PATH="/tmp/sqlcmd-bin:$PATH"
+          fi
+        fi
+
+        if ! command -v sqlcmd &> /dev/null; then
+          echo "::error::sqlcmd utility could not be located or installed."
+          exit 1
+        fi
+
+        echo "Waiting for SQL Server on ${{ inputs.db-server }} to be ready..."
+        READY=0
+        for i in $(seq 1 60); do
+          if sqlcmd -S "${{ inputs.db-server }}" -U "${{ inputs.db-user }}" -P "${{ inputs.db-password }}" -C -Q "SET NOCOUNT ON; SELECT 1;" > /dev/null 2>&1; then
+            echo "SQL Server is online (attempt $i)."
+            READY=1
+            break
+          fi
+          echo "Waiting for database to be ready... ($i/60)"
+          sleep 1
+        done
+
+        if [ $READY -ne 1 ]; then
+          echo "::error::SQL Server did not become ready within 60 seconds."
+          exit 1
+        fi
+
+        echo "Applying schema scripts..."
+        sqlcmd -S "${{ inputs.db-server }}" -U "${{ inputs.db-user }}" -P "${{ inputs.db-password }}" -C -d master -i .db-scripts/sql/database.sql
+        sqlcmd -S "${{ inputs.db-server }}" -U "${{ inputs.db-user }}" -P "${{ inputs.db-password }}" -C -d master -i .db-scripts/sql/tables.sql
+        sqlcmd -S "${{ inputs.db-server }}" -U "${{ inputs.db-user }}" -P "${{ inputs.db-password }}" -C -d master -i .db-scripts/sql/stored-procedures.sql
+
+        echo "Database schema configured successfully."
+        rm -rf .db-scripts

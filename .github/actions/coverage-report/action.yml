@@ -1,0 +1,44 @@
+name: "Generate Test and Coverage Reports"
+description: "Publishes test results, generates coverage reports, adds step summary, and comments on PR"
+
+inputs:
+  results-directory:
+    description: "Directory containing test results and coverage data"
+    required: false
+    default: "TestResults"
+  min-line-coverage:
+    description: "Minimum line coverage threshold percentage"
+    required: false
+    default: "70"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Publish test results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: ${{ !cancelled() }}
+      with:
+        files: "${{ inputs.results-directory }}/**/*.trx"
+
+    - name: Merge coverage reports and enforce threshold
+      uses: danielpalme/ReportGenerator-GitHub-Action@5
+      if: ${{ !cancelled() }}
+      with:
+        reports: "${{ inputs.results-directory }}/**/coverage.cobertura.xml"
+        targetdir: "${{ inputs.results-directory }}/Merged"
+        reporttypes: "Cobertura;MarkdownSummaryGithub"
+        customSettings: "minimumCoverageThresholds:lineCoverage=${{ inputs.min-line-coverage }}"
+
+    - name: Write coverage job summary
+      shell: bash
+      if: ${{ !cancelled() }}
+      run: |
+        if [ -f "${{ inputs.results-directory }}/Merged/SummaryGithub.md" ]; then
+          cat "${{ inputs.results-directory }}/Merged/SummaryGithub.md" >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+    - name: Add coverage comment to PR
+      uses: marocchino/sticky-pull-request-comment@v3
+      if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+      with:
+        path: "${{ inputs.results-directory }}/Merged/SummaryGithub.md"
