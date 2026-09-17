@@ -362,3 +362,48 @@ finishes:
 ```bash
 ./coverage.sh --open
 ```
+
+### Local GitHub Actions Testing
+
+You can test the GitHub Actions workflows locally using [`act`](https://github.com/nektos/act) before pushing your branch.
+
+#### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- Install `act`:
+  ```bash
+  brew install act
+  ```
+
+#### Running workflow jobs locally
+
+- **List available jobs:**
+  ```bash
+  act -l
+  ```
+
+- **Run Unit Tests job:**
+  ```bash
+  act -j unit-tests
+  ```
+
+- **Run Integration Tests job:**
+  Spins up a SQL Server 2022 service container, checks out the schema repo, applies the migration scripts, and runs 
+  the integration tests:
+  ```bash
+  act -j integration-tests
+  ```
+
+- **Dry run (validate workflow syntax without executing steps):**
+  ```bash
+  act -n
+  ```
+
+#### Inspecting coverage & step summaries locally
+
+When tests run, coverage reports and markdown summaries are generated into `TestResults/Merged/SummaryGithub.md`. You 
+can view them in your terminal with:
+```bash
+cat TestResults/Merged/SummaryGithub.md
+```
+Additionally from with further findings you could use a terminal markdown renderer like `glow`.

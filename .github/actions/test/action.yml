@@ -1,0 +1,60 @@
+name: "Run .NET Tests"
+description: "Executes unit or integration tests and collects TRX results and code coverage"
+
+inputs:
+  dotnet-version:
+    description: ".NET Version"
+    type: string
+    required: true
+  project-path:
+    description: "Path to specific test project or solution (defaults to solution)"
+    required: false
+    default: ""
+  configuration:
+    description: "Build configuration (e.g. Debug, Release)"
+    required: false
+    default: "Release"
+  results-directory:
+    description: "Directory to output test results and coverage data"
+    required: false
+    default: "TestResults"
+  log-file-name:
+    description: "Name of the TRX test log file"
+    required: false
+    default: "test_results.trx"
+  no-build:
+    description: "Skip building prior to running tests"
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ inputs.dotnet-version }}
+
+    - name: Cache NuGet
+      if: ${{ !env.ACT }}
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: nuget-
+      
+    - name: Run tests with coverage
+      shell: bash
+      run: |
+        NO_BUILD_FLAG=""
+        if [ "${{ inputs.no-build }}" = "true" ]; then
+          NO_BUILD_FLAG="--no-build"
+        fi
+
+        dotnet test ${{ inputs.project-path }} \
+          --configuration ${{ inputs.configuration }} \
+          --no-restore \
+          $NO_BUILD_FLAG \
+          --logger "trx;LogFileName=${{ inputs.log-file-name }}" \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ${{ inputs.results-directory }}
