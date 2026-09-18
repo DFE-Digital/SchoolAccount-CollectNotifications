@@ -29,12 +29,12 @@ public partial class InitialisationTests
     }
 
     [Fact]
-    public async Task ConfigureService_should_throw_options_validation_exception_on_host_start_when_enrollment_csv_file_path_is_missing()
+    public async Task ConfigureService_should_throw_options_validation_exception_on_host_start_when_gov_notify_from_address_is_invalid()
     {
         // Arrange
         using var host = CreateHost(new Dictionary<string, string?>
         {
-            ["Enrollment:Csv:FilePath"] = ""
+            ["GovNotify:FromAddress"] = "not-a-valid-email"
         });
 
         // Act & Assert
@@ -43,7 +43,7 @@ public partial class InitialisationTests
             await host.StartAsync();
         });
 
-        exception.OptionsType.ShouldBe(typeof(EnrollmentCsvOptions));
+        exception.OptionsType.ShouldBe(typeof(GovNotifyOptions));
     }
 
     [Fact]
@@ -69,6 +69,7 @@ public partial class InitialisationTests
         const int testThreadingBatchAmount = 100;
         const int testThreadingBatchWaitAmountInSec = 5;
         const int testThreadingItemWaitAmountInSec = 2;
+        const string testLastRunBlobName = "schoolaccount/collect/lastran.json";
         
         // Arrange
         using var host = CreateHost(new Dictionary<string, string?>
@@ -78,7 +79,8 @@ public partial class InitialisationTests
             ["Threading:ItemWaitAmountInSec"] = testThreadingItemWaitAmountInSec.ToString(),
             ["Census:AllowedStatuses:0"] = "7",
             ["Census:AllowedStatuses:1"] = "10",
-            ["Census:AllowedStatuses:2"] = "1"
+            ["Census:AllowedStatuses:2"] = "1",
+            ["Census:LastRunBlobName"] = testLastRunBlobName
         });
 
         // Act
@@ -99,7 +101,8 @@ public partial class InitialisationTests
                 ReturnStatusCodes.Approved,
                 ReturnStatusCodes.Authorised,
                 ReturnStatusCodes.NoData
-            ])
+            ]),
+            x => x.LastRunBlobName.ShouldBe(testLastRunBlobName)
         );
     }
 }

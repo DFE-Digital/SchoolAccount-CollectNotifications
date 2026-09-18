@@ -18,7 +18,7 @@ public partial class InitialisationTests
         // Arrange
         using var host = CreateHost(new Dictionary<string, string?>
         {
-            ["Enrollment:Db:ConnectionString"] =testConnectionString
+            ["Enrollment:Db:ConnectionString"] = testConnectionString
         });
 
         // Act
@@ -62,6 +62,39 @@ public partial class InitialisationTests
 
         csvOptions.ShouldSatisfyAllConditions(
             x => x.FilePath.ShouldBe(testFilePath),
+            x => x.SheetName.ShouldBe(testSheetName),
+            x => x.StartCell.ShouldBe(testStartCell)
+        );
+    }
+
+    [Fact]
+    public void ConfigureService_should_register_enrollment_csv_store_and_bind_options_when_csv_blob_name_is_configured()
+    {
+        const string testBlobName = "blobs/recipients.xlsx";
+        const string testSheetName = "Recipients";
+        const string testStartCell = "A2";
+
+        // Arrange
+        using var host = CreateHost(new Dictionary<string, string?>
+        {
+            ["Enrollment:Csv:FilePath"] = "",
+            ["Enrollment:Csv:BlobName"] = testBlobName,
+            ["Enrollment:Csv:SheetName"] = testSheetName,
+            ["Enrollment:Csv:StartCell"] = testStartCell
+        });
+
+        // Act
+        using var scope = host.Services.CreateScope();
+        var sp = scope.ServiceProvider;
+
+        var enrollmentStore = sp.GetRequiredService<IEnrollmentStore>();
+        var csvOptions = sp.GetRequiredService<IOptions<EnrollmentCsvOptions>>().Value;
+
+        // Assert
+        enrollmentStore.ShouldBeOfType<EnrollmentCsvStore>();
+
+        csvOptions.ShouldSatisfyAllConditions(
+            x => x.BlobName.ShouldBe(testBlobName),
             x => x.SheetName.ShouldBe(testSheetName),
             x => x.StartCell.ShouldBe(testStartCell)
         );
