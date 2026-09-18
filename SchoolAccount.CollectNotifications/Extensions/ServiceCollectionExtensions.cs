@@ -48,6 +48,8 @@ public static class ServiceCollectionExtensions
         {
             services.AddOptions<EnrollmentCsvOptions>()
                 .Bind(configuration.GetSection(EnrollmentCsvOptions.SectionName))
+                .Validate(x => !string.IsNullOrEmpty(x.FilePath) || !string.IsNullOrWhiteSpace(x.BlobName),
+                    $"Either properties \"{nameof(EnrollmentCsvOptions.FilePath)}\" or \"{nameof(EnrollmentCsvOptions.BlobName)}\" must be set.")
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
 
