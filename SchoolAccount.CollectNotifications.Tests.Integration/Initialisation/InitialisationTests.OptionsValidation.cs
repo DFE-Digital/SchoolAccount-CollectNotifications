@@ -66,7 +66,6 @@ public partial class InitialisationTests
     [Fact]
     public void ConfigureService_should_bind_threading_and_census_options_correctly_when_valid_values_are_provided()
     {
-        const int testThreadingMaxDegreeOfParallelism = 8;
         const int testThreadingBatchAmount = 100;
         const int testThreadingBatchWaitAmountInSec = 5;
         const int testThreadingItemWaitAmountInSec = 2;
@@ -74,7 +73,6 @@ public partial class InitialisationTests
         // Arrange
         using var host = CreateHost(new Dictionary<string, string?>
         {
-            ["Threading:MaxDegreeOfParallelism"] = testThreadingMaxDegreeOfParallelism.ToString(),
             ["Threading:BatchAmount"] = testThreadingBatchAmount.ToString(),
             ["Threading:BatchWaitAmountInSec"] = testThreadingBatchWaitAmountInSec.ToString(),
             ["Threading:ItemWaitAmountInSec"] = testThreadingItemWaitAmountInSec.ToString(),
@@ -91,7 +89,6 @@ public partial class InitialisationTests
 
         // Assert
         threadingOptions.ShouldSatisfyAllConditions(
-            x => x.MaxDegreeOfParallelism.ShouldBe(testThreadingMaxDegreeOfParallelism),
             x => x.BatchAmount.ShouldBe(testThreadingBatchAmount),
             x => x.BatchWaitAmountInSec.ShouldBe(testThreadingBatchWaitAmountInSec),
             x => x.ItemWaitAmountInSec.ShouldBe(testThreadingItemWaitAmountInSec)
