@@ -1,18 +1,25 @@
 using System.Data.SqlTypes;
+using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models;
+using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services;
 
 namespace SchoolAccount.CollectNotifications.Tests.Unit.Services;
 
 public class LastRanServiceTests
 {
+    private const string TestBlobName = "custom/collect/lastran.json";
     private readonly IBlobStorageService _blobStorageService = Substitute.For<IBlobStorageService>();
+    private readonly IOptions<CensusOptions> _censusOptions = Options.Create(new CensusOptions
+    {
+        LastRunBlobName = TestBlobName
+    });
     private readonly LastRanService _sut;
 
     public LastRanServiceTests()
     {
-        _sut = new LastRanService(_blobStorageService);
+        _sut = new LastRanService(_blobStorageService, _censusOptions);
     }
 
     [Fact]
@@ -20,7 +27,7 @@ public class LastRanServiceTests
     {
         // Arrange
         _blobStorageService
-            .GetAsync<LastRanService.LastRanBlobObject>("schoolaccount/collect/lastran.json", Arg.Any<CancellationToken>())
+            .GetAsync<LastRanService.LastRanBlobObject>(TestBlobName, Arg.Any<CancellationToken>())
             .Returns(Result.Success<LastRanService.LastRanBlobObject?>(null));
 
         // Act
@@ -39,7 +46,7 @@ public class LastRanServiceTests
         var blobObject = new LastRanService.LastRanBlobObject(expectedDateTime.ToOADate());
 
         _blobStorageService
-            .GetAsync<LastRanService.LastRanBlobObject>("schoolaccount/collect/lastran.json", Arg.Any<CancellationToken>())
+            .GetAsync<LastRanService.LastRanBlobObject>(TestBlobName, Arg.Any<CancellationToken>())
             .Returns(Result.Success<LastRanService.LastRanBlobObject?>(blobObject));
 
         // Act
@@ -55,7 +62,7 @@ public class LastRanServiceTests
     {
         // Arrange
         _blobStorageService
-            .GetAsync<LastRanService.LastRanBlobObject>("schoolaccount/collect/lastran.json", Arg.Any<CancellationToken>())
+            .GetAsync<LastRanService.LastRanBlobObject>(TestBlobName, Arg.Any<CancellationToken>())
             .Returns(Result.Failure<LastRanService.LastRanBlobObject?>("Storage account unreachable"));
 
         // Act
@@ -75,7 +82,7 @@ public class LastRanServiceTests
 
         _blobStorageService
             .SaveAsync(
-                "schoolaccount/collect/lastran.json",
+                TestBlobName,
                 Arg.Is<LastRanService.LastRanBlobObject>(x => Math.Abs(x.RunDate - expectedOaDate) < 0.00001),
                 Arg.Any<CancellationToken>())
             .Returns(Result.Success());
@@ -88,7 +95,7 @@ public class LastRanServiceTests
         await _blobStorageService
             .Received(1)
             .SaveAsync(
-                "schoolaccount/collect/lastran.json",
+                TestBlobName,
                 Arg.Is<LastRanService.LastRanBlobObject>(x => Math.Abs(x.RunDate - expectedOaDate) < 0.00001),
                 Arg.Any<CancellationToken>());
     }
@@ -101,7 +108,7 @@ public class LastRanServiceTests
 
         _blobStorageService
             .SaveAsync(
-                "schoolaccount/collect/lastran.json",
+                TestBlobName,
                 Arg.Any<LastRanService.LastRanBlobObject>(),
                 Arg.Any<CancellationToken>())
             .Returns(Result.Failure("Write permissions denied"));
@@ -109,7 +116,7 @@ public class LastRanServiceTests
         // Act
         var result = await _sut.SetTimestampAsync(timestamp);
 
-        // Arrange
+        // Assert
         result.IsFailure.ShouldBeTrue();
         result.Error.ShouldBe("Write permissions denied");
     }
