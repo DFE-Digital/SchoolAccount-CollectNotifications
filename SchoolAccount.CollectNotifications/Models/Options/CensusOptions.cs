@@ -7,5 +7,5 @@ public sealed class CensusOptions
     public const string SectionName = "Census";
 
     public List<ReturnStatusCodes> AllowedStatuses { get; init; } = [];
-
+    public string LastRunBlobName { get; init; } = string.Empty;
 }
