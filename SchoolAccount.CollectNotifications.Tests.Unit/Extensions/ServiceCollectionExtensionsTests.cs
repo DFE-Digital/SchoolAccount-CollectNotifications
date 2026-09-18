@@ -16,7 +16,7 @@ namespace SchoolAccount.CollectNotifications.Tests.Unit.Extensions;
 public class ServiceCollectionExtensionsTests
 {
     [Fact]
-    public void AddDatabase_with_connectionStringFactory_should_register_db_connection_factory()
+    public void Adding_a_database_with_connectionStringFactory_should_register_db_connection_factory()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -32,7 +32,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddDatabase_with_configuration_should_resolve_connection_string_by_type_name()
+    public void Adding_a_database_with_configuration_should_resolve_connection_string_by_type_name()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -53,7 +53,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddDatabase_with_missing_connection_string_in_configuration_should_throw_on_registration()
+    public void Adding_a_database_with_missing_connection_string_in_configuration_should_throw_on_registration()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -67,7 +67,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddEnrollmentStores_when_connection_string_is_provided_should_register_db_store()
+    public void When_adding_enrollment_store_and_when_connection_string_is_provided_should_register_db_store()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -97,10 +97,12 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddEnrollmentStores_when_connection_string_is_not_provided_should_register_csv_store()
+    public void When_adding_enrollment_store_and_connection_string_is_not_provided_should_register_csv_store()
     {
         // Arrange
         var services = new ServiceCollection();
+        services.AddSingleton(Substitute.For<IBlobStorageService>());
+        
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -127,7 +129,39 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddAzureBlobStorage_when_not_configured_should_register_blanked_blob_storage_service()
+    public void When_adding_enrollment_store_and_blob_name_is_provided_should_register_csv_store()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddSingleton(Substitute.For<IBlobStorageService>());
+        
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [$"{EnrollmentCsvOptions.SectionName}:BlobName"] = "recipients.xlsx"
+            })
+            .Build();
+
+        // Act
+        services.AddEnrollmentStores(configuration);
+        var provider = services.BuildServiceProvider();
+
+        // Assert
+        var store = provider.GetService<IEnrollmentStore>();
+        store.ShouldNotBeNull();
+        store.ShouldBeOfType<EnrollmentCsvStore>();
+
+        var csvStore = provider.GetService<EnrollmentCsvStore>();
+        csvStore.ShouldNotBeNull();
+        csvStore.ShouldBeSameAs(store);
+
+        var csvOptions = provider.GetService<IOptions<EnrollmentCsvOptions>>();
+        csvOptions.ShouldNotBeNull();
+        csvOptions.Value.BlobName.ShouldBe("recipients.xlsx");
+    }
+
+    [Fact]
+    public void When_adding_azure_blob_store_and_when_not_configured_should_register_blanked_blob_storage_service()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -146,7 +180,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddAzureBlobStorage_when_connection_string_is_configured_should_register_azure_blob_service()
+    public void When_adding_azure_blob_store_and_connection_string_is_configured_should_register_azure_blob_service()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -174,7 +208,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddAzureBlobStorage_when_service_uri_is_configured_should_register_azure_blob_service()
+    public void When_adding_azure_blob_store_and_when_service_uri_is_configured_should_register_azure_blob_service()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -203,7 +237,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void CreateBlobServiceClient_from_service_provider_should_resolve_configured_client()
+    public void When_creating_blob_client_from_service_provider_should_resolve_configured_client()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -221,7 +255,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void CreateBlobServiceClient_with_connection_string_should_create_client()
+    public void When_creating_blob_client_with_connection_string_should_create_client()
     {
         // Arrange
         var options = new AzureBlobStorageOptions
@@ -237,7 +271,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void CreateBlobServiceClient_with_service_uri_should_create_client()
+    public void When_creating_blob_client_with_service_uri_should_create_client()
     {
         // Arrange
         var options = new AzureBlobStorageOptions
@@ -254,7 +288,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void CreateBlobServiceClient_with_neither_connection_string_nor_uri_should_throw_invalid_operation_exception()
+    public void When_creating_blob_client_with_neither_connection_string_nor_uri_should_throw_invalid_operation_exception()
     {
         // Arrange
         var options = new AzureBlobStorageOptions
