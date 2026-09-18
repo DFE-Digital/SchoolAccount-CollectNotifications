@@ -8,7 +8,7 @@ namespace SchoolAccount.CollectNotifications.Tests.Unit.Stores;
 public class LedgerStoreExtensionsTests
 {
     [Fact]
-    public void RestrictToApprovedStatuses_should_return_status_when_current_status_code_is_approved()
+    public void Should_only_return_approved_statues_when_current_status_code_is_approved()
     {
         // Arrange
         var approvedStatuses = new List<ReturnStatusCodes> { ReturnStatusCodes.Authorised, ReturnStatusCodes.Approved };
@@ -30,7 +30,7 @@ public class LedgerStoreExtensionsTests
     }
 
     [Fact]
-    public void RestrictToApprovedStatuses_should_return_status_when_first_return_status_code_is_approved()
+    public void Should_only_return_approved_statues_when_first_return_status_code_is_approved()
     {
         // Arrange
         var approvedStatuses = new List<ReturnStatusCodes> { ReturnStatusCodes.Submitted };
@@ -52,7 +52,7 @@ public class LedgerStoreExtensionsTests
     }
 
     [Fact]
-    public void RestrictToApprovedStatuses_should_return_status_when_baseline_return_status_code_is_approved()
+    public void Should_only_return_approved_statues_when_baseline_return_status_code_is_approved()
     {
         // Arrange
         var approvedStatuses = new List<ReturnStatusCodes> { ReturnStatusCodes.Approved };
@@ -74,7 +74,7 @@ public class LedgerStoreExtensionsTests
     }
 
     [Fact]
-    public void RestrictToApprovedStatuses_should_filter_out_items_when_no_status_codes_match()
+    public void Should_only_return_approved_statues_when_filtering_out_items_when_no_status_codes_match()
     {
         // Arrange
         var approvedStatuses = new List<ReturnStatusCodes> { ReturnStatusCodes.Authorised, ReturnStatusCodes.Approved };
@@ -100,7 +100,7 @@ public class LedgerStoreExtensionsTests
     }
 
     [Fact]
-    public void RestrictToApprovedStatuses_should_handle_null_first_and_baseline_statuses_gracefully()
+    public void Should_only_return_approved_statues_and_handle_null_first_and_baseline_statuses_gracefully()
     {
         // Arrange
         var approvedStatuses = new List<ReturnStatusCodes> { ReturnStatusCodes.Authorised };
@@ -121,7 +121,7 @@ public class LedgerStoreExtensionsTests
     }
 
     [Fact]
-    public void RestrictToApprovedStatuses_should_return_empty_when_approved_statuses_list_is_empty()
+    public void Should_only_return_approved_statues_should_return_empty_when_approved_statuses_list_is_empty()
     {
         // Arrange
         var approvedStatuses = new List<ReturnStatusCodes>();
@@ -142,7 +142,7 @@ public class LedgerStoreExtensionsTests
     }
 
     [Fact]
-    public void RestrictToApprovedStatuses_should_return_empty_when_source_collection_is_empty()
+    public void Should_only_return_approved_statues_should_return_empty_when_source_collection_is_empty()
     {
         // Arrange
         var approvedStatuses = new List<ReturnStatusCodes> { ReturnStatusCodes.Authorised };

@@ -35,7 +35,7 @@ public class ReturnStatusCodesExtensionsTests
     [InlineData(ReturnStatusCodes.ReconciliationInProgress, "Reconciliation in progress")]
     [InlineData(ReturnStatusCodes.MatchingFailed, "Matching failed")]
     [InlineData(ReturnStatusCodes.ReconciliationFailed, "Reconciliation failed")]
-    public void GetHumanName_should_return_correct_description_for_known_status(ReturnStatusCodes status, string expectedDescription)
+    public void Getting_name_should_return_correct_description_for_known_status(ReturnStatusCodes status, string expectedDescription)
     {
         // Act
         var result = status.GetHumanName();
@@ -45,7 +45,7 @@ public class ReturnStatusCodesExtensionsTests
     }
 
     [Fact]
-    public void GetHumanName_should_return_unavailable_for_unknown_status()
+    public void Getting_name_should_return_unavailable_for_unknown_status()
     {
         // Arrange
         const ReturnStatusCodes unknownStatus = (ReturnStatusCodes)9999;
