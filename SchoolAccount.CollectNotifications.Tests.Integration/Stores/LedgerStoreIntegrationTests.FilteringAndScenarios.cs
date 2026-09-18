@@ -7,7 +7,7 @@ namespace SchoolAccount.CollectNotifications.Tests.Integration.Stores;
 public partial class LedgerStoreIntegrationTests
 {
     [Fact]
-    public async Task GetWhatHasChangedAsync_should_return_empty_result_when_requested_lae_stab_keys_list_is_empty()
+    public async Task When_getting_what_has_changed_it_should_return_empty_result_when_requested_lae_stab_keys_list_is_empty()
     {
         // Arrange
         var store = CreateLedgerStore();
@@ -22,7 +22,7 @@ public partial class LedgerStoreIntegrationTests
     }
 
     [Fact]
-    public async Task GetWhatHasChangedAsync_should_filter_results_to_match_only_requested_lae_stab_keys()
+    public async Task When_getting_what_has_changed_it_should_filter_results_to_match_only_requested_lae_stab_keys()
     {
         // Arrange
         var store = CreateLedgerStore();
@@ -55,7 +55,7 @@ public partial class LedgerStoreIntegrationTests
     }
 
     [Fact]
-    public async Task GetWhatHasChangedAsync_should_filter_to_approved_statuses_when_limit_to_approved_statuses_is_true()
+    public async Task When_getting_what_has_changed_it_should_filter_to_approved_statuses_when_limit_to_approved_statuses_is_true()
     {
         // Arrange
         var store = CreateLedgerStore([ReturnStatusCodes.Authorised, ReturnStatusCodes.Approved]);
@@ -107,7 +107,7 @@ public partial class LedgerStoreIntegrationTests
     }
 
     [Fact]
-    public async Task GetWhatHasChangedAsync_should_return_all_changed_statuses_when_limit_to_approved_statuses_is_false()
+    public async Task When_getting_what_has_changed_it_should_return_all_changed_statuses_when_limit_to_approved_statuses_is_false()
     {
         // Arrange
         var store = CreateLedgerStore([ReturnStatusCodes.Authorised]);
@@ -142,7 +142,7 @@ public partial class LedgerStoreIntegrationTests
     }
 
     [Fact]
-    public async Task GetWhatHasChangedAsync_should_handle_mixed_scenarios_correctly_across_multiple_schools()
+    public async Task When_getting_what_has_changed_it_should_handle_mixed_scenarios_correctly_across_multiple_schools()
     {
         // Arrange
         var store = CreateLedgerStore([ReturnStatusCodes.Authorised, ReturnStatusCodes.Approved]);

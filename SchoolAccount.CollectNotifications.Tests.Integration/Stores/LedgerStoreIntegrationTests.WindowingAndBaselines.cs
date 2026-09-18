@@ -8,7 +8,7 @@ namespace SchoolAccount.CollectNotifications.Tests.Integration.Stores;
 public partial class LedgerStoreIntegrationTests
 {
     [Fact]
-    public async Task GetWhatHasChangedAsync_should_return_status_with_null_baseline_when_new_return_occurs_after_last_run_date()
+    public async Task When_getting_what_has_changed_it_should_return_status_with_null_baseline_when_new_return_occurs_after_last_run_date()
     {
         // Arrange
         var store = CreateLedgerStore();
@@ -40,7 +40,7 @@ public partial class LedgerStoreIntegrationTests
     }
 
     [Fact]
-    public async Task GetWhatHasChangedAsync_should_return_latest_status_with_previous_baseline_when_status_changed_since_last_run()
+    public async Task When_getting_what_has_changed_it_should_return_latest_status_with_previous_baseline_when_status_changed_since_last_run()
     {
         // Arrange
         var store = CreateLedgerStore();
@@ -78,7 +78,7 @@ public partial class LedgerStoreIntegrationTests
     }
 
     [Fact]
-    public async Task GetWhatHasChangedAsync_should_return_empty_list_when_status_in_window_is_identical_to_baseline()
+    public async Task When_getting_what_has_changed_it_should_return_empty_list_when_status_in_window_is_identical_to_baseline()
     {
         // Arrange
         var store = CreateLedgerStore();
@@ -108,7 +108,7 @@ public partial class LedgerStoreIntegrationTests
     }
 
     [Fact]
-    public async Task GetWhatHasChangedAsync_should_pick_latest_status_in_window_and_baseline_before_last_run_date()
+    public async Task When_getting_what_has_changed_it_should_pick_latest_status_in_window_and_baseline_before_last_run_date()
     {
         // Arrange
         var store = CreateLedgerStore();
@@ -155,7 +155,7 @@ public partial class LedgerStoreIntegrationTests
     }
 
     [Fact]
-    public async Task GetWhatHasChangedAsync_should_pick_initial_and_previous_baselines_when_multiple_baselines_exist_before_last_run_date()
+    public async Task When_getting_what_has_changed_it_should_pick_initial_and_previous_baselines_when_multiple_baselines_exist_before_last_run_date()
     {
         // Arrange
         var store = CreateLedgerStore();
@@ -196,7 +196,7 @@ public partial class LedgerStoreIntegrationTests
     }
 
     [Fact]
-    public async Task GetWhatHasChangedAsync_should_return_empty_when_all_records_are_prior_to_last_run_date()
+    public async Task When_getting_what_has_changed_it_should_return_empty_when_all_records_are_prior_to_last_run_date()
     {
         // Arrange
         var store = CreateLedgerStore();
