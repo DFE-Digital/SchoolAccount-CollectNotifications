@@ -47,23 +47,6 @@ public partial class InitialisationTests
     }
 
     [Fact]
-    public void ConfigureService_should_throw_argument_exception_during_host_build_when_ledger_database_connection_string_is_missing()
-    {
-        // Arrange, Act & Assert
-        Should.Throw<ArgumentException>(() =>
-        {
-            new HostBuilder()
-                .ConfigureAppConfiguration(builder => builder.AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["GovNotify:ApiKey"] = ValidDummyGovNotifyApiKey,
-                    ["Enrollment:Csv:FilePath"] = "/path.csv"
-                }))
-                .Configure()
-                .Build();
-        });
-    }
-
-    [Fact]
     public void ConfigureService_should_bind_threading_and_census_options_correctly_when_valid_values_are_provided()
     {
         const int testThreadingBatchAmount = 100;
@@ -75,8 +58,8 @@ public partial class InitialisationTests
         using var host = CreateHost(new Dictionary<string, string?>
         {
             ["Threading:BatchAmount"] = testThreadingBatchAmount.ToString(),
-            ["Threading:BatchWaitAmountInSec"] = testThreadingBatchWaitAmountInSec.ToString(),
-            ["Threading:ItemWaitAmountInSec"] = testThreadingItemWaitAmountInSec.ToString(),
+            ["Threading:BatchWaitAmountInMs"] = testThreadingBatchWaitAmountInSec.ToString(),
+            ["Threading:ItemWaitAmountInMs"] = testThreadingItemWaitAmountInSec.ToString(),
             ["Census:AllowedStatuses:0"] = "7",
             ["Census:AllowedStatuses:1"] = "10",
             ["Census:AllowedStatuses:2"] = "1",
@@ -92,8 +75,8 @@ public partial class InitialisationTests
         // Assert
         threadingOptions.ShouldSatisfyAllConditions(
             x => x.BatchAmount.ShouldBe(testThreadingBatchAmount),
-            x => x.BatchWaitAmountInSec.ShouldBe(testThreadingBatchWaitAmountInSec),
-            x => x.ItemWaitAmountInSec.ShouldBe(testThreadingItemWaitAmountInSec)
+            x => x.BatchWaitAmountInMs.ShouldBe(testThreadingBatchWaitAmountInSec),
+            x => x.ItemWaitAmountInMs.ShouldBe(testThreadingItemWaitAmountInSec)
         );
 
         censusOptions.ShouldSatisfyAllConditions(

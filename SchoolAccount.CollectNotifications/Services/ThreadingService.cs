@@ -20,10 +20,16 @@ public class ThreadingService(
             
             logger.LogInformation($"Batch {b + 1}/{batch.Length}: Starting a new batch of {batch.Length} items");
 
-            var actions = batch.Select(async source =>
+            var actions = batch.Select(async (source, i) =>
             {
                 try
                 {
+                    if (threadingOptions.Value.ItemWaitAmountInMs > 0)
+                    {
+                        logger.LogDebug($"Pausing {i + 1}/{batch.Length}. Pausing for {threadingOptions.Value.ItemWaitAmountInMs * i} milliseconds to respect rate limits...");
+                        await Task.Delay(TimeSpan.FromMilliseconds(threadingOptions.Value.ItemWaitAmountInMs * i), cancellationToken);
+                    }
+                    
                     return await func(source, cancellationToken);
                 }
                 catch (Exception ex)
@@ -46,12 +52,10 @@ public class ThreadingService(
                 continue;
             }
 
-            for (var i = 1; i <= threadingOptions.Value.BatchWaitAmountInSec; i++)
+            if (threadingOptions.Value.BatchWaitAmountInMs > 0)
             {
-                logger.LogDebug(
-                    $"Batch finished. Pausing for {i}/{threadingOptions.Value.BatchWaitAmountInSec} seconds to respect rate limits...");
-
-                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                logger.LogDebug($"Batch finished. Pausing for {threadingOptions.Value.BatchWaitAmountInMs} milliseconds to respect rate limits...");
+                await Task.Delay(TimeSpan.FromMilliseconds(threadingOptions.Value.BatchWaitAmountInMs), cancellationToken);
             }
         }
     }

@@ -15,7 +15,7 @@ public class ThreadingServiceTests
         var options = Options.Create(new ThreadingOptions
         {
             BatchAmount = 2,
-            BatchWaitAmountInSec = 0
+            BatchWaitAmountInMs = 0
         });
 
         var sut = new ThreadingService(NullLogger<ThreadingService>.Instance, options);
@@ -42,7 +42,7 @@ public class ThreadingServiceTests
         var options = Options.Create(new ThreadingOptions
         {
             BatchAmount = 2,
-            BatchWaitAmountInSec = 0
+            BatchWaitAmountInMs = 0
         });
 
         var sut = new ThreadingService(NullLogger<ThreadingService>.Instance, options);
@@ -71,7 +71,7 @@ public class ThreadingServiceTests
         var options = Options.Create(new ThreadingOptions
         {
             BatchAmount = 2,
-            BatchWaitAmountInSec = 0
+            BatchWaitAmountInMs = 0
         });
 
         var sut = new ThreadingService(NullLogger<ThreadingService>.Instance, options);
@@ -105,7 +105,7 @@ public class ThreadingServiceTests
         var options = Options.Create(new ThreadingOptions
         {
             BatchAmount = 1,
-            BatchWaitAmountInSec = 1
+            BatchWaitAmountInMs = 1
         });
 
         var sut = new ThreadingService(NullLogger<ThreadingService>.Instance, options);

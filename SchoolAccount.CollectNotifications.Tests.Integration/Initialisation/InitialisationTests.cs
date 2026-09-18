@@ -25,8 +25,8 @@ public partial class InitialisationTests
         ["Enrollment:Csv:FilePath"] = EnrollmentCsvFilePath,
         ["Threading:MaxDegreeOfParallelism"] = ThreadingMaxParallelism,
         ["Threading:BatchAmount"] = ThreadingBatchAmount,
-        ["Threading:BatchWaitAmountInSec"] = ThreadingBatchWait,
-        ["Threading:ItemWaitAmountInSec"] = ThreadingItemWait,
+        ["Threading:BatchWaitAmountInMs"] = ThreadingBatchWait,
+        ["Threading:ItemWaitAmountInMs"] = ThreadingItemWait,
         ["Census:AllowedStatuses:0"] = "7",
         ["Census:AllowedStatuses:1"] = "10"
     };
