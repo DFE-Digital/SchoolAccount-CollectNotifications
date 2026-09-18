@@ -29,7 +29,7 @@ public class GovNotifyServiceTests
     }
 
     [Fact]
-    public async Task SendMessage_should_return_success_when_email_is_sent_successfully()
+    public async Task When_sending_a_message_it_should_return_success_when_email_is_sent_successfully()
     {
         // Arrange
         var properties = new Dictionary<string, dynamic> { { "status", "10" }, { "school_name", "Test School" } };
@@ -49,7 +49,7 @@ public class GovNotifyServiceTests
     }
 
     [Fact]
-    public async Task SendMessage_should_use_custom_reply_to_and_reference_when_options_are_provided()
+    public async Task When_sending_a_message_it_should_use_custom_reply_to_and_reference_when_options_are_provided()
     {
         // Arrange
         var options = new EmailOptions
@@ -73,7 +73,7 @@ public class GovNotifyServiceTests
     }
 
     [Fact]
-    public async Task SendMessage_should_return_warning_when_email_address_is_invalid()
+    public async Task When_sending_a_message_it_should_return_warning_when_email_address_is_invalid()
     {
         // Arrange
         _notificationClient
@@ -91,7 +91,7 @@ public class GovNotifyServiceTests
     }
 
     [Fact]
-    public async Task SendMessage_should_return_warning_when_team_member_restriction_is_encountered()
+    public async Task When_sending_a_message_it_should_return_warning_when_team_member_restriction_is_encountered()
     {
         // Arrange
         _notificationClient
@@ -109,7 +109,7 @@ public class GovNotifyServiceTests
     }
 
     [Fact]
-    public async Task SendMessage_should_return_failure_when_rate_limit_exceeded()
+    public async Task When_sending_a_message_it_should_return_failure_when_rate_limit_exceeded()
     {
         // Arrange
         _notificationClient
@@ -126,7 +126,7 @@ public class GovNotifyServiceTests
     }
 
     [Fact]
-    public async Task SendMessage_should_return_failure_when_auth_exception_is_thrown()
+    public async Task When_sending_a_message_it_should_return_failure_when_auth_exception_is_thrown()
     {
         // Arrange
         _notificationClient
@@ -143,7 +143,7 @@ public class GovNotifyServiceTests
     }
 
     [Fact]
-    public async Task SendMessage_should_return_failure_when_general_notify_client_exception_is_thrown()
+    public async Task When_sending_a_message_it_should_return_failure_when_general_notify_client_exception_is_thrown()
     {
         // Arrange
         _notificationClient

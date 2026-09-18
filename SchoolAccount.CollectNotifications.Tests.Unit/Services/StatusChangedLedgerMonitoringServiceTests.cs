@@ -31,7 +31,7 @@ public class StatusChangedLedgerMonitoringServiceTests
     }
 
     [Fact]
-    public async Task InvokeAsync_should_abort_workflow_when_retrieving_recipients_fails()
+    public async Task Should_abort_workflow_when_retrieving_recipients_fails()
     {
         // Arrange
         _enrollmentStore
@@ -51,7 +51,7 @@ public class StatusChangedLedgerMonitoringServiceTests
     }
 
     [Fact]
-    public async Task InvokeAsync_should_abort_workflow_when_retrieving_last_ran_timestamp_fails()
+    public async Task Should_abort_workflow_when_retrieving_last_ran_timestamp_fails()
     {
         // Arrange
         var recipients = new List<EnrolledRecipient>
@@ -80,7 +80,7 @@ public class StatusChangedLedgerMonitoringServiceTests
     }
 
     [Fact]
-    public async Task InvokeAsync_should_abort_workflow_when_retrieving_ledger_changes_fails()
+    public async Task Should_abort_workflow_when_retrieving_ledger_changes_fails()
     {
         // Arrange
         var recipients = new List<EnrolledRecipient>
@@ -116,7 +116,7 @@ public class StatusChangedLedgerMonitoringServiceTests
     }
 
     [Fact]
-    public async Task InvokeAsync_should_abort_workflow_when_updating_last_ran_timestamp_fails()
+    public async Task Should_abort_workflow_when_updating_last_ran_timestamp_fails()
     {
         // Arrange
         var recipients = new List<EnrolledRecipient>
@@ -144,7 +144,7 @@ public class StatusChangedLedgerMonitoringServiceTests
     }
 
     [Fact]
-    public async Task InvokeAsync_should_match_changed_schools_with_recipients_and_trigger_notifications()
+    public async Task Should_match_changed_schools_with_recipients_and_trigger_notifications()
     {
         // Arrange
         var recipients = new List<EnrolledRecipient>
@@ -205,7 +205,7 @@ public class StatusChangedLedgerMonitoringServiceTests
     }
 
     [Fact]
-    public async Task InvokeAsync_should_skip_enrolled_recipients_missing_email()
+    public async Task Should_skip_enrolled_recipients_missing_email()
     {
         // Arrange
         var recipients = new List<EnrolledRecipient>
@@ -240,7 +240,7 @@ public class StatusChangedLedgerMonitoringServiceTests
     }
 
     [Fact]
-    public async Task InvokeAsync_should_send_email_via_gov_notify_inside_batch_worker()
+    public async Task Should_send_email_via_gov_notify_inside_batch_worker()
     {
         // Arrange
         var recipients = new List<EnrolledRecipient>
@@ -294,7 +294,7 @@ public class StatusChangedLedgerMonitoringServiceTests
     }
 
     [Fact]
-    public async Task InvokeAsync_should_return_false_in_batch_worker_when_gov_notify_service_fails()
+    public async Task Should_return_false_in_batch_worker_when_gov_notify_service_fails()
     {
         // Arrange
         var recipients = new List<EnrolledRecipient>

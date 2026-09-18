@@ -34,7 +34,7 @@ public class AzureBlobStorageServiceTests
     }
 
     [Fact]
-    public async Task GetAsync_should_return_success_with_deserialized_content_when_blob_exists()
+    public async Task Getting_a_item_should_return_success_with_deserialized_content_when_blob_exists()
     {
         // Arrange
         var expectedModel = new TestModel("Alpha", 42);
@@ -57,7 +57,7 @@ public class AzureBlobStorageServiceTests
     }
 
     [Fact]
-    public async Task GetAsync_should_return_success_with_null_when_blob_is_not_found_with_status_404()
+    public async Task Getting_a_item_should_return_success_with_null_when_blob_is_not_found_with_status_404()
     {
         // Arrange
         _blobClient.DownloadStreamingAsync(cancellationToken: Arg.Any<CancellationToken>())
@@ -73,7 +73,7 @@ public class AzureBlobStorageServiceTests
     }
 
     [Fact]
-    public async Task GetAsync_should_return_failure_when_deserialized_json_is_null()
+    public async Task Getting_a_item_should_return_failure_when_deserialized_json_is_null()
     {
         // Arrange
         var stream = new MemoryStream(Encoding.UTF8.GetBytes("null"));
@@ -91,7 +91,7 @@ public class AzureBlobStorageServiceTests
     }
 
     [Fact]
-    public async Task GetAsync_should_return_failure_when_unexpected_exception_is_thrown()
+    public async Task Getting_a_item_should_return_failure_when_unexpected_exception_is_thrown()
     {
         // Arrange
         _blobClient.DownloadStreamingAsync(cancellationToken: Arg.Any<CancellationToken>())
@@ -108,7 +108,7 @@ public class AzureBlobStorageServiceTests
     }
 
     [Fact]
-    public async Task SaveAsync_should_return_success_when_upload_succeeds_with_valid_etag()
+    public async Task Saving_a_item_should_return_success_when_upload_succeeds_with_valid_etag()
     {
         // Arrange
         var contentInfo = BlobsModelFactory.BlobContentInfo(new ETag("test-etag-value"), DateTimeOffset.UtcNow, null,
@@ -129,7 +129,7 @@ public class AzureBlobStorageServiceTests
     }
 
     [Fact]
-    public async Task SaveAsync_should_return_failure_when_upload_fails_due_to_request_failed_exception()
+    public async Task Saving_a_item_should_return_failure_when_upload_fails_due_to_request_failed_exception()
     {
         // Arrange
         _blobClient.UploadAsync(
@@ -149,7 +149,7 @@ public class AzureBlobStorageServiceTests
     }
 
     [Fact]
-    public async Task SaveAsync_should_return_failure_when_authentication_failed_exception_is_thrown()
+    public async Task Saving_a_item_should_return_failure_when_authentication_failed_exception_is_thrown()
     {
         // Arrange
         _blobClient.UploadAsync(
@@ -167,7 +167,7 @@ public class AzureBlobStorageServiceTests
     }
 
     [Fact]
-    public async Task SaveAsync_should_return_failure_when_general_exception_is_thrown()
+    public async Task Saving_a_item_should_return_failure_when_general_exception_is_thrown()
     {
         // Arrange
         _blobClient.UploadAsync(

@@ -9,7 +9,7 @@ namespace SchoolAccount.CollectNotifications.Tests.Unit.Services;
 public class ThreadingServiceTests
 {
     [Fact]
-    public async Task Batch_should_process_all_items_across_batches()
+    public async Task Should_process_all_items_across_batches()
     {
         // Arrange
         var options = Options.Create(new ThreadingOptions
@@ -36,7 +36,7 @@ public class ThreadingServiceTests
     }
 
     [Fact]
-    public async Task Batch_should_stop_further_batches_when_func_returns_false()
+    public async Task Should_stop_further_batches_when_func_returns_false()
     {
         // Arrange
         var options = Options.Create(new ThreadingOptions
@@ -65,7 +65,7 @@ public class ThreadingServiceTests
     }
 
     [Fact]
-    public async Task Batch_should_catch_exception_in_func_and_stop_further_batches()
+    public async Task Should_catch_exception_in_func_and_stop_further_batches()
     {
         // Arrange
         var options = Options.Create(new ThreadingOptions
@@ -99,7 +99,7 @@ public class ThreadingServiceTests
     }
 
     [Fact]
-    public async Task Batch_should_throw_operation_canceled_exception_when_cancellation_is_requested()
+    public async Task Should_throw_operation_canceled_exception_when_cancellation_is_requested()
     {
         // Arrange
         var options = Options.Create(new ThreadingOptions

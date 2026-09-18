@@ -16,7 +16,7 @@ public class LastRanServiceTests
     }
 
     [Fact]
-    public async Task GetTimestampAsync_should_return_minimum_sql_date_time_when_blob_does_not_exist()
+    public async Task Getting_a_timestamp_should_return_minimum_sql_date_time_when_blob_does_not_exist()
     {
         // Arrange
         _blobStorageService
@@ -32,7 +32,7 @@ public class LastRanServiceTests
     }
 
     [Fact]
-    public async Task GetTimestampAsync_should_return_correct_date_time_when_blob_contains_valid_oa_date()
+    public async Task Getting_a_timestamp_should_return_correct_date_time_when_blob_contains_valid_oa_date()
     {
         // Arrange
         var expectedDateTime = new DateTime(2026, 9, 15, 12, 30, 0, DateTimeKind.Utc);
@@ -51,7 +51,7 @@ public class LastRanServiceTests
     }
 
     [Fact]
-    public async Task GetTimestampAsync_should_return_failure_when_blob_storage_retrieval_fails()
+    public async Task Getting_a_timestamp_should_return_failure_when_blob_storage_retrieval_fails()
     {
         // Arrange
         _blobStorageService
@@ -67,7 +67,7 @@ public class LastRanServiceTests
     }
 
     [Fact]
-    public async Task SetTimestampAsync_should_convert_timestamp_to_oa_date_and_save_to_expected_blob_path()
+    public async Task Updating_the_timestamp_should_convert_timestamp_to_oa_date_and_save_to_expected_blob_path()
     {
         // Arrange
         var timestamp = new DateTime(2026, 9, 15, 14, 0, 0, DateTimeKind.Utc);
@@ -94,7 +94,7 @@ public class LastRanServiceTests
     }
 
     [Fact]
-    public async Task SetTimestampAsync_should_return_failure_when_blob_storage_save_fails()
+    public async Task Updating_the_timestamp_should_return_failure_when_blob_storage_save_fails()
     {
         // Arrange
         var timestamp = new DateTime(2026, 9, 15, 14, 0, 0, DateTimeKind.Utc);
