@@ -5,7 +5,6 @@ using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services;
 using SchoolAccount.CollectNotifications.Stores;
-using SchoolAccount.CollectNotifications.Extensions;
 
 namespace SchoolAccount.CollectNotifications.Extensions;
 
