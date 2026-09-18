@@ -183,4 +183,59 @@ public class AzureBlobStorageServiceTests
         result.IsFailure.ShouldBeTrue();
         result.Error.ShouldBe("Upload failed: Connection broken");
     }
+
+    [Fact]
+    public async Task Getting_a_file_should_return_stream_when_blob_exists()
+    {
+        // Arrange
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes("sample content"));
+        var downloadResult = BlobsModelFactory.BlobDownloadStreamingResult(content: stream);
+        var response = Response.FromValue(downloadResult, Substitute.For<Response>());
+
+        _blobClient.DownloadStreamingAsync(cancellationToken: Arg.Any<CancellationToken>())
+            .Returns(response);
+
+        // Act
+        var result = await _sut.GetFileAsync("sample.csv");
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.ShouldNotBeNull();
+        using var reader = new StreamReader(result.Value);
+        var content = await reader.ReadToEndAsync();
+        content.ShouldBe("sample content");
+    }
+
+    [Fact]
+    public async Task Getting_a_file_should_return_success_with_null_when_blob_is_not_found_with_status_404()
+    {
+        // Arrange
+        _blobClient.DownloadStreamingAsync(cancellationToken: Arg.Any<CancellationToken>())
+            .Returns<Response<BlobDownloadStreamingResult>>(_ =>
+                throw new RequestFailedException(404, "Blob not found"));
+
+        // Act
+        var result = await _sut.GetFileAsync("missing.csv");
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Getting_a_file_should_return_failure_when_unexpected_exception_is_thrown()
+    {
+        // Arrange
+        _blobClient.DownloadStreamingAsync(cancellationToken: Arg.Any<CancellationToken>())
+            .Returns<Response<BlobDownloadStreamingResult>>(_ =>
+                throw new RequestFailedException(500, "Internal Server Error"));
+
+        // Act
+        var result = await _sut.GetFileAsync("error.csv");
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldNotBeNull();
+        result.Error.ShouldContain("Internal Server Error");
+    }
 }
