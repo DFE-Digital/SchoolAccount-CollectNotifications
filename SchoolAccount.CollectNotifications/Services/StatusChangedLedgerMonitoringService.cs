@@ -98,14 +98,13 @@ public class StatusChangedLedgerMonitoringService(
                         { "status", notify.Status }, // todo: actually make it a human equivalent 
                         { "school_name", notify.School }
                     });
-                
-                if (result.IsFailure)
+
+                if (!string.IsNullOrWhiteSpace(result.Error))
                 {
-                    logger.LogWarning("Sending email to {recipient} failed: {message}", notify.Recipient, result.Error);
-                    return false;
+                    logger.LogWarning("Sending email message: {error}", result.Error);
                 }
 
-                return true;
+                return result.IsSuccess;
             });
 
         var completedOn = DateTime.UtcNow;
