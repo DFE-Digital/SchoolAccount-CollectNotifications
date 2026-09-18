@@ -40,6 +40,7 @@ public partial class InitialisationTests
         }
 
         return new HostBuilder()
+            .UseEnvironment("IntegrationTest")
             .ConfigureAppConfiguration(builder => builder.AddInMemoryCollection(config))
             .Configure()
             .Build();

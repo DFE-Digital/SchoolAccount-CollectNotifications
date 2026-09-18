@@ -14,7 +14,8 @@ public static class HostBuilderExtensions
     {
         builder.ConfigureAppConfiguration((hostContext, configBuilder) =>
         {
-            if (!hostContext.HostingEnvironment.IsDevelopment())
+            if (!hostContext.HostingEnvironment.IsDevelopment() 
+                && !hostContext.HostingEnvironment.IsEnvironment("IntegrationTest"))
             {
                 configBuilder.AddAzureAppConfiguration();
             }
