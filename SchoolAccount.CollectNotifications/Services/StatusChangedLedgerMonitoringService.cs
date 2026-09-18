@@ -79,6 +79,7 @@ public class StatusChangedLedgerMonitoringService(
         if (timestampUpdate.IsFailure)
         {
             logger.LogWarning("Updating last ran date failed: {error}", timestampUpdate.Error);
+            return;
         }
 
         await threadingService.Batch(
