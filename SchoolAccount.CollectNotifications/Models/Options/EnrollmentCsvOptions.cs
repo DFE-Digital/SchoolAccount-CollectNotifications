@@ -6,8 +6,8 @@ public sealed class EnrollmentCsvOptions
 {
     public const string SectionName = "Enrollment:Csv";
 
-    [Required, MinLength(1)]
-    public string FilePath { get; init; } = "";
+    public string? FilePath { get; init; } = "";
+    public string? BlobName { get; init; } = "";
     
     public string? SheetName { get; init; }
 

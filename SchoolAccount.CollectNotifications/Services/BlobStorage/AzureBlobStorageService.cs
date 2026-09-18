@@ -82,4 +82,24 @@ public class AzureBlobStorageService(
             return Result.Failure($"Upload failed: {ex.Message}");
         }
     }
+
+    public async Task<Result<Stream?>> GetFileAsync(string blobName, CancellationToken cancellationToken = default)
+    {
+        var blob = _container.GetBlobClient(blobName);
+
+        try
+        {
+            var response = await blob.DownloadStreamingAsync(cancellationToken: cancellationToken);
+            return Result.Success<Stream?>(response.Value.Content);
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return Result.Success<Stream?>(null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Azure Blob Storage: Failed to download blob {BlobName}", blobName);
+            return Result.Failure<Stream?>(ex.Message);
+        }
+    }
 }

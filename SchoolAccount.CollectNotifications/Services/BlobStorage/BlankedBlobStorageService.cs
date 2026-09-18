@@ -14,4 +14,9 @@ public class BlankedBlobStorageService : IBlobStorageService
     {
         return Result.Success();
     }
+
+    public async Task<Result<Stream?>> GetFileAsync(string blobName, CancellationToken cancellationToken = default)
+    {
+        return Result.Success<Stream?>(null);
+    }
 }
