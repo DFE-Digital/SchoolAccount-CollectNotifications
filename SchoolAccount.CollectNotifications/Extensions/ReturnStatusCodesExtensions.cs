@@ -4,41 +4,41 @@ namespace SchoolAccount.CollectNotifications.Extensions;
 
 public static class ReturnStatusCodesExtensions
 {
-    private static readonly Dictionary<int, string> StatusDescriptions = new()
+    private static readonly Dictionary<ReturnStatusCodes, string> StatusDescriptions = new()
     {
-        { 1, "No data" },
-        { 23, "Awaiting file upload" },
-        { 24, "File upload in progress" },
-        { 31, "File uploaded" },
-        { 32, "File upload failed" },
-        { 13, "Waiting for validation" },
-        { 12, "Validation in progress" },
-        { 11, "Uploaded validation failed" },
-        { 2, "Loaded and validated" },
-        { 3, "Amended by source" },
-        { 14, "Awaiting submission" },
-        { 17, "Submission in progress" },
-        { 4, "Submitted" },
-        { 5, "Rejected" },
-        { 6, "Amended by agent" },
-        { 15, "Awaiting approval" },
-        { 18, "Approval in progress" },
-        { 7, "Approved" },
-        { 8, "Rejected by collector" },
-        { 9, "Amended by collector" },
-        { 16, "Awaiting authorisation" },
-        { 19, "Authorisation in progress" },
-        { 10, "Authorised" },
-        { 25, "Awaiting matching" },
-        { 26, "Matching in progress" },
-        { 27, "Awaiting reconciliation" },
-        { 28, "Reconciliation in progress" },
-        { 29, "Matching failed" },
-        { 30, "Reconciliation failed" },
+        { ReturnStatusCodes.NoData, "No data" },
+        { ReturnStatusCodes.AwaitingFileUpload, "Awaiting file upload" },
+        { ReturnStatusCodes.FileUploadInProgress, "File upload in progress" },
+        { ReturnStatusCodes.FileUploaded, "File uploaded" },
+        { ReturnStatusCodes.FileUploadFailed, "File upload failed" },
+        { ReturnStatusCodes.WaitingForValidation, "Waiting for validation" },
+        { ReturnStatusCodes.ValidationInProgress, "Validation in progress" },
+        { ReturnStatusCodes.UploadedValidationFailed, "Uploaded validation failed" },
+        { ReturnStatusCodes.LoadedAndValidated, "Loaded and validated" },
+        { ReturnStatusCodes.AmendedBySource, "Amended by source" },
+        { ReturnStatusCodes.AwaitingSubmission, "Awaiting submission" },
+        { ReturnStatusCodes.SubmissionInProgress, "Submission in progress" },
+        { ReturnStatusCodes.Submitted, "Submitted" },
+        { ReturnStatusCodes.Rejected, "Rejected" },
+        { ReturnStatusCodes.AmendedByAgent, "Amended by agent" },
+        { ReturnStatusCodes.AwaitingApproval, "Awaiting approval" },
+        { ReturnStatusCodes.ApprovalInProgress, "Approval in progress" },
+        { ReturnStatusCodes.Approved, "Approved" },
+        { ReturnStatusCodes.RejectedByCollector, "Rejected by collector" },
+        { ReturnStatusCodes.AmendedByCollector, "Amended by collector" },
+        { ReturnStatusCodes.AwaitingAuthorisation, "Awaiting authorisation" },
+        { ReturnStatusCodes.AuthorisationInProgress, "Authorisation in progress" },
+        { ReturnStatusCodes.Authorised, "Authorised" },
+        { ReturnStatusCodes.AwaitingMatching, "Awaiting matching" },
+        { ReturnStatusCodes.MatchingInProgress, "Matching in progress" },
+        { ReturnStatusCodes.AwaitingReconciliation, "Awaiting reconciliation" },
+        { ReturnStatusCodes.ReconciliationInProgress, "Reconciliation in progress" },
+        { ReturnStatusCodes.MatchingFailed, "Matching failed" },
+        { ReturnStatusCodes.ReconciliationFailed, "Reconciliation failed" },
     };
-
+    
     public static string GetHumanName(this ReturnStatusCodes status)
     {
-        return StatusDescriptions.GetValueOrDefault((int)status, "Unavailable"); 
+        return StatusDescriptions.GetValueOrDefault(status, "Unavailable"); 
     }
 }
