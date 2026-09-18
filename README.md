@@ -124,27 +124,33 @@ If any send fails, the remaining batches are stopped.
 
 ```json
 {
-  "ConnectionStrings": {
-    "LedgerDatabase": ""
+  "ConnectionStrings": {            // Required.
+    "LedgerDatabase": ""            // Required. Connection string to the ledger db.
   },
-  "GovNotify": {
-    "ApiKey": ""
+  "GovNotify": {                    // Required.
+    "ApiKey": ""                    // Required. Api from GovNotify.
   },
-  "Enrollment": {
-    "Csv": {
-      "FilePath": ""
+  "Enrollment": {                   // Required.
+    "Csv": {                        // One of two optional blocks
+      "FilePath": "",               // Optional. The local filepath to a excel sheet, this is needed if BlobName is emtpy.
+      "BlobName": ""                // Optional. The azure blob path name to a excel sheet, this is needed if FilePath is emtpy.
+    },
+    "Db": {                         // One of two optional blocks
+      "ConnectionString": "",       // Required. The connection string to where to obtain db records
+      "CommandTimeoutSeconds": 0    // Optional. Defaults to 30 seconds.
     }
   },
-  "AzureBlobStorage": {
-    "ConnectionString": "",
-    "ContainerName": ""
+  "AzureBlobStorage": {             // Optional.
+    "ConnectionString": "",         // Required. The site address to where the blob is contained.
+    "ContainerName": ""             // Required. The container's name.
   },
-  "Threading": {
+  "Threading": {                    
     "BatchAmount": 50,
     "BatchWaitAmountInSec": 10
   },
-  "Census": {
-    "AllowedStatuses": []
+  "Census": {                       // Required.
+    "AllowedStatuses": [],          // Required. The enum or int values of the ReturnStatueCodes which are allowed.
+    "LastRunBlobName": ""           // Optional. The file path of where the last ran object is stored. If this is empty it will always defualt to SqlDateTime.MinValue.
   }
 }
 ```
