@@ -6,8 +6,8 @@ using SchoolAccount.CollectNotifications.Models.Dtos;
 
 namespace SchoolAccount.CollectNotifications.Services;
 
-public class StatusChangedLegerMonitoringService(
-    ILogger<StatusChangedLegerMonitoringService> logger,
+public class StatusChangedLedgerMonitoringService(
+    ILogger<StatusChangedLedgerMonitoringService> logger,
     IEnrollmentStore enrollmentStore,
     ILastRanService lastRanService,
     ILedgerStore ledgerStore,
@@ -19,7 +19,7 @@ public class StatusChangedLegerMonitoringService(
     {
         var runningAt = DateTime.UtcNow;
 
-        logger.LogInformation("Running {class} at {runningAt}", nameof(StatusChangedLegerMonitoringService), runningAt);
+        logger.LogInformation("Running {class} at {runningAt}", nameof(StatusChangedLedgerMonitoringService), runningAt);
 
         var recipients = await enrollmentStore.ListAsync(cancellationToken);
 

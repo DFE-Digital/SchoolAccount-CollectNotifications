@@ -10,19 +10,19 @@ using static SchoolAccount.CollectNotifications.Tests.Common.Builders.Notificati
 
 namespace SchoolAccount.CollectNotifications.Tests.Unit.Services;
 
-public class StatusChangedLegerMonitoringServiceTests
+public class StatusChangedLedgerMonitoringServiceTests
 {
     private readonly IEnrollmentStore _enrollmentStore = Substitute.For<IEnrollmentStore>();
     private readonly ILastRanService _lastRanService = Substitute.For<ILastRanService>();
     private readonly ILedgerStore _ledgerStore = Substitute.For<ILedgerStore>();
     private readonly IThreadingService _threadingService = Substitute.For<IThreadingService>();
     private readonly IGovNotifyService _govNotifyService = Substitute.For<IGovNotifyService>();
-    private readonly StatusChangedLegerMonitoringService _sut;
+    private readonly StatusChangedLedgerMonitoringService _sut;
 
-    public StatusChangedLegerMonitoringServiceTests()
+    public StatusChangedLedgerMonitoringServiceTests()
     {
-        _sut = new StatusChangedLegerMonitoringService(
-            NullLogger<StatusChangedLegerMonitoringService>.Instance,
+        _sut = new StatusChangedLedgerMonitoringService(
+            NullLogger<StatusChangedLedgerMonitoringService>.Instance,
             _enrollmentStore,
             _lastRanService,
             _ledgerStore,

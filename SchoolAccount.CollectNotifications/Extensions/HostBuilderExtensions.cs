@@ -38,7 +38,7 @@ public static class HostBuilderExtensions
             services.AddSingleton<IThreadingService, ThreadingService>();
             services.AddSingleton<ILastRanService, LastRanService>();
             services.AddSingleton<IGovNotifyService, GovNotifyService>();
-            services.AddSingleton<StatusChangedLegerMonitoringService>();
+            services.AddSingleton<StatusChangedLedgerMonitoringService>();
         });
 
         return builder;

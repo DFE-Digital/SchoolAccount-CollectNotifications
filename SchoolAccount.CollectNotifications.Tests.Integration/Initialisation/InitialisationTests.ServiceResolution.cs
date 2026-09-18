@@ -21,7 +21,7 @@ public partial class InitialisationTests
         using var scope = host.Services.CreateScope();
         var sp = scope.ServiceProvider;
 
-        sp.GetRequiredService<StatusChangedLegerMonitoringService>().ShouldNotBeNull();
+        sp.GetRequiredService<StatusChangedLedgerMonitoringService>().ShouldNotBeNull();
         sp.GetRequiredService<ILedgerStore>().ShouldBeOfType<LedgerStore>();
         sp.GetRequiredService<IEnrollmentStore>().ShouldBeOfType<EnrollmentCsvStore>();
         sp.GetRequiredService<IBlobStorageService>().ShouldBeOfType<BlankedBlobStorageService>();
