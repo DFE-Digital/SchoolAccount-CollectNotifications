@@ -1,4 +1,4 @@
-name: Collect API Build and Deploy
+name: Collect Notifications Build and Deploy
 
 on:
   workflow_dispatch:
@@ -101,13 +101,13 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: src/SchoolAccount.Collect.Api/Dockerfile
+          file: src/SchoolAccount.CollectNotifications/Dockerfile
           target: final
           push: ${{ github.ref == env.MAIN_BRANCH }}
           tags: ${{ steps.meta.outputs.tags }}
 
       - name: Publish
-        run: dotnet publish ${{ env.API_SOLUTION_FILE }} --configuration Release --no-restore --no-build
+        run: dotnet publish --configuration Release --no-restore --no-build
 
       - name: Azure Login
         if: github.event_name == 'push' && github.ref == env.MAIN_BRANCH
