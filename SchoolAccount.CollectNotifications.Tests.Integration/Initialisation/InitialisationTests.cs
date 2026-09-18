@@ -41,7 +41,7 @@ public partial class InitialisationTests
 
         return new HostBuilder()
             .ConfigureAppConfiguration(builder => builder.AddInMemoryCollection(config))
-            .ConfigureService()
+            .Configure()
             .Build();
     }
 }

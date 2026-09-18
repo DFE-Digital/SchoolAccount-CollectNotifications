@@ -58,7 +58,7 @@ public partial class InitialisationTests
                     ["GovNotify:ApiKey"] = ValidDummyGovNotifyApiKey,
                     ["Enrollment:Csv:FilePath"] = "/path.csv"
                 }))
-                .ConfigureService()
+                .Configure()
                 .Build();
         });
     }
