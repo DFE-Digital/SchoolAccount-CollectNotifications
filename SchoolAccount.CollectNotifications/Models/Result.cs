@@ -17,6 +17,10 @@ public class Result
     public static Result Success() => new(true, null);
 
     public static Result<TValue> Success<TValue>(TValue value) => new(value, true, null);
+    
+    public static Result Warning(string warning) => new(true, warning);
+    
+    public static Result<TValue> Warning<TValue>(TValue? value, string warning) => new Result<TValue>(value, true, warning);
 
     public static Result Failure(string? error = null) => new(false, error);
 

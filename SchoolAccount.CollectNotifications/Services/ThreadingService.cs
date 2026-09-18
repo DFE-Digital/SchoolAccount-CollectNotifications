@@ -13,34 +13,29 @@ public class ThreadingService(
     public async Task Batch<TSource>(IEnumerable<TSource> items, CancellationToken cancellationToken, Func<TSource, CancellationToken, Task<bool>> func)
     {
         var batches = items.Chunk(threadingOptions.Value.BatchAmount).ToList();
-        var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = threadingOptions.Value.MaxDegreeOfParallelism, CancellationToken = cancellationToken };
-        var shouldContinue = true;
-
+        
         for (var b = 0; b < batches.Count; b++)
         {
             var batch = batches[b];
             
             logger.LogInformation($"Batch {b + 1}/{batch.Length}: Starting a new batch of {batch.Length} items");
 
-            await Parallel.ForEachAsync(source: batch, parallelOptions: parallelOptions, async (source, token) =>
+            var actions = batch.Select(async source =>
             {
-                if (token.IsCancellationRequested || !shouldContinue)
-                {
-                    return;
-                }
-                
                 try
                 {
-                    shouldContinue = await func(source, token);
-                    logger.LogDebug("Threading: Command complete");
+                    return await func(source, cancellationToken);
                 }
-                catch (Exception exception)
+                catch (Exception ex)
                 {
-                    logger.LogCritical(exception, "Threading: Command failed: {message}", exception.Message);
+                    logger.LogCritical(ex, "Threading: Command failed: {message}", ex.Message);
+                    return false;
                 }
             });
 
-            if (!shouldContinue)
+            var results = await Task.WhenAll(actions);
+
+            if (results.Any(x => !x))
             {
                 logger.LogWarning("Threading: Informated to quit");
                 break;
