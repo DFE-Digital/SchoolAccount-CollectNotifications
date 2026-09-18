@@ -116,6 +116,34 @@ public class StatusChangedLedgerMonitoringServiceTests
     }
 
     [Fact]
+    public async Task InvokeAsync_should_abort_workflow_when_updating_last_ran_timestamp_fails()
+    {
+        // Arrange
+        var recipients = new List<EnrolledRecipient>
+        {
+            AnEnrolledRecipient().WithLaeStab("1111111").WithEmail("head@school1.sch.uk")
+        };
+        var changes = new List<ComparableCollectReturnStatus>
+        {
+            ACollectReturnStatus().WithLaeStab("1111111").WithSchoolName("School One").WithReturnStatusCode(ReturnStatusCodes.Authorised)
+        };
+
+        _enrollmentStore.ListAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(recipients));
+        _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(DateTime.UtcNow.AddDays(-1)));
+        _ledgerStore.GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<List<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(Result.Success(changes));
+        _lastRanService.SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(Result.Failure("Failed to write timestamp blob"));
+
+        // Act
+        await _sut.InvokeAsync();
+
+        // Assert
+        await _threadingService.DidNotReceive().Batch(
+            Arg.Any<IEnumerable<Notification>>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<Func<Notification, CancellationToken, Task<bool>>>());
+    }
+
+    [Fact]
     public async Task InvokeAsync_should_match_changed_schools_with_recipients_and_trigger_notifications()
     {
         // Arrange
@@ -173,7 +201,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             n.Status == "Submitted" &&
             n.School == "School Two");
 
-        capturedNotifications.ShouldNotContain(n => n.LaeStab == "3333333");
+        capturedNotifications.Any(n => n.LaeStab == "3333333").ShouldBeFalse();
     }
 
     [Fact]

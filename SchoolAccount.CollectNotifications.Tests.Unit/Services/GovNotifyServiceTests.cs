@@ -73,23 +73,89 @@ public class GovNotifyServiceTests
     }
 
     [Fact]
-    public async Task SendMessage_should_return_failure_when_notify_client_throws_exception()
+    public async Task SendMessage_should_return_warning_when_email_address_is_invalid()
     {
         // Arrange
-        const string invalidEmail = "invalid-email";
-
         _notificationClient
-            .SendEmailAsync(invalidEmail, TemplateId, Arg.Any<Dictionary<string, dynamic>>(), Arg.Any<string>(),
-                Arg.Any<string>())
+            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns<EmailNotificationResponse>(_ =>
-                throw new NotifyClientException("Validation error: email address is not valid"));
+                throw new NotifyClientException("Status code 400: Not a valid email address"));
 
         // Act
-        var result = await _sut.SendMessage(TemplateId, invalidEmail);
+        var result = await _sut.SendMessage(TemplateId, Recipient);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.Error.ShouldBe("The recipient email address is invalid.");
+        result.Value.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task SendMessage_should_return_warning_when_team_member_restriction_is_encountered()
+    {
+        // Arrange
+        _notificationClient
+            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(), Arg.Any<string>(), Arg.Any<string>())
+            .Returns<EmailNotificationResponse>(_ =>
+                throw new NotifyClientException("Status code 400: can only send to team members with a trial API key"));
+
+        // Act
+        var result = await _sut.SendMessage(TemplateId, Recipient);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.Error.ShouldBe("Cannot send to non-team members with a test API key.");
+        result.Value.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task SendMessage_should_return_failure_when_rate_limit_exceeded()
+    {
+        // Arrange
+        _notificationClient
+            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(), Arg.Any<string>(), Arg.Any<string>())
+            .Returns<EmailNotificationResponse>(_ =>
+                throw new NotifyClientException("Status code 429: Exceeded rate limit for key"));
+
+        // Act
+        var result = await _sut.SendMessage(TemplateId, Recipient);
 
         // Assert
         result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldNotBeNull();
-        result.Error.ShouldContain("Validation error: email address is not valid");
+        result.Error.ShouldBe("Gov Notify rate limit exceeded.");
+    }
+
+    [Fact]
+    public async Task SendMessage_should_return_failure_when_auth_exception_is_thrown()
+    {
+        // Arrange
+        _notificationClient
+            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(), Arg.Any<string>(), Arg.Any<string>())
+            .Returns<EmailNotificationResponse>(_ =>
+                throw new NotifyAuthException("Invalid API key"));
+
+        // Act
+        var result = await _sut.SendMessage(TemplateId, Recipient);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBe("Authentication failed: Invalid API key");
+    }
+
+    [Fact]
+    public async Task SendMessage_should_return_failure_when_general_notify_client_exception_is_thrown()
+    {
+        // Arrange
+        _notificationClient
+            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(), Arg.Any<string>(), Arg.Any<string>())
+            .Returns<EmailNotificationResponse>(_ =>
+                throw new NotifyClientException("General service error"));
+
+        // Act
+        var result = await _sut.SendMessage(TemplateId, Recipient);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBe("General service error");
     }
 }

@@ -15,7 +15,6 @@ public class ThreadingServiceTests
         var options = Options.Create(new ThreadingOptions
         {
             BatchAmount = 2,
-            MaxDegreeOfParallelism = 2,
             BatchWaitAmountInSec = 0
         });
 
@@ -43,7 +42,6 @@ public class ThreadingServiceTests
         var options = Options.Create(new ThreadingOptions
         {
             BatchAmount = 2,
-            MaxDegreeOfParallelism = 1,
             BatchWaitAmountInSec = 0
         });
 
@@ -60,30 +58,31 @@ public class ThreadingServiceTests
         });
 
         // Assert
+        processed.ShouldContain(1);
+        processed.ShouldContain(2);
         processed.ShouldNotContain(3);
         processed.ShouldNotContain(4);
     }
 
     [Fact]
-    public async Task Batch_should_continue_processing_when_func_throws_exception()
+    public async Task Batch_should_catch_exception_in_func_and_stop_further_batches()
     {
         // Arrange
         var options = Options.Create(new ThreadingOptions
         {
-            BatchAmount = 3,
-            MaxDegreeOfParallelism = 1,
+            BatchAmount = 2,
             BatchWaitAmountInSec = 0
         });
 
         var sut = new ThreadingService(NullLogger<ThreadingService>.Instance, options);
         
-        var items = new List<int> { 1, 2, 3 };
+        var items = new List<int> { 1, 2, 3, 4 };
         var processed = new ConcurrentBag<int>();
 
         // Act
         await sut.Batch(items, CancellationToken.None, (item, _) =>
         {
-            if (item == 2)
+            if (item == 1)
             {
                 throw new InvalidOperationException("Simulated error");
             }
@@ -92,10 +91,11 @@ public class ThreadingServiceTests
             return Task.FromResult(true);
         });
 
-        // Arrange
-        processed.ShouldContain(1);
-        processed.ShouldContain(3);
-        processed.ShouldNotContain(2);
+        // Assert
+        processed.ShouldContain(2);
+        processed.ShouldNotContain(1);
+        processed.ShouldNotContain(3);
+        processed.ShouldNotContain(4);
     }
 
     [Fact]
@@ -105,8 +105,7 @@ public class ThreadingServiceTests
         var options = Options.Create(new ThreadingOptions
         {
             BatchAmount = 1,
-            MaxDegreeOfParallelism = 1,
-            BatchWaitAmountInSec = 0
+            BatchWaitAmountInSec = 1
         });
 
         var sut = new ThreadingService(NullLogger<ThreadingService>.Instance, options);
@@ -114,7 +113,7 @@ public class ThreadingServiceTests
         
         var items = new List<int> { 1, 2, 3, 4 };
 
-        // Act
+        // Act & Assert
         await Should.ThrowAsync<OperationCanceledException>(async () =>
         {
             await sut.Batch(items, cts.Token, (item, _) =>
