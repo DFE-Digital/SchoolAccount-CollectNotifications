@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="SchoolAccount.CollectNotifications/SchoolAccount.CollectNotifications.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="SchoolAccount.CollectNotifications.Tests.Common/SchoolAccount.CollectNotifications.Tests.Common.csproj" />
+    <Project Path="SchoolAccount.CollectNotifications.Tests.Unit/SchoolAccount.CollectNotifications.Tests.Unit.csproj" />
+    <Project Path="SchoolAccount.CollectNotifications.Tests.Integration/SchoolAccount.CollectNotifications.Tests.Integration.csproj" />
+  </Folder>
+  <Folder Name="/solution/">
+    <File Path=".gitignore" />
+    <File Path="README.md" />
+  </Folder>
+</Solution>

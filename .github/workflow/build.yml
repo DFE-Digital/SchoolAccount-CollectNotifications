@@ -1,0 +1,124 @@
+name: Collect Notifications Build and Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  DOTNET_VERSION: "10.x"
+  MIN_LINE_COVERAGE: "50"
+  MAIN_BRANCH: refs/heads/main
+  CONTAINERAPP_NAME: schoolaccount-collectnotifiations-app
+  CONTAINERAPP_RESOURCE_GROUP: s268d01rg-uks-sa-poc
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      checks: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Check formatting
+        run: |
+          dotnet tool restore
+          dotnet csharpier check .
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test SchoolAccount.CollectNotifications.Tests.Unit --configuration Release --no-restore --no-build -- --report-trx --coverage --coverage-output-format cobertura --coverage-settings ${{ github.workspace }}/coverage.config
+
+      - name: Test report
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: ${{ !cancelled() }}
+        with:
+          files: "TestResults/*.trx"
+
+      - name: Merge coverage reports and enforce threshold
+        if: ${{ !cancelled() }}
+        uses: danielpalme/ReportGenerator-GitHub-Action@5
+        with:
+          reports: "TestResults/*.cobertura.xml"
+          targetdir: TestResults/Merged
+          reporttypes: "Cobertura;MarkdownSummaryGithub"
+          customSettings: "minimumCoverageThresholds:lineCoverage=${{ env.MIN_LINE_COVERAGE }}"
+
+      - name: Write coverage job summary
+        if: ${{ !cancelled() }}
+        run: cat TestResults/Merged/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Add coverage comment to PR
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        uses: marocchino/sticky-pull-request-comment@v3
+        with:
+          path: TestResults/Merged/SummaryGithub.md
+
+      - name: Log in to GHCR
+        if: ${{ github.event_name == 'push' }}
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/dfe-digital/schoolaccount-collectapi
+          tags: |
+            type=sha
+            type=raw,value=latest,enable=${{ github.ref == env.MAIN_BRANCH }}
+            type=ref,event=branch
+
+      - name: Get SHA image tag
+        id: image
+        run: |
+          IMAGE=$(echo "${{ steps.meta.outputs.tags }}" | grep "sha-" | head -n 1)
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+      - name: Build & Push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: src/SchoolAccount.CollectNotifications/Dockerfile
+          target: final
+          push: ${{ github.ref == env.MAIN_BRANCH }}
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Publish
+        run: dotnet publish --configuration Release --no-restore --no-build
+
+      - name: Azure Login
+        if: github.event_name == 'push' && github.ref == env.MAIN_BRANCH
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Update ACA Image
+        if: github.event_name == 'push' && github.ref == env.MAIN_BRANCH
+        run: |
+          az containerapp update \
+            --name ${{ env.CONTAINERAPP_NAME }} \
+            --resource-group ${{ env.CONTAINERAPP_RESOURCE_GROUP }} \
+            --image ${{ steps.image.outputs.image }}
