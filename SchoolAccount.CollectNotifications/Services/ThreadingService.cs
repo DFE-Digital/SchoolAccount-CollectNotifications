@@ -18,7 +18,7 @@ public class ThreadingService(
         {
             var batch = batches[b];
             
-            logger.LogInformation($"Batch {b + 1}/{batch.Length}: Starting a new batch of {batch.Length} items");
+            logger.LogInformation($"Batch {b + 1}/{batches.Count}: Starting a new batch of {batch.Length} items");
 
             var actions = batch.Select(async (source, i) =>
             {
