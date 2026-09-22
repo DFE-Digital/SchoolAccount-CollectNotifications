@@ -15,14 +15,13 @@ isn't one, it falls back to `1753-01-01` (the SQL Server minimum date).
 compared with the row immediately before it, and it counts as changed if the `ReturnStatusCode` differs, or if there 
 is no earlier row. Only changes where either end is Approved or Authorised are returned.
 3. **Save the run time.** Writes the time this run started (UTC) back to `JobStatus`.
-4. **Send emails.** Sends the notifications through GOV.UK Notify in rate-limited, parallel batches using the 
-`CensusStatusChange` template.
+4. **Send emails.** Sends each notification through GOV.UK Notify using the `CensusStatusChange` template. A
+problem with one recipient is logged and skipped; a rate limit or an authentication failure stops the run.
 
 ```mermaid
 flowchart LR
     C[(Ledger DB<br/>CollectReturnStatus<br/>RegisteredUsers, JobStatus)] <--> D[StatusChangedLedgerMonitoringService]
-    D --> E[ThreadingService<br/>batched + parallel]
-    E --> F[GOV.UK Notify]
+    D --> F[GOV.UK Notify]
 ```
 
 ### GOV.UK Notify template
@@ -52,24 +51,15 @@ user secrets. Options marked as required are validated when the app starts, so i
 | `GovNotify:ApiKey`      | Yes      | Notify API key |
 | `GovNotify:FromAddress` | No       | Passed to Notify as the reply-to value |
 
-### Threading
-
-Controls how emails are sent so we stay within Notify's rate limits.
-
-| Key                               | Default | Description |
-| --------------------------------- | ------- | ----------- |
-| `Threading:MaxDegreeOfParallelism` | `10`   | Emails sent at the same time within a batch |
-| `Threading:BatchAmount`           | `50`    | Emails per batch |
-| `Threading:BatchWaitAmountInSec`  | `10`    | Pause between batches |
-| `Threading:ItemWaitAmountInSec`   | `1`     | Not used yet |
-
-If any send fails, the remaining batches are stopped.
-
 ### Census
 
-| Key                      | Default | Description |
-| ------------------------ | ------- | ----------- |
-| `Census:AllowedStatuses` | `[]`    | Optional list of approved return status codes (`ReturnStatusCodes`) to filter notifications against |
+All three are required. Each one fails quietly if it isn't set, so they're validated at startup.
+
+| Key                      | Description |
+| ------------------------ | ----------- |
+| `Census:Collection`      | The collection to watch, matching the `Collection` column the ledger procedure writes, for example `SchoolCensus2025_Spring` |
+| `Census:JobName`         | Names this job's row in the ledger's `JobStatus` table, where the last run date lives |
+| `Census:AllowedStatuses` | The statuses that make a change notifiable at either end of the transition (`ReturnStatusCodes`) |
 
 ### Example `appsettings.Development.json`
 
@@ -80,10 +70,6 @@ If any send fails, the remaining batches are stopped.
   },
   "GovNotify": {                    // Required.
     "ApiKey": ""                    // Required. Api from GovNotify.
-  },
-  "Threading": {                    
-    "BatchAmount": 50,
-    "BatchWaitAmountInSec": 10
   },
   "Census": {                       // Required.
     "AllowedStatuses": [],          // Required. The enum or int values of the ReturnStatueCodes which are allowed.
@@ -167,20 +153,11 @@ dotnet test SchoolAccount.CollectNotifications.Tests.Integration
 
 ### Test coverage
 
-#### **`ThreadingService`** by `ThreadingServiceTests`
-- Processing all items across configured batch chunks and degrees of parallelism.
-- Aborting subsequent batches when a worker callback returns `false` (e.g. rate limiting or send failure).
-- Exception resilience within batches without unhandled worker crashes.
-- Handling cancellation tokens and throwing `OperationCanceledException` directions.
-
-#### **Workflow Orchestration** by `StatusChangedLegerMonitoringServiceTests`
+#### **Workflow Orchestration** by `StatusChangedLedgerMonitoringServiceTests`
 - Validating end-to-end processing pipeline across the ledger queries and run tracking.
 - Skipping invalid or incomplete recipient records.
 - Matching changed schools to recipients and building notification payloads.
-- Passing notification batches into `IThreadingService` and executing GOV.UK Notify dispatches.
-
-#### **Store Filtering & Ledger Extensions** by `LedgerStoreExtensionsTests`
-- Filtering ledger return status records against configured approved census statuses (matching current, first, or baseline status codes).
+- Sending each notification through GOV.UK Notify, and what happens when one is rejected or the service fails.
 
 #### **GOV.UK Notify Integration** by `GovNotifyServiceTests`
 - Template personalisation and reply-to configuration.
@@ -192,7 +169,7 @@ dotnet test SchoolAccount.CollectNotifications.Tests.Integration
 
 #### **Test Data Builders** located in `Builders/`
 - Fluent builder helpers to create clean, reusable test fixtures:
-  - `CollectReturnStatusBuilder` to build a ledger row (`ComparableCollectReturnStatus`);
+  - `CollectReturnStatusBuilder` to build a ledger row (`CensusStatusChange`);
   - `NotificationBuilder` to allow us to emulate sending a request to the GovNotify service.
 
 #### **App Initialisation Tests** by `InitialisationTests`
@@ -248,7 +225,7 @@ The run date is stored in UTC, so the `UpdatedAt` values in the ledger are expec
 ```
 SchoolAccount.CollectNotifications/
 ├── Extensions/        # Dependency injection and options setup
-├── Interfaces/        # IDbConnectionFactory, ILastRanService, ILedgerStore, IThreadingService
+├── Interfaces/        # IDbConnectionFactory, IGovNotifyService, ILastRanService, ILedgerStore
 ├── Models/
 │   ├── Databases/     # Marker types used to tell database connections apart
 │   ├── Dtos/          # CensusStatusChange, Notification, NotificationResult
@@ -259,7 +236,6 @@ SchoolAccount.CollectNotifications/
 │   ├── GovNotifyService.cs
 │   ├── LastRanService.cs   # Last run time, in the ledger JobStatus table
 │   ├── StatusChangedLedgerMonitoringService.cs  # Main workflow
-│   └── ThreadingService.cs                      # Batched, parallel processing
 ├── Stores/
 │   └── LedgerStore.cs # Status change query, joined to registered recipients
 ├── Dockerfile
