@@ -16,6 +16,12 @@ public class LastRanService(
     IOptions<CensusOptions> censusOptions
 ) : ILastRanService
 {
+    /// <summary>
+    /// What we report when the job has no row yet. Everything in the ledger is after this, so a
+    /// run starting from here treats the whole history as new.
+    /// </summary>
+    public static readonly DateTime NeverRun = (DateTime)SqlDateTime.MinValue;
+
     public async Task<Result<DateTime>> GetTimestampAsync(CancellationToken cancellationToken = default)
     {
         const string sql = """
@@ -32,15 +38,11 @@ public class LastRanService(
                 new { Name = censusOptions.Value.JobName },
                 cancellationToken: cancellationToken));
 
-        // No row yet means we have never run. Everything in the ledger then counts as new, so the
-        // row wants seeding at deploy rather than being left to default.
-        return Result.Success(lastRun ?? (DateTime)SqlDateTime.MinValue);
+        return Result.Success(lastRun ?? NeverRun);
     }
 
     public async Task<Result> SetTimestampAsync(DateTime timestamp, CancellationToken cancellationToken = default)
     {
-        // One row per job, so update it if it is there and insert it if it isn't. A single nightly
-        // writer, so there is no race worth using MERGE for.
         const string sql = """
                            UPDATE JobStatus
                            SET LastRun = @LastRun

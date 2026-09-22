@@ -226,14 +226,20 @@ docker run --rm \
 
 ## First run behaviour
 
-When this job has no row in `JobStatus`, the last run date falls back to `1753-01-01`. This means **every school
-with a ledger row and a registered user counts as changed, so everyone gets an email.**
+When this job has no row in `JobStatus`, everything in the ledger counts as new, which would email every school
+about every qualifying change it has ever had. So the first run doesn't send anything. It records the time it
+started, logs a warning saying so, and exits. The run after that behaves normally.
 
-To avoid this, seed the row before the first real run:
+There is no deployment step for this, but it does mean the first scheduled run after go-live is a no-op.
+
+To deliberately notify from an earlier point, set the job's `LastRun` to that date and run again:
 
 ```sql
-INSERT INTO JobStatus (Name, LastRun) VALUES ('<Census:JobName>', GETUTCDATE());
+UPDATE JobStatus SET LastRun = '2026-09-01' WHERE Name = '<Census:JobName>';
 ```
+
+Be careful with how far back you go. Every qualifying change since that date is notified, so a date before the
+collection opened will mail a lot of schools at once.
 
 The run date is stored in UTC, so the `UpdatedAt` values in the ledger are expected to be in UTC too.
 

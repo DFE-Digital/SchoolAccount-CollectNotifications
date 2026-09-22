@@ -61,6 +61,36 @@ public class StatusChangedLedgerMonitoringServiceTests
     }
 
     [Fact]
+    public async Task InvokeAsync_should_record_where_we_are_and_send_nothing_when_there_is_no_previous_run()
+    {
+        // Without this the first run treats the whole ledger as new and emails every school about
+        // every qualifying change it has ever had.
+
+        // Arrange
+        _lastRanService
+            .GetTimestampAsync(Arg.Any<CancellationToken>())
+            .Returns(Result.Success(LastRanService.NeverRun));
+
+        _lastRanService
+            .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Success());
+
+        // Act
+        await _sut.InvokeAsync();
+
+        // Assert
+        await _lastRanService.Received(1).SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+
+        await _ledgerStore.DidNotReceive().GetWhatHasChangedAsync(
+            Arg.Any<DateTime>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+
+        await _threadingService.DidNotReceive().Batch(
+            Arg.Any<IEnumerable<Notification>>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<Func<Notification, CancellationToken, Task<bool>>>());
+    }
+
+    [Fact]
     public async Task InvokeAsync_should_abort_workflow_when_retrieving_ledger_changes_fails()
     {
         // Arrange

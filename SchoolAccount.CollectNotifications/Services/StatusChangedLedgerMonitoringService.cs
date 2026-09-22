@@ -30,6 +30,22 @@ public class StatusChangedLedgerMonitoringService(
 
         logger.LogInformation("Service last run {lastRan}", lastRan.Value);
 
+        if (lastRan.Value == LastRanService.NeverRun)
+        {
+            logger.LogWarning(
+                "No previous run recorded for this job. Setting the last run date to {runningAt} and sending nothing this time",
+                runningAt);
+
+            var seeded = await lastRanService.SetTimestampAsync(runningAt, cancellationToken);
+
+            if (seeded.IsFailure)
+            {
+                logger.LogWarning("Seeding the last run date failed: {error}", seeded.Error);
+            }
+
+            return;
+        }
+
         var changes = await ledgerStore.GetWhatHasChangedAsync(lastRan.Value, true, cancellationToken);
 
         if (changes.IsFailure)
