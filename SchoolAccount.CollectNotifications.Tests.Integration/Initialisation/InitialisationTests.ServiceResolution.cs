@@ -3,7 +3,6 @@ using Microsoft.Extensions.Hosting;
 using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Services;
-using SchoolAccount.CollectNotifications.Services.BlobStorage;
 using SchoolAccount.CollectNotifications.Stores;
 
 namespace SchoolAccount.CollectNotifications.Tests.Integration.Initialisation;
@@ -22,7 +21,6 @@ public partial class InitialisationTests
 
         sp.GetRequiredService<StatusChangedLedgerMonitoringService>().ShouldNotBeNull();
         sp.GetRequiredService<ILedgerStore>().ShouldBeOfType<LedgerStore>();
-        sp.GetRequiredService<IBlobStorageService>().ShouldBeOfType<BlankedBlobStorageService>();
         sp.GetRequiredService<IThreadingService>().ShouldBeOfType<ThreadingService>();
         sp.GetRequiredService<ILastRanService>().ShouldBeOfType<LastRanService>();
         sp.GetRequiredService<IGovNotifyService>().ShouldBeOfType<GovNotifyService>();

@@ -38,7 +38,6 @@ public static class HostBuilderExtensions
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
     
-            services.AddAzureBlobStorage(hostContext.Configuration);
     
             services.AddDatabase<LedgerDatabase>(hostContext.Configuration);
             services.AddSingleton<ILedgerStore, LedgerStore>();

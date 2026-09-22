@@ -8,20 +8,19 @@ schedule, running on a Azure Container App Jobs.
 
 Each run does the following:
 
-1. **Get the last run time.** Reads `{containerName}/collect/lastran.json` from Azure Blob Storage. If there isn't one, 
-it falls back to `1753-01-01` (the SQL Server minimum date).
+1. **Get the last run time.** Reads this job's row from the `JobStatus` table in the ledger database. If there
+isn't one, it falls back to `1753-01-01` (the SQL Server minimum date).
 2. **Find status changes.** Queries the `CollectReturnStatus` table in the ledger database, joined to 
 `RegisteredUsers` so each change arrives already paired with the people to tell. For each school the latest row is 
 compared with the row immediately before it, and it counts as changed if the `ReturnStatusCode` differs, or if there 
 is no earlier row. Only changes where either end is Approved or Authorised are returned.
-3. **Save the run time.** Writes the time this run started (UTC) back to blob storage.
+3. **Save the run time.** Writes the time this run started (UTC) back to `JobStatus`.
 4. **Send emails.** Sends the notifications through GOV.UK Notify in rate-limited, parallel batches using the 
 `CensusStatusChange` template.
 
 ```mermaid
 flowchart LR
-    B[(Azure Blob<br/>lastran.json)] <--> D
-    C[(Ledger DB<br/>CollectReturnStatus<br/>+ RegisteredUsers)] --> D[StatusChangedLedgerMonitoringService]
+    C[(Ledger DB<br/>CollectReturnStatus<br/>RegisteredUsers, JobStatus)] <--> D[StatusChangedLedgerMonitoringService]
     D --> E[ThreadingService<br/>batched + parallel]
     E --> F[GOV.UK Notify]
 ```
@@ -53,20 +52,6 @@ user secrets. Options marked as required are validated when the app starts, so i
 | `GovNotify:ApiKey`      | Yes      | Notify API key |
 | `GovNotify:FromAddress` | No       | Passed to Notify as the reply-to value |
 
-### Azure Blob Storage (optional)
-
-Used to remember when the app last ran. Set **either** a connection string **or** a service URI. With a service URI, the 
-app signs in using `DefaultAzureCredential` (managed identity, Azure CLI login, and so on).
-
-| Key                                 | Description |
-| ----------------------------------- | ----------- |
-| `AzureBlobStorage:ConnectionString` | Storage account connection string |
-| `AzureBlobStorage:ServiceUri`       | For example `https://<account>.blob.core.windows.net` |
-| `AzureBlobStorage:ContainerName`    | Container that holds `schoolaccount/collect/lastran.json` |
-
-If neither value is set, the app uses a blank storage service instead of failing. Nothing is saved, and every run is 
-treated as a first run (see [first run behaviour](#first-run-behaviour)).
-
 ### Threading
 
 Controls how emails are sent so we stay within Notify's rate limits.
@@ -96,17 +81,13 @@ If any send fails, the remaining batches are stopped.
   "GovNotify": {                    // Required.
     "ApiKey": ""                    // Required. Api from GovNotify.
   },
-  "AzureBlobStorage": {             // Optional.
-    "ConnectionString": "",         // Required. The site address to where the blob is contained.
-    "ContainerName": ""             // Required. The container's name.
-  },
   "Threading": {                    
     "BatchAmount": 50,
     "BatchWaitAmountInSec": 10
   },
   "Census": {                       // Required.
     "AllowedStatuses": [],          // Required. The enum or int values of the ReturnStatueCodes which are allowed.
-    "LastRunBlobName": ""           // Optional. The file path of where the last ran object is stored. If this is empty it will always defualt to SqlDateTime.MinValue.
+    "JobName": ""                   // Required. Names this job's row in the ledger JobStatus table.
   }
 }
 ```
@@ -115,7 +96,6 @@ If any send fails, the remaining batches are stopped.
 
 ### Prerequisites
 
-> For local development with Azure Blob, there is [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite).
 > Currently still investigating this as of 15 Sep 26.
 
 #### Required
@@ -194,7 +174,7 @@ dotnet test SchoolAccount.CollectNotifications.Tests.Integration
 - Handling cancellation tokens and throwing `OperationCanceledException` directions.
 
 #### **Workflow Orchestration** by `StatusChangedLegerMonitoringServiceTests`
-- Validating end-to-end processing pipeline from blob tracking through to the ledger queries.
+- Validating end-to-end processing pipeline across the ledger queries and run tracking.
 - Skipping invalid or incomplete recipient records.
 - Matching changed schools to recipients and building notification payloads.
 - Passing notification batches into `IThreadingService` and executing GOV.UK Notify dispatches.
@@ -206,8 +186,8 @@ dotnet test SchoolAccount.CollectNotifications.Tests.Integration
 - Template personalisation and reply-to configuration.
 - Error wrapping on Notify client failures.
 
-#### **Blob Storage & Run Tracking** by `AzureBlobStorageServiceTests` & `LastRanServiceTests`
-- Handling blob downloads, 404 missing states, JSON serialisation, and Azure authentication errors.
+#### **Run Tracking** by `LastRanServiceIntegrationTests`
+- Reading and writing this job's row in `JobStatus`, including the never-run case and not adding a second row.
 - Fallback to minimum SQL Server timestamp on initial runs.
 
 #### **Test Data Builders** located in `Builders/`
@@ -217,7 +197,6 @@ dotnet test SchoolAccount.CollectNotifications.Tests.Integration
 
 #### **App Initialisation Tests** by `InitialisationTests`
   - `InitialisationTests.ServiceResolution.cs`: Host container bootstrapping, environment verification, and core service resolution.
-  - `InitialisationTests.BlobStorageRegistration.cs`: Blob storage service registration (ConnectionString vs ServiceUri vs Blanked fallback).
   - `InitialisationTests.OptionsValidation.cs`: Fail-fast startup validation for required API keys, paths, and options binding.
 
 #### **Ledger database integration+** by `LedgerStoreIntegrationTests`
@@ -247,12 +226,13 @@ docker run --rm \
 
 ## First run behaviour
 
-When there is no `lastran.json` (or blob storage isn't configured), the last run date falls back to `1753-01-01`. This means **every school with a ledger row and a registered user counts as changed, so everyone gets an email.**
+When this job has no row in `JobStatus`, the last run date falls back to `1753-01-01`. This means **every school
+with a ledger row and a registered user counts as changed, so everyone gets an email.**
 
-To avoid this, create the blob before the first real run. `runDate` is an OLE Automation date (days since 30 December 1899), for example `46280.0` is 15 September 2026:
+To avoid this, seed the row before the first real run:
 
-```json
-{ "runDate": 46280.0 }
+```sql
+INSERT INTO JobStatus (Name, LastRun) VALUES ('<Census:JobName>', GETUTCDATE());
 ```
 
 The run date is stored in UTC, so the `UpdatedAt` values in the ledger are expected to be in UTC too.
@@ -262,7 +242,7 @@ The run date is stored in UTC, so the `UpdatedAt` values in the ledger are expec
 ```
 SchoolAccount.CollectNotifications/
 ├── Extensions/        # Dependency injection and options setup
-├── Interfaces/        # IBlobStorageService, IDbConnectionFactory, ILedgerStore, IThreadingService
+├── Interfaces/        # IDbConnectionFactory, ILastRanService, ILedgerStore, IThreadingService
 ├── Models/
 │   ├── Databases/     # Marker types used to tell database connections apart
 │   ├── Dtos/          # CensusStatusChange, Notification, NotificationResult
@@ -270,13 +250,12 @@ SchoolAccount.CollectNotifications/
 │   ├── Options/       # Strongly typed configuration
 │   └── Result.cs      # Result / Result<T> for handling errors without exceptions
 ├── Services/
-│   ├── BlobStorage/   # Azure implementation and a blank fallback
 │   ├── GovNotifyService.cs
-│   ├── LastRanService.cs
-│   ├── StatusChangedLegerMonitoringService.cs   # Main workflow
+│   ├── LastRanService.cs   # Last run time, in the ledger JobStatus table
+│   ├── StatusChangedLedgerMonitoringService.cs  # Main workflow
 │   └── ThreadingService.cs                      # Batched, parallel processing
 ├── Stores/
-│   └── LedgerStore.cs # Status change query and status filter extensions
+│   └── LedgerStore.cs # Status change query, joined to registered recipients
 ├── Dockerfile
 └── Program.cs
 
@@ -300,7 +279,7 @@ SchoolAccount.CollectNotifications.Tests.Integration/
 | ------- | -------- |
 | `Dapper` + `Microsoft.Data.SqlClient` | Querying SQL Server |
 | `GovukNotify` | Sending emails |
-| `Azure.Storage.Blobs` + `Azure.Identity` | Storing the last run date |
+| `Azure.Identity` | Authenticating to Azure App Configuration |
 
 ### Code Coverage
 

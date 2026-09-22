@@ -7,7 +7,10 @@ public sealed class CensusOptions
     public const string SectionName = "Census";
 
     public List<ReturnStatusCodes> AllowedStatuses { get; init; } = [];
-    public string LastRunBlobName { get; init; } = string.Empty;
+    /// <summary>
+    /// Identifies this job's row in the ledger's JobStatus table, where the last run time lives.
+    /// </summary>
+    public string JobName { get; init; } = string.Empty;
 
     /// <summary>
     /// The collection to watch, matching the Collection column the ledger procedure writes,

@@ -52,7 +52,7 @@ public partial class InitialisationTests
         const int testThreadingBatchAmount = 100;
         const int testThreadingBatchWaitAmountInSec = 5;
         const int testThreadingItemWaitAmountInSec = 2;
-        const string testLastRunBlobName = "schoolaccount/collect/lastran.json";
+        const string testJobName = "collect-notifications";
         
         // Arrange
         using var host = CreateHost(new Dictionary<string, string?>
@@ -63,7 +63,7 @@ public partial class InitialisationTests
             ["Census:AllowedStatuses:0"] = "7",
             ["Census:AllowedStatuses:1"] = "10",
             ["Census:AllowedStatuses:2"] = "1",
-            ["Census:LastRunBlobName"] = testLastRunBlobName
+            ["Census:JobName"] = testJobName
         });
 
         // Act
@@ -85,7 +85,7 @@ public partial class InitialisationTests
                 ReturnStatusCodes.Authorised,
                 ReturnStatusCodes.NoData
             ]),
-            x => x.LastRunBlobName.ShouldBe(testLastRunBlobName)
+            x => x.JobName.ShouldBe(testJobName)
         );
     }
 }
