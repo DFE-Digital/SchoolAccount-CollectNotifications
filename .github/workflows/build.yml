@@ -46,7 +46,7 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test SchoolAccount.CollectNotifications.Tests.Unit --configuration Release --no-restore --no-build -- --report-trx --coverage --coverage-output-format cobertura --coverage-settings ${{ github.workspace }}/coverage.config
+        run: dotnet test SchoolAccount.CollectNotifications.Tests.Unit --configuration Release --no-restore --no-build -- --report-trx --coverage --coverage-output-format cobertura --coverage-settings ${{ github.workspace }}/.config/coverage.config
 
       - name: Test report
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -85,7 +85,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/dfe-digital/schoolaccount-collectapi
+          images: ghcr.io/dfe-digital/schoolaccount-collectnotifications
           tags: |
             type=sha
             type=raw,value=latest,enable=${{ github.ref == env.MAIN_BRANCH }}
@@ -101,7 +101,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: src/SchoolAccount.CollectNotifications/Dockerfile
+          file: SchoolAccount.CollectNotifications/Dockerfile
           target: final
           push: ${{ github.ref == env.MAIN_BRANCH }}
           tags: ${{ steps.meta.outputs.tags }}
