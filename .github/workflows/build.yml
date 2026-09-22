@@ -13,8 +13,8 @@ env:
   DOTNET_VERSION: "10.x"
   MIN_LINE_COVERAGE: "50"
   MAIN_BRANCH: refs/heads/main
-  CONTAINERAPP_NAME: schoolaccount-collectnotifiations-app
-  CONTAINERAPP_RESOURCE_GROUP: s268d01rg-uks-sa-poc
+  CONTAINERAPP_NAME: schoolaccount-collectnotifications-app
+  CONTAINERAPP_RESOURCE_GROUP: s268d01rg-uks-sa-ace
 
 jobs:
   build:
