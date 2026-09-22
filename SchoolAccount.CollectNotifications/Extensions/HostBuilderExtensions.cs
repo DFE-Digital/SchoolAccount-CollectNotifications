@@ -10,44 +10,41 @@ namespace SchoolAccount.CollectNotifications.Extensions;
 
 public static class HostBuilderExtensions
 {
-    public static IHostBuilder Configure(this IHostBuilder builder)
+    private const string IntegrationTestEnvironment = "IntegrationTest";
+
+    public static HostApplicationBuilder Configure(this HostApplicationBuilder builder)
     {
-        builder.ConfigureAppConfiguration((hostContext, configBuilder) =>
+        if (!builder.Environment.IsDevelopment()
+            && !builder.Environment.IsEnvironment(IntegrationTestEnvironment))
         {
-            if (!hostContext.HostingEnvironment.IsDevelopment() 
-                && !hostContext.HostingEnvironment.IsEnvironment("IntegrationTest"))
-            {
-                configBuilder.AddAzureAppConfiguration();
-            }
-        });
-        
-        builder.ConfigureServices((hostContext, services) =>
-        {
-            services.AddOptions<GovNotifyOptions>()
-                .Bind(hostContext.Configuration.GetSection(GovNotifyOptions.SectionName))
-                .ValidateDataAnnotations()
-                .ValidateOnStart();
-    
-            services.AddOptions<ThreadingOptions>()
-                .Bind(hostContext.Configuration.GetSection(ThreadingOptions.SectionName))
-                .ValidateDataAnnotations()
-                .ValidateOnStart();
-    
-            services.AddOptions<CensusOptions>()
-                .Bind(hostContext.Configuration.GetSection(CensusOptions.SectionName))
-                .ValidateDataAnnotations()
-                .ValidateOnStart();
-    
-    
-            services.AddDatabase<LedgerDatabase>(hostContext.Configuration);
-            services.AddSingleton<ILedgerStore, LedgerStore>();
-    
-            services.AddSingleton<IThreadingService, ThreadingService>();
-            services.AddSingleton<ILastRanService, LastRanService>();
-            services.AddSingleton<IGovNotifyService, GovNotifyService>();
-            services.AddSingleton<StatusChangedLedgerMonitoringService>();
-        });
+            var endpoint = builder.Configuration["AzureAppConfiguration:Endpoint"]
+                           ?? throw new InvalidOperationException(
+                               "The setting `AzureAppConfiguration:Endpoint` was not found.");
+
+            builder.Configuration.AddAzureAppConfiguration(endpoint);
+        }
+
+        builder.AddValidatedOptions<GovNotifyOptions>(GovNotifyOptions.SectionName);
+        builder.AddValidatedOptions<ThreadingOptions>(ThreadingOptions.SectionName);
+        builder.AddValidatedOptions<CensusOptions>(CensusOptions.SectionName);
+
+        builder.Services.AddDatabase<LedgerDatabase>(builder.Configuration);
+        builder.Services.AddSingleton<ILedgerStore, LedgerStore>();
+
+        builder.Services.AddSingleton<IThreadingService, ThreadingService>();
+        builder.Services.AddSingleton<ILastRanService, LastRanService>();
+        builder.Services.AddSingleton<IGovNotifyService, GovNotifyService>();
+        builder.Services.AddSingleton<StatusChangedLedgerMonitoringService>();
 
         return builder;
+    }
+
+    private static void AddValidatedOptions<TOptions>(this HostApplicationBuilder builder, string sectionName)
+        where TOptions : class
+    {
+        builder.Services.AddOptions<TOptions>()
+            .Bind(builder.Configuration.GetSection(sectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
     }
 }

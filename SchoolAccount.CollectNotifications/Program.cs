@@ -3,7 +3,7 @@ using Microsoft.Extensions.Hosting;
 using SchoolAccount.CollectNotifications.Extensions;
 using SchoolAccount.CollectNotifications.Services;
 
-using var app = Host.CreateDefaultBuilder(args).Configure().Build();
+using var app = Host.CreateApplicationBuilder(args).Configure().Build();
 
 // Starting the host is what runs the options validation registered by ValidateOnStart. Building it
 // alone doesn't, so without this a missing setting surfaces partway through a run, when something

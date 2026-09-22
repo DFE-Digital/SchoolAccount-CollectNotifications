@@ -53,10 +53,16 @@ public partial class InitialisationTests
             config[kvp.Key] = kvp.Value;
         }
 
-        return new HostBuilder()
-            .UseEnvironment("IntegrationTest")
-            .ConfigureAppConfiguration(builder => builder.AddInMemoryCollection(config))
-            .Configure()
-            .Build();
+        // DisableDefaults keeps this hermetic. Without it the builder picks up environment
+        // variables and appsettings from wherever the tests happen to be running.
+        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
+        {
+            EnvironmentName = "IntegrationTest",
+            DisableDefaults = true
+        });
+
+        builder.Configuration.AddInMemoryCollection(config);
+
+        return builder.Configure().Build();
     }
 }
