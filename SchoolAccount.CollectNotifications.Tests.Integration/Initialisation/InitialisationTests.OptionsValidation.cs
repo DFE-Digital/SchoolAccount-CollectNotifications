@@ -1,8 +1,5 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using SchoolAccount.CollectNotifications.Extensions;
 using SchoolAccount.CollectNotifications.Models.Enums;
 using SchoolAccount.CollectNotifications.Models.Options;
 
@@ -11,7 +8,7 @@ namespace SchoolAccount.CollectNotifications.Tests.Integration.Initialisation;
 public partial class InitialisationTests
 {
     [Fact]
-    public async Task ConfigureService_should_throw_options_validation_exception_on_host_start_when_gov_notify_api_key_is_missing()
+    public async Task Should_throw_options_validation_exception_on_host_start_when_gov_notify_api_key_is_missing()
     {
         // Arrange
         using var host = CreateHost(new Dictionary<string, string?>
@@ -29,7 +26,7 @@ public partial class InitialisationTests
     }
 
     [Fact]
-    public async Task ConfigureService_should_throw_options_validation_exception_on_host_start_when_gov_notify_from_address_is_invalid()
+    public async Task Should_throw_options_validation_exception_on_host_start_when_gov_notify_from_address_is_invalid()
     {
         // Arrange
         using var host = CreateHost(new Dictionary<string, string?>
@@ -46,8 +43,48 @@ public partial class InitialisationTests
         exception.OptionsType.ShouldBe(typeof(GovNotifyOptions));
     }
 
+    [Theory]
+    [InlineData("Census:JobName")]
+    [InlineData("Census:Collection")]
+    public async Task Should_throw_options_validation_exception_on_host_start_when_a_required_census_setting_is_missing(
+        string settingKey)
+    {
+        // Arrange
+        using var host = CreateHost(new Dictionary<string, string?>
+        {
+            [settingKey] = "",
+        });
+
+        // Act & Assert
+        var exception = await Should.ThrowAsync<OptionsValidationException>(async () =>
+        {
+            await host.StartAsync();
+        });
+
+        exception.OptionsType.ShouldBe(typeof(CensusOptions));
+    }
+
     [Fact]
-    public void ConfigureService_should_bind_threading_and_census_options_correctly_when_valid_values_are_provided()
+    public async Task Should_throw_options_validation_exception_on_host_start_when_no_allowed_statuses_are_configured()
+    {
+        // Arrange
+        using var host = CreateHost(new Dictionary<string, string?>
+        {
+            ["Census:AllowedStatuses:0"] = null,
+            ["Census:AllowedStatuses:1"] = null,
+        });
+
+        // Act & Assert
+        var exception = await Should.ThrowAsync<OptionsValidationException>(async () =>
+        {
+            await host.StartAsync();
+        });
+
+        exception.OptionsType.ShouldBe(typeof(CensusOptions));
+    }
+
+    [Fact]
+    public void Should_bind_threading_and_census_options_correctly_when_valid_values_are_provided()
     {
         const int testThreadingBatchAmount = 100;
         const int testThreadingBatchWaitAmountInSec = 5;
