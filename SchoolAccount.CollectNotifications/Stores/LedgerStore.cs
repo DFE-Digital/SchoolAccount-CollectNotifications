@@ -18,61 +18,59 @@ public class LedgerStore(
         bool limitToApprovedStatuses = true,
         CancellationToken cancellationToken = default)
     {
-        // Recipients are joined after the ranking, not before. Joining RegisteredUsers inside the
-        // CTE multiplies each ledger row by the number of registered contacts, so rn 1 and rn 2
-        // both end up being the same ledger row with different emails, their statuses compare
-        // equal, and a school with more than one contact is silently never notified.
+        // The rules are written as start status to end status, so they are applied to each
+        // transition rather than to the net difference across the window. If we miss a run, a
+        // return that reached Approved and then came off it again still produces both
+        // notifications, because both rows are sitting in the ledger waiting to be read.
+        //
+        // LAG gives each row the status of the row before it, so there is no self join and no
+        // rank. Recipients are joined after the window function, not inside it: joining them
+        // first multiplies the rows and the window ends up counting rows times emails.
         var statusFilter = limitToApprovedStatuses
             ? """
                 AND (
-                    curr.ReturnStatusCode IN @NotifiableStatuses
-                    OR prev.ReturnStatusCode IN @NotifiableStatuses
+                    h.ReturnStatusCode IN @NotifiableStatuses
+                    OR h.PreviousReturnStatusCode IN @NotifiableStatuses
                 )
               """
             : string.Empty;
 
         var sql = $"""
-                   WITH Ranked AS (
+                   WITH History AS (
                        SELECT
-                           Id,
                            SchoolName,
                            LAEStab,
                            ReturnStatusCode,
                            UpdatedAt,
                            Collection,
                            DCID,
-                           ROW_NUMBER() OVER (
+                           LAG(ReturnStatusCode) OVER (
                                PARTITION BY LAEStab, Collection
-                               ORDER BY UpdatedAt DESC, Id DESC
-                           ) AS Rn
+                               ORDER BY UpdatedAt, Id
+                           ) AS PreviousReturnStatusCode
                        FROM CollectReturnStatus
                        WHERE Collection = @Collection
                    )
                    SELECT
-                       curr.SchoolName,
-                       curr.LAEStab AS LaeStab,
+                       h.SchoolName,
+                       h.LAEStab AS LaeStab,
                        ru.Email,
-                       curr.ReturnStatusCode,
-                       prev.ReturnStatusCode AS PreviousReturnStatusCode,
-                       curr.UpdatedAt,
-                       curr.Collection,
-                       curr.DCID AS DcId
-                   FROM Ranked curr
-                       LEFT JOIN Ranked prev
-                           ON prev.LAEStab = curr.LAEStab
-                           AND prev.Collection = curr.Collection
-                           AND prev.Rn = 2
+                       h.ReturnStatusCode,
+                       h.PreviousReturnStatusCode,
+                       h.UpdatedAt,
+                       h.Collection,
+                       h.DCID AS DcId
+                   FROM History h
                        INNER JOIN RegisteredUsers ru
-                           ON ru.LAEStab = curr.LAEStab
+                           ON ru.LAEStab = h.LAEStab
                    WHERE
-                       curr.Rn = 1
-                       AND curr.UpdatedAt >= @LastRunDate
+                       h.UpdatedAt >= @LastRunDate
                        AND (
-                           prev.ReturnStatusCode IS NULL
-                           OR curr.ReturnStatusCode <> prev.ReturnStatusCode
+                           h.PreviousReturnStatusCode IS NULL
+                           OR h.ReturnStatusCode <> h.PreviousReturnStatusCode
                        )
                        {statusFilter}
-                   ORDER BY curr.LAEStab, ru.Email;
+                   ORDER BY h.LAEStab, h.UpdatedAt, ru.Email;
                    """;
 
         await using var conn = await factory.OpenAsync(cancellationToken);

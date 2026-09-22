@@ -102,10 +102,10 @@ public partial class LedgerStoreIntegrationTests
     }
 
     [Fact]
-    public async Task When_getting_what_has_changed_it_should_compare_the_latest_row_against_the_one_immediately_before_it()
+    public async Task When_getting_what_has_changed_it_should_filter_out_transitions_where_neither_end_is_notifiable()
     {
-        // The status moves several times after the last run. The comparison is against the row
-        // immediately before the latest one, not against where the return stood at the last run.
+        // The status moves several times after the last run. Each move is compared against the row
+        // before it, and only the one ending on a notifiable status survives the filter.
 
         // Arrange
         var store = CreateLedgerStore();

@@ -8,16 +8,16 @@ namespace SchoolAccount.CollectNotifications.Tests.Integration.Stores;
 public partial class LedgerStoreIntegrationTests
 {
     [Fact]
-    public async Task When_getting_what_has_changed_it_should_notify_a_return_that_passed_through_approved_between_runs()
+    public async Task When_getting_what_has_changed_it_should_notify_every_qualifying_transition_a_return_made_between_runs()
     {
         // A return that reaches Approved and then moves off it again before the service next runs.
-        // Two of these transitions are notifiable under the rules:
+        // Both of those transitions are notifiable, and a missed run should not mean we skip
+        // qualifying changes we have already captured:
         //
         //   Loaded_and_Validated -> Approved   any other status -> Approved   send
         //   Approved -> Rejected               Approved -> any other status   send
         //
-        // Whether that should end up as one email for the school or one per transition is still
-        // open, so this only asserts that the change is not dropped altogether.
+        // The two either side of them are not notifiable and should stay filtered out.
 
         // Arrange
         var store = CreateLedgerStore();
@@ -41,8 +41,16 @@ public partial class LedgerStoreIntegrationTests
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        result.Value.ShouldNotBeEmpty();
         result.Value.ShouldAllBe(x => x.LaeStab == laeStab);
+        result.Value.Count.ShouldBe(2);
+
+        var reachedApproved = result.Value[0];
+        reachedApproved.PreviousReturnStatusCode.ShouldBe(ReturnStatusCodes.LoadedAndValidated);
+        reachedApproved.ReturnStatusCode.ShouldBe(ReturnStatusCodes.Approved);
+
+        var cameOffApproved = result.Value[1];
+        cameOffApproved.PreviousReturnStatusCode.ShouldBe(ReturnStatusCodes.Approved);
+        cameOffApproved.ReturnStatusCode.ShouldBe(ReturnStatusCodes.Rejected);
     }
 
     [Fact]
