@@ -17,9 +17,9 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
     private readonly string _jobName = $"test-{Guid.NewGuid():N}";
     private readonly DbConnectionFactory<LedgerDatabase> _connectionFactory = new(TestDatabaseHelper.ConnectionString);
 
-    public Task InitializeAsync() => Task.CompletedTask;
+    public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         await using var conn = await TestDatabaseHelper.OpenConnectionAsync();
         await conn.ExecuteAsync("DELETE FROM JobStatus WHERE Name = @Name;", new { Name = _jobName });

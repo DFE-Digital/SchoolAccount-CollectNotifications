@@ -16,9 +16,9 @@ public partial class LedgerStoreIntegrationTests : IAsyncLifetime
     private readonly List<string> _createdLaeStabs = [];
     private readonly DbConnectionFactory<LedgerDatabase> _connectionFactory = new(TestDatabaseHelper.ConnectionString);
 
-    public Task InitializeAsync() => Task.CompletedTask;
+    public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         await _connectionFactory.DisposeAsync();
         if (_createdLaeStabs.Count > 0)

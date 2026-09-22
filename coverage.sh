@@ -7,9 +7,9 @@ cd "$(dirname "$0")"
 rm -rf TestResults
 
 dotnet tool restore
-dotnet test --collect:"XPlat Code Coverage" --results-directory TestResults
+dotnet test -- --coverage --coverage-output-format cobertura --coverage-settings .config/coverage.config
 dotnet reportgenerator \
-  -reports:"TestResults/**/coverage.cobertura.xml" \
+  -reports:"TestResults/*.cobertura.xml" \
   -targetdir:TestResults/CoverageReport \
   -reporttypes:Html
 
