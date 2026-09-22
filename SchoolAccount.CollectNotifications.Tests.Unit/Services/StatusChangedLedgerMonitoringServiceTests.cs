@@ -18,8 +18,11 @@ public class StatusChangedLedgerMonitoringServiceTests
 
     public StatusChangedLedgerMonitoringServiceTests()
     {
+        var nullLogger = NullLogger<StatusChangedLedgerMonitoringService>.Instance;
+        var instrumentation = new StatusChangedLedgerMonitoringServiceInstrumentation(nullLogger);
+        
         _sut = new StatusChangedLedgerMonitoringService(
-            NullLogger<StatusChangedLedgerMonitoringService>.Instance,
+            instrumentation,
             _lastRanService,
             _ledgerStore,
             _threadingService,

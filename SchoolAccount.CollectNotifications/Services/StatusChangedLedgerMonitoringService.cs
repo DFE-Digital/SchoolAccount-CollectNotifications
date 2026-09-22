@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using SchoolAccount.CollectNotifications.Extensions;
 using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models;
@@ -7,7 +6,7 @@ using SchoolAccount.CollectNotifications.Models.Dtos;
 namespace SchoolAccount.CollectNotifications.Services;
 
 public class StatusChangedLedgerMonitoringService(
-    ILogger<StatusChangedLedgerMonitoringService> logger,
+    StatusChangedLedgerMonitoringServiceInstrumentation log,
     ILastRanService lastRanService,
     ILedgerStore ledgerStore,
     IThreadingService threadingService,
@@ -18,29 +17,25 @@ public class StatusChangedLedgerMonitoringService(
     {
         var runningAt = DateTime.UtcNow;
 
-        logger.LogInformation("Running {class} at {runningAt}", nameof(StatusChangedLedgerMonitoringService), runningAt);
-
         var lastRan = await lastRanService.GetTimestampAsync(cancellationToken);
 
         if (lastRan.IsFailure)
         {
-            logger.LogWarning("Retrieving last ran date failed: {error}", lastRan.Error);
+            log.LastRunDateUnavailable(lastRan.Error);
             return;
         }
 
-        logger.LogInformation("Service last run {lastRan}", lastRan.Value);
+        log.RunStarted(lastRan.Value, runningAt);
 
         if (lastRan.Value == LastRanService.NeverRun)
         {
-            logger.LogWarning(
-                "No previous run recorded for this job. Setting the last run date to {runningAt} and sending nothing this time",
-                runningAt);
+            log.NoPreviousRunRecorded(runningAt);
 
             var seeded = await lastRanService.SetTimestampAsync(runningAt, cancellationToken);
 
             if (seeded.IsFailure)
             {
-                logger.LogWarning("Seeding the last run date failed: {error}", seeded.Error);
+                log.CouldNotRecordFirstRun(seeded.Error);
             }
 
             return;
@@ -50,11 +45,11 @@ public class StatusChangedLedgerMonitoringService(
 
         if (changes.IsFailure)
         {
-            logger.LogWarning("Retrieving what had changed failed: {error}", changes.Error);
+            log.LedgerUnavailable(changes.Error);
             return;
         }
 
-        logger.LogInformation("Found {count} of changes", changes.Value.Count);
+        log.ChangesFound(changes.Value.Count);
 
         // The query already pairs each change with its registered recipients, so a school with two
         // registered contacts arrives here as two changes.
@@ -66,43 +61,39 @@ public class StatusChangedLedgerMonitoringService(
                 change.SchoolName))
             .ToList();
 
-        logger.LogInformation("Sending {count} of notifications", whatToNotify.Count);
-
         var timestampUpdate = await lastRanService.SetTimestampAsync(runningAt, cancellationToken);
 
         if (timestampUpdate.IsFailure)
         {
-            logger.LogWarning("Updating last ran date failed: {error}", timestampUpdate.Error);
+            log.CouldNotRecordRun(timestampUpdate.Error);
             return;
         }
 
         await threadingService.Batch(
-            whatToNotify, 
+            whatToNotify,
             cancellationToken,
             async (notify, token) =>
             {
                 token.ThrowIfCancellationRequested();
-                logger.LogInformation("Sending email to {recipient} for {laeStab}", notify.Recipient, notify.LaeStab);
-                
+                log.NotifyingRecipient(notify.Recipient, notify.LaeStab);
+
                 var result = await govNotifyService.SendMessage(
                     GovNotifyTemplates.CensusStatusChange,
                     notify.Recipient,
                     new Dictionary<string, dynamic>
                     {
-                        { "status", notify.Status }, // todo: actually make it a human equivalent 
+                        { "status", notify.Status },
                         { "school_name", notify.School }
                     });
 
                 if (!string.IsNullOrWhiteSpace(result.Error))
                 {
-                    logger.LogWarning("Sending email message: {error}", result.Error);
+                    log.NotificationRejected(result.Error);
                 }
 
                 return result.IsSuccess;
             });
 
-        var completedOn = DateTime.UtcNow;
-        logger.LogInformation("Completed at {completedOn} took {time}ms", completedOn,
-            (completedOn - runningAt).TotalMilliseconds);
+        log.RunFinished((DateTime.UtcNow - runningAt).TotalMilliseconds);
     }
 }
