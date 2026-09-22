@@ -1,3 +1,4 @@
+using System.Data.Common;
 using Dapper;
 using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Interfaces;
@@ -73,20 +74,27 @@ public class LedgerStore(
                    ORDER BY h.LAEStab, h.UpdatedAt, ru.Email;
                    """;
 
-        await using var conn = await factory.OpenAsync(cancellationToken);
+        try
+        {
+            await using var conn = await factory.OpenAsync(cancellationToken);
 
-        var command = new CommandDefinition(
-            sql,
-            new
-            {
-                Collection = censusOptions.Value.Collection,
-                LastRunDate = lastRunDate,
-                NotifiableStatuses = censusOptions.Value.AllowedStatuses
-            },
-            cancellationToken: cancellationToken);
+            var command = new CommandDefinition(
+                sql,
+                new
+                {
+                    Collection = censusOptions.Value.Collection,
+                    LastRunDate = lastRunDate,
+                    NotifiableStatuses = censusOptions.Value.AllowedStatuses
+                },
+                cancellationToken: cancellationToken);
 
-        var changes = await conn.QueryAsync<CensusStatusChange>(command);
+            var changes = await conn.QueryAsync<CensusStatusChange>(command);
 
-        return Result.Success(changes.ToList());
+            return Result.Success(changes.ToList());
+        }
+        catch (DbException exception)
+        {
+            return Result.Failure<List<CensusStatusChange>>(exception.Message);
+        }
     }
 }

@@ -1,4 +1,9 @@
+using Microsoft.Extensions.Options;
+using SchoolAccount.CollectNotifications.Models;
+using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Models.Dtos;
+using SchoolAccount.CollectNotifications.Models.Options;
+using SchoolAccount.CollectNotifications.Stores;
 using SchoolAccount.CollectNotifications.Models.Enums;
 using SchoolAccount.CollectNotifications.Tests.Integration.Helpers;
 using static SchoolAccount.CollectNotifications.Tests.Common.Builders.CollectReturnStatusBuilder;
@@ -7,6 +12,29 @@ namespace SchoolAccount.CollectNotifications.Tests.Integration.Stores;
 
 public partial class LedgerStoreIntegrationTests
 {
+    [Fact]
+    public async Task When_getting_what_has_changed_it_should_return_a_failure_when_the_database_cannot_be_reached()
+    {
+        // Arrange
+        await using var unreachable = new DbConnectionFactory<LedgerDatabase>(
+            "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1");
+
+        var store = new LedgerStore(
+            unreachable,
+            Options.Create(new CensusOptions
+            {
+                Collection = TestCollection,
+                AllowedStatuses = [ReturnStatusCodes.Approved]
+            }));
+
+        // Act
+        var result = await store.GetWhatHasChangedAsync(LastRunDate);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldNotBeNullOrWhiteSpace();
+    }
+
     [Fact]
     public async Task When_getting_what_has_changed_it_should_return_a_change_for_every_registered_recipient()
     {

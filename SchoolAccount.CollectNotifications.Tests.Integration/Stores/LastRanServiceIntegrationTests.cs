@@ -30,6 +30,40 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
         new(_connectionFactory, Options.Create(new CensusOptions { JobName = _jobName }));
 
     [Fact]
+    public async Task When_the_database_cannot_be_reached_it_should_return_a_failure_rather_than_throw()
+    {
+        // Arrange
+        await using var unreachable = new DbConnectionFactory<LedgerDatabase>(
+            "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1");
+
+        var sut = new LastRanService(unreachable, Options.Create(new CensusOptions { JobName = _jobName }));
+
+        // Act
+        var result = await sut.GetTimestampAsync();
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldNotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task When_the_database_cannot_be_reached_it_should_return_a_failure_when_saving_too()
+    {
+        // Arrange
+        await using var unreachable = new DbConnectionFactory<LedgerDatabase>(
+            "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1");
+
+        var sut = new LastRanService(unreachable, Options.Create(new CensusOptions { JobName = _jobName }));
+
+        // Act
+        var result = await sut.SetTimestampAsync(DateTime.UtcNow);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldNotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
     public async Task When_the_job_has_never_run_it_should_return_the_minimum_sql_date()
     {
         // Arrange

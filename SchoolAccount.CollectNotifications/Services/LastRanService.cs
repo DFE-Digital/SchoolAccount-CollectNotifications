@@ -1,3 +1,4 @@
+using System.Data.Common;
 using System.Data.SqlTypes;
 using Dapper;
 using Microsoft.Extensions.Options;
@@ -30,15 +31,22 @@ public class LastRanService(
                            WHERE Name = @Name;
                            """;
 
-        await using var conn = await factory.OpenAsync(cancellationToken);
+        try
+        {
+            await using var conn = await factory.OpenAsync(cancellationToken);
 
-        var lastRun = await conn.QuerySingleOrDefaultAsync<DateTime?>(
-            new CommandDefinition(
-                sql,
-                new { Name = censusOptions.Value.JobName },
-                cancellationToken: cancellationToken));
+            var lastRun = await conn.QuerySingleOrDefaultAsync<DateTime?>(
+                new CommandDefinition(
+                    sql,
+                    new { Name = censusOptions.Value.JobName },
+                    cancellationToken: cancellationToken));
 
-        return Result.Success(lastRun ?? NeverRun);
+            return Result.Success(lastRun ?? NeverRun);
+        }
+        catch (DbException exception)
+        {
+            return Result.Failure<DateTime>(exception.Message);
+        }
     }
 
     public async Task<Result> SetTimestampAsync(DateTime timestamp, CancellationToken cancellationToken = default)
@@ -53,14 +61,21 @@ public class LastRanService(
                                VALUES (@Name, @LastRun);
                            """;
 
-        await using var conn = await factory.OpenAsync(cancellationToken);
+        try
+        {
+            await using var conn = await factory.OpenAsync(cancellationToken);
 
-        await conn.ExecuteAsync(
-            new CommandDefinition(
-                sql,
-                new { Name = censusOptions.Value.JobName, LastRun = timestamp },
-                cancellationToken: cancellationToken));
+            await conn.ExecuteAsync(
+                new CommandDefinition(
+                    sql,
+                    new { Name = censusOptions.Value.JobName, LastRun = timestamp },
+                    cancellationToken: cancellationToken));
 
-        return Result.Success();
+            return Result.Success();
+        }
+        catch (DbException exception)
+        {
+            return Result.Failure(exception.Message);
+        }
     }
 }
