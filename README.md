@@ -50,6 +50,7 @@ user secrets. Options marked as required are validated when the app starts, so i
 | ----------------------- | -------- | ----------- |
 | `GovNotify:ApiKey`      | Yes      | Notify API key |
 | `GovNotify:FromAddress` | No       | Passed to Notify as the reply-to value |
+| `GovNotify:DelayBetweenSendsInMs` | No | Pause between each send. Defaults to `0`. Nothing needs it at beta volumes, it's there to turn up if Notify starts rate limiting us |
 
 ### Census
 

@@ -1,8 +1,11 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Models.Dtos;
 using SchoolAccount.CollectNotifications.Models.Enums;
+using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services;
 
 namespace SchoolAccount.CollectNotifications.Tests.Unit.Services;
@@ -16,13 +19,21 @@ public class StatusChangedLedgerMonitoringServiceTests
 
     public StatusChangedLedgerMonitoringServiceTests()
     {
-        _sut = new StatusChangedLedgerMonitoringService(
+        _sut = CreateService();
+    }
+
+    private StatusChangedLedgerMonitoringService CreateService(int delayBetweenSendsInMs = 0) =>
+        new(
             new StatusChangedLedgerMonitoringServiceInstrumentation(
                 NullLogger<StatusChangedLedgerMonitoringService>.Instance),
             _lastRanService,
             _ledgerStore,
-            _govNotifyService);
-    }
+            _govNotifyService,
+            Options.Create(new GovNotifyOptions
+            {
+                ApiKey = "test-key",
+                DelayBetweenSendsInMs = delayBetweenSendsInMs
+            }));
 
     private static CensusStatusChange AChange(
         string laeStab,
@@ -212,6 +223,37 @@ public class StatusChangedLedgerMonitoringServiceTests
         // Assert
         await _govNotifyService.Received(1).SendMessage(
             Arg.Any<string>(), "fine@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>());
+    }
+
+    [Fact]
+    public async Task InvokeAsync_should_wait_between_sends_when_a_delay_is_configured()
+    {
+        // The lever for backing off if Notify ever starts rate limiting us. Asserts a lower bound
+        // only, so a slow machine can't make it fail.
+
+        // Arrange
+        const int delayMs = 100;
+        var sut = CreateService(delayMs);
+
+        GivenChanges(
+            AChange("1111111", "first@school.sch.uk"),
+            AChange("2222222", "second@school.sch.uk"),
+            AChange("3333333", "third@school.sch.uk"));
+
+        _govNotifyService.SendMessage(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, dynamic>>())
+            .Returns(Result.Success(new NotificationResult()));
+
+        // Act
+        var stopwatch = Stopwatch.StartNew();
+        await sut.InvokeAsync();
+        stopwatch.Stop();
+
+        // Assert
+        // Three sends means two gaps, so nothing before the first one.
+        stopwatch.Elapsed.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(delayMs * 2));
+
+        await _govNotifyService.Received(3).SendMessage(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, dynamic>>());
     }
 
     private static bool MatchesPersonalisation(

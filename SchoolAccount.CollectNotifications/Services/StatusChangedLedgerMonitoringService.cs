@@ -1,7 +1,9 @@
 using SchoolAccount.CollectNotifications.Extensions;
 using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models;
+using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Models.Dtos;
+using SchoolAccount.CollectNotifications.Models.Options;
 
 namespace SchoolAccount.CollectNotifications.Services;
 
@@ -9,7 +11,8 @@ public class StatusChangedLedgerMonitoringService(
     StatusChangedLedgerMonitoringServiceInstrumentation log,
     ILastRanService lastRanService,
     ILedgerStore ledgerStore,
-    IGovNotifyService govNotifyService
+    IGovNotifyService govNotifyService,
+    IOptions<GovNotifyOptions> govNotifyOptions
 )
 {
     public async Task InvokeAsync(CancellationToken cancellationToken = default)
@@ -68,9 +71,18 @@ public class StatusChangedLedgerMonitoringService(
             return;
         }
 
-        foreach (var notify in whatToNotify)
+        var delayBetweenSends = TimeSpan.FromMilliseconds(govNotifyOptions.Value.DelayBetweenSendsInMs);
+
+        for (var i = 0; i < whatToNotify.Count; i++)
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            if (i > 0 && delayBetweenSends > TimeSpan.Zero)
+            {
+                await Task.Delay(delayBetweenSends, cancellationToken);
+            }
+
+            var notify = whatToNotify[i];
             log.NotifyingRecipient(notify.Recipient, notify.LaeStab);
 
             Result<NotificationResult> result;
@@ -104,7 +116,7 @@ public class StatusChangedLedgerMonitoringService(
             // the rest.
             if (result.IsFailure)
             {
-                log.SendingStopped(whatToNotify.Count - whatToNotify.IndexOf(notify) - 1);
+                log.SendingStopped(whatToNotify.Count - i - 1);
                 break;
             }
         }
