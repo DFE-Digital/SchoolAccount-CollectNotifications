@@ -1,3 +1,4 @@
+using SchoolAccount.CollectNotifications.Models.Dtos;
 using SchoolAccount.CollectNotifications.Models.Enums;
 using SchoolAccount.CollectNotifications.Tests.Integration.Helpers;
 using static SchoolAccount.CollectNotifications.Tests.Common.Builders.CollectReturnStatusBuilder;
@@ -7,219 +8,173 @@ namespace SchoolAccount.CollectNotifications.Tests.Integration.Stores;
 public partial class LedgerStoreIntegrationTests
 {
     [Fact]
-    public async Task When_getting_what_has_changed_it_should_return_empty_result_when_requested_lae_stab_keys_list_is_empty()
+    public async Task When_getting_what_has_changed_it_should_return_a_change_for_every_registered_recipient()
     {
+        // A school with two registered contacts should produce two changes, one each. Joining
+        // RegisteredUsers before the ranking instead of after makes this return nothing at all,
+        // because rn 1 and rn 2 then land on the same ledger row with different emails.
+
         // Arrange
         var store = CreateLedgerStore();
-        var lastRunDate = new DateTime(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
+        var laeStab = CreateTrackedLaeStab();
+        await RegisterAsync(laeStab, "head@school.sch.uk", "office@school.sch.uk");
+
+        List<CollectReturnStatus> history =
+        [
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.Rejected)
+                .WithUpdatedAt(LastRunDate.AddDays(-1)),
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.Approved)
+                .WithUpdatedAt(LastRunDate.AddHours(1))
+        ];
+
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(lastRunDate, [], limitToApprovedStatuses: false);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Value.ShouldBeEmpty();
+        result.Value.Count.ShouldBe(2);
+        result.Value.Select(x => x.Email)
+            .ShouldBe(["head@school.sch.uk", "office@school.sch.uk"], ignoreOrder: true);
+        result.Value.ShouldAllBe(x => x.ReturnStatusCode == ReturnStatusCodes.Approved);
+        result.Value.ShouldAllBe(x => x.PreviousReturnStatusCode == ReturnStatusCodes.Rejected);
     }
 
     [Fact]
-    public async Task When_getting_what_has_changed_it_should_filter_results_to_match_only_requested_lae_stab_keys()
+    public async Task When_getting_what_has_changed_it_should_ignore_schools_with_nobody_registered()
     {
         // Arrange
         var store = CreateLedgerStore();
-        var requestedLaeStab = CreateTrackedLaeStab();
-        var unrequestedLaeStab = CreateTrackedLaeStab();
-        var lastRunDate = new DateTime(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
+        var registered = CreateTrackedLaeStab();
+        var unregistered = CreateTrackedLaeStab();
+        await RegisterAsync(registered);
 
-        var requestedRecord = ACollectReturnStatus()
-            .WithLaeStab(requestedLaeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithUpdatedAt(lastRunDate.AddHours(1))
-            .Build();
+        List<CollectReturnStatus> history =
+        [
+            ACollectReturnStatus()
+                .WithLaeStab(registered)
+                .WithReturnStatusCode(ReturnStatusCodes.Authorised)
+                .WithUpdatedAt(LastRunDate.AddHours(1)),
+            ACollectReturnStatus()
+                .WithLaeStab(unregistered)
+                .WithReturnStatusCode(ReturnStatusCodes.Authorised)
+                .WithUpdatedAt(LastRunDate.AddHours(1))
+        ];
 
-        var unrequestedRecord = ACollectReturnStatus()
-            .WithLaeStab(unrequestedLaeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithUpdatedAt(lastRunDate.AddHours(1))
-            .Build();
-
-        await TestDatabaseHelper.InsertReturnStatusesAsync([requestedRecord, unrequestedRecord]);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
 
         // Act
-        var result =
-            await store.GetWhatHasChangedAsync(lastRunDate, [requestedLaeStab], limitToApprovedStatuses: false);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Value.Count.ShouldBe(1);
-        result.Value.Single().LaeStab.ShouldBe(requestedLaeStab);
+        var change = result.Value.ShouldHaveSingleItem();
+        change.LaeStab.ShouldBe(registered);
     }
 
     [Fact]
-    public async Task When_getting_what_has_changed_it_should_filter_to_approved_statuses_when_limit_to_approved_statuses_is_true()
+    public async Task When_getting_what_has_changed_it_should_only_return_changes_where_one_end_is_a_notifiable_status()
     {
         // Arrange
         var store = CreateLedgerStore([ReturnStatusCodes.Authorised, ReturnStatusCodes.Approved]);
-        var approvedLaeStab = CreateTrackedLaeStab();
-        var unapprovedLaeStab = CreateTrackedLaeStab();
-        var lastRunDate = new DateTime(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
+        var notifiable = CreateTrackedLaeStab();
+        var ignored = CreateTrackedLaeStab();
+        await RegisterAsync(notifiable);
+        await RegisterAsync(ignored);
 
-        // School 1: changed to Authorised (approved)
-        var school1Baseline = ACollectReturnStatus()
-            .WithLaeStab(approvedLaeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
-            .WithUpdatedAt(lastRunDate.AddDays(-1))
-            .Build();
+        List<CollectReturnStatus> history =
+        [
+            // Rejected to Approved: the end is notifiable
+            ACollectReturnStatus()
+                .WithLaeStab(notifiable)
+                .WithReturnStatusCode(ReturnStatusCodes.Rejected)
+                .WithUpdatedAt(LastRunDate.AddDays(-1)),
+            ACollectReturnStatus()
+                .WithLaeStab(notifiable)
+                .WithReturnStatusCode(ReturnStatusCodes.Approved)
+                .WithUpdatedAt(LastRunDate.AddHours(1)),
+            // Loaded_and_Validated to Rejected: neither end is notifiable
+            ACollectReturnStatus()
+                .WithLaeStab(ignored)
+                .WithReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
+                .WithUpdatedAt(LastRunDate.AddDays(-1)),
+            ACollectReturnStatus()
+                .WithLaeStab(ignored)
+                .WithReturnStatusCode(ReturnStatusCodes.Rejected)
+                .WithUpdatedAt(LastRunDate.AddHours(1))
+        ];
 
-        var school1Current = ACollectReturnStatus()
-            .WithLaeStab(approvedLaeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithUpdatedAt(lastRunDate.AddHours(1))
-            .Build();
-
-        // School 2: changed to Rejected (unapproved, baseline is also unapproved)
-        var school2Baseline = ACollectReturnStatus()
-            .WithLaeStab(unapprovedLaeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
-            .WithUpdatedAt(lastRunDate.AddDays(-1))
-            .Build();
-
-        var school2Current = ACollectReturnStatus()
-            .WithLaeStab(unapprovedLaeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.Rejected)
-            .WithUpdatedAt(lastRunDate.AddHours(1))
-            .Build();
-
-        await TestDatabaseHelper.InsertReturnStatusesAsync([
-            school1Baseline, school1Current,
-            school2Baseline, school2Current
-        ]);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(
-            lastRunDate,
-            [approvedLaeStab, unapprovedLaeStab],
-            limitToApprovedStatuses: true);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Value.Count.ShouldBe(1);
-        result.Value.Single().LaeStab.ShouldBe(approvedLaeStab);
+        var change = result.Value.ShouldHaveSingleItem();
+        change.LaeStab.ShouldBe(notifiable);
+        change.ReturnStatusCode.ShouldBe(ReturnStatusCodes.Approved);
     }
 
     [Fact]
-    public async Task When_getting_what_has_changed_it_should_return_all_changed_statuses_when_limit_to_approved_statuses_is_false()
+    public async Task When_getting_what_has_changed_it_should_return_every_status_change_when_not_limited_to_notifiable_statuses()
     {
         // Arrange
         var store = CreateLedgerStore([ReturnStatusCodes.Authorised]);
-        var laeStab1 = CreateTrackedLaeStab();
-        var laeStab2 = CreateTrackedLaeStab();
-        var lastRunDate = new DateTime(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
+        var laeStab = CreateTrackedLaeStab();
+        await RegisterAsync(laeStab);
 
-        var school1 = ACollectReturnStatus()
-            .WithLaeStab(laeStab1)
-            .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithUpdatedAt(lastRunDate.AddHours(1))
-            .Build();
+        List<CollectReturnStatus> history =
+        [
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
+                .WithUpdatedAt(LastRunDate.AddDays(-1)),
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.Rejected)
+                .WithUpdatedAt(LastRunDate.AddHours(1))
+        ];
 
-        var school2 = ACollectReturnStatus()
-            .WithLaeStab(laeStab2)
-            .WithReturnStatusCode(ReturnStatusCodes.Rejected)
-            .WithUpdatedAt(lastRunDate.AddHours(1))
-            .Build();
-
-        await TestDatabaseHelper.InsertReturnStatusesAsync([school1, school2]);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(
-            lastRunDate,
-            [laeStab1, laeStab2],
-            limitToApprovedStatuses: false);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate, limitToApprovedStatuses: false);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Value.Count.ShouldBe(2);
-        result.Value.Select(x => x.LaeStab).ShouldBe([laeStab1, laeStab2], ignoreOrder: true);
+        var change = result.Value.ShouldHaveSingleItem();
+        change.ReturnStatusCode.ShouldBe(ReturnStatusCodes.Rejected);
+        change.PreviousReturnStatusCode.ShouldBe(ReturnStatusCodes.LoadedAndValidated);
     }
 
     [Fact]
-    public async Task When_getting_what_has_changed_it_should_handle_mixed_scenarios_correctly_across_multiple_schools()
+    public async Task When_getting_what_has_changed_it_should_ignore_rows_from_another_collection()
     {
+        // The ledger holds every collection, so without the Collection filter a school's rows from
+        // a different census rank against each other and read as a status change.
+
         // Arrange
-        var store = CreateLedgerStore([ReturnStatusCodes.Authorised, ReturnStatusCodes.Approved]);
-        var newSchool = CreateTrackedLaeStab();
-        var changedSchool = CreateTrackedLaeStab();
-        var unchangedSchool = CreateTrackedLaeStab();
-        var excludedSchool = CreateTrackedLaeStab();
-        var lastRunDate = new DateTime(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
+        var store = CreateLedgerStore();
+        var laeStab = CreateTrackedLaeStab();
+        await RegisterAsync(laeStab);
 
-        // 1. New school (no baseline) -> Approved
-        var newSchoolRecord = ACollectReturnStatus()
-            .WithLaeStab(newSchool)
-            .WithReturnStatusCode(ReturnStatusCodes.Approved)
-            .WithUpdatedAt(lastRunDate.AddHours(1))
-            .Build();
+        List<CollectReturnStatus> history =
+        [
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.Authorised)
+                .WithUpdatedAt(LastRunDate.AddHours(1))
+                .WithCollection("SomeOtherCensus")
+        ];
 
-        // 2. Changed school: LoadedAndValidated -> Authorised
-        var changedBaseline = ACollectReturnStatus()
-            .WithLaeStab(changedSchool)
-            .WithReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
-            .WithUpdatedAt(lastRunDate.AddDays(-1))
-            .Build();
-        var changedCurrent = ACollectReturnStatus()
-            .WithLaeStab(changedSchool)
-            .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithUpdatedAt(lastRunDate.AddHours(2))
-            .Build();
-
-        // 3. Unchanged school: Authorised -> Authorised
-        var unchangedBaseline = ACollectReturnStatus()
-            .WithLaeStab(unchangedSchool)
-            .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithUpdatedAt(lastRunDate.AddDays(-1))
-            .Build();
-        var unchangedCurrent = ACollectReturnStatus()
-            .WithLaeStab(unchangedSchool)
-            .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithUpdatedAt(lastRunDate.AddHours(1))
-            .Build();
-
-        // 4. Excluded school (not in search keys): LoadedAndValidated -> Authorised
-        var excludedBaseline = ACollectReturnStatus()
-            .WithLaeStab(excludedSchool)
-            .WithReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
-            .WithUpdatedAt(lastRunDate.AddDays(-1))
-            .Build();
-        var excludedCurrent = ACollectReturnStatus()
-            .WithLaeStab(excludedSchool)
-            .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithUpdatedAt(lastRunDate.AddHours(1))
-            .Build();
-
-        await TestDatabaseHelper.InsertReturnStatusesAsync([
-            newSchoolRecord,
-            changedBaseline, changedCurrent,
-            unchangedBaseline, unchangedCurrent,
-            excludedBaseline, excludedCurrent
-        ]);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(
-            lastRunDate,
-            [newSchool, changedSchool, unchangedSchool],
-            limitToApprovedStatuses: true);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Value.Count.ShouldBe(2);
-
-        var changedResult = result.Value.Single(x => x.LaeStab == changedSchool);
-        changedResult.ReturnStatusCode.ShouldBe(ReturnStatusCodes.Authorised);
-        changedResult.InitialReturnStatusCode.ShouldBe(ReturnStatusCodes.LoadedAndValidated);
-        changedResult.PreviousReturnStatusCode.ShouldBe(ReturnStatusCodes.LoadedAndValidated);
-
-        var newResult = result.Value.Single(x => x.LaeStab == newSchool);
-        newResult.ReturnStatusCode.ShouldBe(ReturnStatusCodes.Approved);
-        newResult.InitialReturnStatusCode.ShouldBeNull();
-        newResult.PreviousReturnStatusCode.ShouldBeNull();
+        result.Value.ShouldBeEmpty();
     }
 }

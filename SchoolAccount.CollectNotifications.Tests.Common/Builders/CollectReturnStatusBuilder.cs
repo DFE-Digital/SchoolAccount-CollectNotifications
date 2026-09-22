@@ -1,4 +1,3 @@
-using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Models.Dtos;
 using SchoolAccount.CollectNotifications.Models.Enums;
 
@@ -10,8 +9,6 @@ public class CollectReturnStatusBuilder
     private string _schoolName = "Default Test School";
     private string _laeStab = "1234567";
     private ReturnStatusCodes _returnStatusCode = ReturnStatusCodes.Authorised;
-    private ReturnStatusCodes? _previousReturnStatusCode;
-    private ReturnStatusCodes? _initialReturnStatusCode;
     private int _errors = 0;
     private int _queries = 0;
     private int _okdErrorsQueries = 0;
@@ -53,18 +50,6 @@ public class CollectReturnStatusBuilder
     public CollectReturnStatusBuilder WithReturnStatusCode(int returnStatusCode)
     {
         _returnStatusCode = (ReturnStatusCodes)returnStatusCode;
-        return this;
-    }
-
-    public CollectReturnStatusBuilder WithPreviousReturnStatusCode(ReturnStatusCodes? statusCode)
-    {
-        _previousReturnStatusCode = statusCode;
-        return this;
-    }
-
-    public CollectReturnStatusBuilder WithInitialReturnStatusCode(ReturnStatusCodes? statusCode)
-    {
-        _initialReturnStatusCode = statusCode;
         return this;
     }
 
@@ -116,16 +101,14 @@ public class CollectReturnStatusBuilder
         return this;
     }
 
-    public ComparableCollectReturnStatus Build()
+    public CollectReturnStatus Build()
     {
-        return new ComparableCollectReturnStatus
+        return new CollectReturnStatus
         {
             Id = _id,
             SchoolName = _schoolName,
             LaeStab = _laeStab,
             ReturnStatusCode = _returnStatusCode,
-            PreviousReturnStatusCode = _previousReturnStatusCode,
-            InitialReturnStatusCode = _initialReturnStatusCode,
             Errors = _errors,
             Queries = _queries,
             OkdErrorsQueries = _okdErrorsQueries,
@@ -135,11 +118,6 @@ public class CollectReturnStatusBuilder
             Collection = _collection,
             DataReturnId = _dataReturnId
         };
-    }
-
-    public static implicit operator ComparableCollectReturnStatus(CollectReturnStatusBuilder builder)
-    {
-        return builder.Build();
     }
 
     public static implicit operator CollectReturnStatus(CollectReturnStatusBuilder builder)

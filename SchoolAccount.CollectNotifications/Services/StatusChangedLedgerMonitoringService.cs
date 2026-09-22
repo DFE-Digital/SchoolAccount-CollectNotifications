@@ -8,7 +8,6 @@ namespace SchoolAccount.CollectNotifications.Services;
 
 public class StatusChangedLedgerMonitoringService(
     ILogger<StatusChangedLedgerMonitoringService> logger,
-    IEnrollmentStore enrollmentStore,
     ILastRanService lastRanService,
     ILedgerStore ledgerStore,
     IThreadingService threadingService,
@@ -21,16 +20,6 @@ public class StatusChangedLedgerMonitoringService(
 
         logger.LogInformation("Running {class} at {runningAt}", nameof(StatusChangedLedgerMonitoringService), runningAt);
 
-        var recipients = await enrollmentStore.ListAsync(cancellationToken);
-
-        if (recipients.IsFailure)
-        {
-            logger.LogWarning("Retrieving recipients list failed: {error}", recipients.Error);
-            return;
-        }
-
-        logger.LogInformation("Received {count} of recipients", recipients.Value.Count);
-
         var lastRan = await lastRanService.GetTimestampAsync(cancellationToken);
 
         if (lastRan.IsFailure)
@@ -41,11 +30,7 @@ public class StatusChangedLedgerMonitoringService(
 
         logger.LogInformation("Service last run {lastRan}", lastRan.Value);
 
-        var changes = await ledgerStore.GetWhatHasChangedAsync(
-            lastRan.Value,
-            recipients.Value.Where(x => x.LaeStab != null).Select(x => x.LaeStab!).Distinct().ToList(),
-            true,
-            cancellationToken);
+        var changes = await ledgerStore.GetWhatHasChangedAsync(lastRan.Value, true, cancellationToken);
 
         if (changes.IsFailure)
         {
@@ -55,24 +40,17 @@ public class StatusChangedLedgerMonitoringService(
 
         logger.LogInformation("Found {count} of changes", changes.Value.Count);
 
-        var whatToNotify = new List<Notification>();
-        foreach (var change in changes.Value)
-        {
-            var toNotify = recipients.Value.Where(x => x.LaeStab == change.LaeStab && !string.IsNullOrWhiteSpace(x.Email)).ToList();
-            logger.LogInformation("For {laeStab} {count} will be notified", change.LaeStab, toNotify.Count);
+        // The query already pairs each change with its registered recipients, so a school with two
+        // registered contacts arrives here as two changes.
+        var whatToNotify = changes.Value
+            .Select(change => new Notification(
+                change.LaeStab,
+                change.Email,
+                change.ReturnStatusCode.GetHumanName(),
+                change.SchoolName))
+            .ToList();
 
-            foreach (var notify in toNotify)
-            {
-                logger.LogInformation("Adding notification record for {recipient} at {laeStab}", notify.Email, change.LaeStab);
-                
-                whatToNotify.Add(
-                    new Notification(
-                        change.LaeStab,
-                        notify.Email!,
-                        change.ReturnStatusCode.GetHumanName(),
-                        change.SchoolName));
-            }
-        }
+        logger.LogInformation("Sending {count} of notifications", whatToNotify.Count);
 
         var timestampUpdate = await lastRanService.SetTimestampAsync(runningAt, cancellationToken);
 

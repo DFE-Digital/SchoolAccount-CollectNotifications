@@ -10,6 +10,9 @@ namespace SchoolAccount.CollectNotifications.Tests.Integration.Stores;
 
 public partial class LedgerStoreIntegrationTests : IAsyncLifetime
 {
+    private const string TestCollection = "Census";
+    private const string DefaultEmail = "head@school.sch.uk";
+
     private readonly List<string> _createdLaeStabs = [];
     private readonly DbConnectionFactory<LedgerDatabase> _connectionFactory = new(TestDatabaseHelper.ConnectionString);
 
@@ -21,6 +24,7 @@ public partial class LedgerStoreIntegrationTests : IAsyncLifetime
         if (_createdLaeStabs.Count > 0)
         {
             await TestDatabaseHelper.DeleteReturnStatusesByLaeStabAsync(_createdLaeStabs);
+            await TestDatabaseHelper.DeleteRegisteredUsersByLaeStabAsync(_createdLaeStabs);
         }
     }
 
@@ -31,11 +35,23 @@ public partial class LedgerStoreIntegrationTests : IAsyncLifetime
         return laeStab;
     }
 
+    /// <summary>
+    /// The query joins RegisteredUsers, so a school with nobody registered never comes back.
+    /// Every test that expects results needs at least one recipient.
+    /// </summary>
+    private static async Task RegisterAsync(string laeStab, params string[] emails)
+    {
+        await TestDatabaseHelper.InsertRegisteredUsersAsync(
+            laeStab,
+            emails.Length > 0 ? emails : [DefaultEmail]);
+    }
+
     private LedgerStore CreateLedgerStore(List<ReturnStatusCodes>? allowedStatuses = null)
     {
         var censusOptions = Options.Create(new CensusOptions
         {
-            AllowedStatuses = allowedStatuses ?? [ReturnStatusCodes.Authorised, ReturnStatusCodes.Approved]
+            AllowedStatuses = allowedStatuses ?? [ReturnStatusCodes.Authorised, ReturnStatusCodes.Approved],
+            Collection = TestCollection
         });
 
         return new LedgerStore(_connectionFactory, censusOptions);

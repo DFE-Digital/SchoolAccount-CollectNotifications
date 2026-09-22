@@ -75,4 +75,39 @@ public static class TestDatabaseHelper
         await using var conn = await OpenConnectionAsync(cancellationToken);
         await conn.ExecuteAsync(sql, new { Keys = keys });
     }
+
+    public static async Task InsertRegisteredUsersAsync(
+        string laeStab,
+        IEnumerable<string> emails,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+                           INSERT INTO RegisteredUsers (LAEStab, Email)
+                           VALUES (@LaeStab, @Email);
+                           """;
+
+        var rows = emails.Select(email => new { LaeStab = laeStab, Email = email }).ToList();
+
+        await using var conn = await OpenConnectionAsync(cancellationToken);
+        await conn.ExecuteAsync(sql, rows);
+    }
+
+    public static async Task DeleteRegisteredUsersByLaeStabAsync(
+        IEnumerable<string> laeStabKeys,
+        CancellationToken cancellationToken = default)
+    {
+        var keys = laeStabKeys.ToList();
+        if (keys.Count == 0)
+        {
+            return;
+        }
+
+        const string sql = """
+                           DELETE FROM RegisteredUsers
+                           WHERE LAEStab IN @Keys;
+                           """;
+
+        await using var conn = await OpenConnectionAsync(cancellationToken);
+        await conn.ExecuteAsync(sql, new { Keys = keys });
+    }
 }

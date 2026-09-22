@@ -22,6 +22,7 @@ public partial class LedgerStoreIntegrationTests
         // Arrange
         var store = CreateLedgerStore();
         var laeStab = CreateTrackedLaeStab();
+        await RegisterAsync(laeStab);
         var lastRunDate = new DateTime(2026, 9, 16, 0, 0, 0, DateTimeKind.Utc);
 
         List<CollectReturnStatus> history =
@@ -36,7 +37,7 @@ public partial class LedgerStoreIntegrationTests
         await TestDatabaseHelper.InsertReturnStatusesAsync(history);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(lastRunDate, [laeStab]);
+        var result = await store.GetWhatHasChangedAsync(lastRunDate);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -50,6 +51,7 @@ public partial class LedgerStoreIntegrationTests
         // Arrange
         var store = CreateLedgerStore();
         var laeStab = CreateTrackedLaeStab();
+        await RegisterAsync(laeStab);
         var lastRunDate = new DateTime(2026, 9, 16, 0, 0, 0, DateTimeKind.Utc);
 
         List<CollectReturnStatus> history =
@@ -63,7 +65,7 @@ public partial class LedgerStoreIntegrationTests
         await TestDatabaseHelper.InsertReturnStatusesAsync(history);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(lastRunDate, [laeStab]);
+        var result = await store.GetWhatHasChangedAsync(lastRunDate);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();

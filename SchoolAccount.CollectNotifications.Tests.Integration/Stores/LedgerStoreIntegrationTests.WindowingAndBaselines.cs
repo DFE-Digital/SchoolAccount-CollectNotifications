@@ -7,221 +7,168 @@ namespace SchoolAccount.CollectNotifications.Tests.Integration.Stores;
 
 public partial class LedgerStoreIntegrationTests
 {
+    private static readonly DateTime LastRunDate = new(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
+
     [Fact]
-    public async Task When_getting_what_has_changed_it_should_return_status_with_null_baseline_when_new_return_occurs_after_last_run_date()
+    public async Task When_getting_what_has_changed_it_should_return_a_null_previous_status_for_a_returns_first_ever_row()
     {
         // Arrange
         var store = CreateLedgerStore();
         var laeStab = CreateTrackedLaeStab();
-        var lastRunDate = new DateTime(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
+        await RegisterAsync(laeStab);
 
-        var newRecord = ACollectReturnStatus()
-            .WithLaeStab(laeStab)
-            .WithSchoolName("St Mary's Primary")
-            .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithUpdatedAt(lastRunDate.AddHours(2))
-            .Build();
+        List<CollectReturnStatus> history =
+        [
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithSchoolName("St Mary's Primary")
+                .WithReturnStatusCode(ReturnStatusCodes.Authorised)
+                .WithUpdatedAt(LastRunDate.AddHours(2))
+        ];
 
-        await TestDatabaseHelper.InsertReturnStatusesAsync([newRecord]);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(lastRunDate, [laeStab], limitToApprovedStatuses: false);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        result.Value.Count.ShouldBe(1);
-
-        var change = result.Value.Single();
+        var change = result.Value.ShouldHaveSingleItem();
         change.LaeStab.ShouldBe(laeStab);
         change.SchoolName.ShouldBe("St Mary's Primary");
+        change.Email.ShouldBe(DefaultEmail);
         change.ReturnStatusCode.ShouldBe(ReturnStatusCodes.Authorised);
         change.PreviousReturnStatusCode.ShouldBeNull();
-        change.InitialReturnStatusCode.ShouldBeNull();
     }
 
     [Fact]
-    public async Task When_getting_what_has_changed_it_should_return_latest_status_with_previous_baseline_when_status_changed_since_last_run()
+    public async Task When_getting_what_has_changed_it_should_return_the_previous_status_when_the_status_changed()
     {
         // Arrange
         var store = CreateLedgerStore();
         var laeStab = CreateTrackedLaeStab();
-        var lastRunDate = new DateTime(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
+        await RegisterAsync(laeStab);
 
-        var baseline = ACollectReturnStatus()
-            .WithLaeStab(laeStab)
-            .WithSchoolName("Oakfield Academy")
-            .WithReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
-            .WithUpdatedAt(lastRunDate.AddDays(-1))
-            .Build();
+        List<CollectReturnStatus> history =
+        [
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
+                .WithUpdatedAt(LastRunDate.AddDays(-1)),
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.Authorised)
+                .WithUpdatedAt(LastRunDate.AddHours(1))
+        ];
 
-        var updated = ACollectReturnStatus()
-            .WithLaeStab(laeStab)
-            .WithSchoolName("Oakfield Academy")
-            .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithUpdatedAt(lastRunDate.AddHours(1))
-            .Build();
-
-        await TestDatabaseHelper.InsertReturnStatusesAsync([baseline, updated]);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(lastRunDate, [laeStab], limitToApprovedStatuses: false);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Value.Count.ShouldBe(1);
-
-        var change = result.Value.Single();
-        change.LaeStab.ShouldBe(laeStab);
+        var change = result.Value.ShouldHaveSingleItem();
         change.ReturnStatusCode.ShouldBe(ReturnStatusCodes.Authorised);
         change.PreviousReturnStatusCode.ShouldBe(ReturnStatusCodes.LoadedAndValidated);
-        change.InitialReturnStatusCode.ShouldBe(ReturnStatusCodes.LoadedAndValidated);
     }
 
     [Fact]
-    public async Task When_getting_what_has_changed_it_should_return_empty_list_when_status_in_window_is_identical_to_baseline()
+    public async Task When_getting_what_has_changed_it_should_return_nothing_when_the_latest_status_matches_the_one_before_it()
     {
         // Arrange
         var store = CreateLedgerStore();
         var laeStab = CreateTrackedLaeStab();
-        var lastRunDate = new DateTime(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
+        await RegisterAsync(laeStab);
 
-        var baseline = ACollectReturnStatus()
-            .WithLaeStab(laeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithUpdatedAt(lastRunDate.AddDays(-1))
-            .Build();
+        List<CollectReturnStatus> history =
+        [
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.Authorised)
+                .WithUpdatedAt(LastRunDate.AddDays(-1)),
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.Authorised)
+                .WithUpdatedAt(LastRunDate.AddHours(1))
+        ];
 
-        var unchangedUpdate = ACollectReturnStatus()
-            .WithLaeStab(laeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithUpdatedAt(lastRunDate.AddHours(1))
-            .Build();
-
-        await TestDatabaseHelper.InsertReturnStatusesAsync([baseline, unchangedUpdate]);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(lastRunDate, [laeStab], limitToApprovedStatuses: false);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldBeEmpty();
     }
 
     [Fact]
-    public async Task When_getting_what_has_changed_it_should_pick_latest_status_in_window_and_baseline_before_last_run_date()
+    public async Task When_getting_what_has_changed_it_should_compare_the_latest_row_against_the_one_immediately_before_it()
     {
+        // The status moves several times after the last run. The comparison is against the row
+        // immediately before the latest one, not against where the return stood at the last run.
+
         // Arrange
         var store = CreateLedgerStore();
         var laeStab = CreateTrackedLaeStab();
-        var lastRunDate = new DateTime(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
+        await RegisterAsync(laeStab);
 
-        var baseline = ACollectReturnStatus()
-            .WithLaeStab(laeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.NoData)
-            .WithUpdatedAt(lastRunDate.AddDays(-2))
-            .Build();
+        List<CollectReturnStatus> history =
+        [
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.NoData)
+                .WithUpdatedAt(LastRunDate.AddDays(-2)),
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
+                .WithUpdatedAt(LastRunDate.AddHours(1)),
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.Rejected)
+                .WithUpdatedAt(LastRunDate.AddHours(2)),
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.Authorised)
+                .WithUpdatedAt(LastRunDate.AddHours(3))
+        ];
 
-        var firstInWindow = ACollectReturnStatus()
-            .WithLaeStab(laeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
-            .WithUpdatedAt(lastRunDate.AddHours(1))
-            .Build();
-
-        var middleInWindow = ACollectReturnStatus()
-            .WithLaeStab(laeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.Rejected)
-            .WithUpdatedAt(lastRunDate.AddHours(2))
-            .Build();
-
-        var lastInWindow = ACollectReturnStatus()
-            .WithLaeStab(laeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithUpdatedAt(lastRunDate.AddHours(3))
-            .Build();
-
-        await TestDatabaseHelper.InsertReturnStatusesAsync([baseline, firstInWindow, middleInWindow, lastInWindow]);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(lastRunDate, [laeStab], limitToApprovedStatuses: false);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Value.Count.ShouldBe(1);
-
-        var change = result.Value.Single();
+        var change = result.Value.ShouldHaveSingleItem();
         change.ReturnStatusCode.ShouldBe(ReturnStatusCodes.Authorised);
-        change.PreviousReturnStatusCode.ShouldBe(ReturnStatusCodes.NoData);
-        change.InitialReturnStatusCode.ShouldBe(ReturnStatusCodes.NoData);
+        change.PreviousReturnStatusCode.ShouldBe(ReturnStatusCodes.Rejected);
     }
 
     [Fact]
-    public async Task When_getting_what_has_changed_it_should_pick_initial_and_previous_baselines_when_multiple_baselines_exist_before_last_run_date()
+    public async Task When_getting_what_has_changed_it_should_return_nothing_when_every_row_predates_the_last_run_date()
     {
         // Arrange
         var store = CreateLedgerStore();
         var laeStab = CreateTrackedLaeStab();
-        var lastRunDate = new DateTime(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
+        await RegisterAsync(laeStab);
 
-        var oldBaseline = ACollectReturnStatus()
-            .WithLaeStab(laeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.NoData)
-            .WithUpdatedAt(lastRunDate.AddDays(-5))
-            .Build();
+        List<CollectReturnStatus> history =
+        [
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.NoData)
+                .WithUpdatedAt(LastRunDate.AddDays(-3)),
+            ACollectReturnStatus()
+                .WithLaeStab(laeStab)
+                .WithReturnStatusCode(ReturnStatusCodes.Authorised)
+                .WithUpdatedAt(LastRunDate.AddDays(-1))
+        ];
 
-        var latestBaseline = ACollectReturnStatus()
-            .WithLaeStab(laeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
-            .WithUpdatedAt(lastRunDate.AddDays(-1))
-            .Build();
-
-        var currentUpdate = ACollectReturnStatus()
-            .WithLaeStab(laeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-            .WithUpdatedAt(lastRunDate.AddHours(1))
-            .Build();
-
-        await TestDatabaseHelper.InsertReturnStatusesAsync([oldBaseline, latestBaseline, currentUpdate]);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(lastRunDate, [laeStab], limitToApprovedStatuses: false);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Value.Count.ShouldBe(1);
-
-        var change = result.Value.Single();
-        change.PreviousReturnStatusCode.ShouldBe(ReturnStatusCodes.LoadedAndValidated);
-        change.InitialReturnStatusCode.ShouldBe(ReturnStatusCodes.NoData);
-        change.ReturnStatusCode.ShouldBe(ReturnStatusCodes.Authorised);
-    }
-
-    [Fact]
-    public async Task When_getting_what_has_changed_it_should_return_empty_when_all_records_are_prior_to_last_run_date()
-    {
-        // Arrange
-        var store = CreateLedgerStore();
-        var laeStab = CreateTrackedLaeStab();
-        var lastRunDate = new DateTime(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
-
-        var oldRecord1 = ACollectReturnStatus()
-            .WithLaeStab(laeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.NoData)
-            .WithUpdatedAt(lastRunDate.AddDays(-3))
-            .Build();
-
-        var oldRecord2 = ACollectReturnStatus()
-            .WithLaeStab(laeStab)
-            .WithReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
-            .WithUpdatedAt(lastRunDate.AddDays(-1))
-            .Build();
-
-        await TestDatabaseHelper.InsertReturnStatusesAsync([oldRecord1, oldRecord2]);
-
-        // Act
-        var result = await store.GetWhatHasChangedAsync(lastRunDate, [laeStab], limitToApprovedStatuses: false);
-
-        // Assert
-        result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldBeEmpty();
     }
 }
