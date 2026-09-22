@@ -84,19 +84,13 @@ public partial class InitialisationTests
     }
 
     [Fact]
-    public void Should_bind_threading_and_census_options_correctly_when_valid_values_are_provided()
+    public void Should_bind_census_options_correctly_when_valid_values_are_provided()
     {
-        const int testThreadingBatchAmount = 100;
-        const int testThreadingBatchWaitAmountInSec = 5;
-        const int testThreadingItemWaitAmountInSec = 2;
         const string testJobName = "collect-notifications";
         
         // Arrange
         using var host = CreateHost(new Dictionary<string, string?>
         {
-            ["Threading:BatchAmount"] = testThreadingBatchAmount.ToString(),
-            ["Threading:BatchWaitAmountInMs"] = testThreadingBatchWaitAmountInSec.ToString(),
-            ["Threading:ItemWaitAmountInMs"] = testThreadingItemWaitAmountInSec.ToString(),
             ["Census:AllowedStatuses:0"] = "7",
             ["Census:AllowedStatuses:1"] = "10",
             ["Census:AllowedStatuses:2"] = "1",
@@ -106,16 +100,9 @@ public partial class InitialisationTests
         // Act
         using var scope = host.Services.CreateScope();
         var sp = scope.ServiceProvider;
-        var threadingOptions = sp.GetRequiredService<IOptions<ThreadingOptions>>().Value;
         var censusOptions = sp.GetRequiredService<IOptions<CensusOptions>>().Value;
 
         // Assert
-        threadingOptions.ShouldSatisfyAllConditions(
-            x => x.BatchAmount.ShouldBe(testThreadingBatchAmount),
-            x => x.BatchWaitAmountInMs.ShouldBe(testThreadingBatchWaitAmountInSec),
-            x => x.ItemWaitAmountInMs.ShouldBe(testThreadingItemWaitAmountInSec)
-        );
-
         censusOptions.ShouldSatisfyAllConditions(
             x => x.AllowedStatuses.ShouldBe([
                 ReturnStatusCodes.Approved,

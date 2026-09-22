@@ -9,7 +9,6 @@ public class StatusChangedLedgerMonitoringService(
     StatusChangedLedgerMonitoringServiceInstrumentation log,
     ILastRanService lastRanService,
     ILedgerStore ledgerStore,
-    IThreadingService threadingService,
     IGovNotifyService govNotifyService
 )
 {
@@ -69,15 +68,16 @@ public class StatusChangedLedgerMonitoringService(
             return;
         }
 
-        await threadingService.Batch(
-            whatToNotify,
-            cancellationToken,
-            async (notify, token) =>
-            {
-                token.ThrowIfCancellationRequested();
-                log.NotifyingRecipient(notify.Recipient, notify.LaeStab);
+        foreach (var notify in whatToNotify)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            log.NotifyingRecipient(notify.Recipient, notify.LaeStab);
 
-                var result = await govNotifyService.SendMessage(
+            Result<NotificationResult> result;
+
+            try
+            {
+                result = await govNotifyService.SendMessage(
                     GovNotifyTemplates.CensusStatusChange,
                     notify.Recipient,
                     new Dictionary<string, dynamic>
@@ -85,14 +85,29 @@ public class StatusChangedLedgerMonitoringService(
                         { "status", notify.Status },
                         { "school_name", notify.School }
                     });
+            }
+            catch (Exception exception)
+            {
+                // The watermark has already moved, so giving up on the whole run here would lose
+                // every notification after this one. Carry on and let the rest through.
+                log.NotificationFailed(exception, notify.Recipient);
+                continue;
+            }
 
-                if (!string.IsNullOrWhiteSpace(result.Error))
-                {
-                    log.NotificationRejected(result.Error);
-                }
+            if (!string.IsNullOrWhiteSpace(result.Error))
+            {
+                log.NotificationRejected(result.Error);
+            }
 
-                return result.IsSuccess;
-            });
+            // Anything the Notify service reports as a failure rather than a warning is a problem
+            // with the whole run, a rate limit or a bad key, so there is no point working through
+            // the rest.
+            if (result.IsFailure)
+            {
+                log.SendingStopped(whatToNotify.Count - whatToNotify.IndexOf(notify) - 1);
+                break;
+            }
+        }
 
         log.RunFinished((DateTime.UtcNow - runningAt).TotalMilliseconds);
     }

@@ -21,7 +21,6 @@ public partial class InitialisationTests
 
         sp.GetRequiredService<StatusChangedLedgerMonitoringService>().ShouldNotBeNull();
         sp.GetRequiredService<ILedgerStore>().ShouldBeOfType<LedgerStore>();
-        sp.GetRequiredService<IThreadingService>().ShouldBeOfType<ThreadingService>();
         sp.GetRequiredService<ILastRanService>().ShouldBeOfType<LastRanService>();
         sp.GetRequiredService<IGovNotifyService>().ShouldBeOfType<GovNotifyService>();
         sp.GetRequiredService<IDbConnectionFactory<LedgerDatabase>>().ShouldNotBeNull();

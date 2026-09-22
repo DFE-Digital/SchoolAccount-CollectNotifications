@@ -4,7 +4,6 @@ using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Models.Dtos;
 using SchoolAccount.CollectNotifications.Models.Enums;
 using SchoolAccount.CollectNotifications.Services;
-using static SchoolAccount.CollectNotifications.Tests.Common.Builders.NotificationBuilder;
 
 namespace SchoolAccount.CollectNotifications.Tests.Unit.Services;
 
@@ -12,27 +11,23 @@ public class StatusChangedLedgerMonitoringServiceTests
 {
     private readonly ILastRanService _lastRanService = Substitute.For<ILastRanService>();
     private readonly ILedgerStore _ledgerStore = Substitute.For<ILedgerStore>();
-    private readonly IThreadingService _threadingService = Substitute.For<IThreadingService>();
     private readonly IGovNotifyService _govNotifyService = Substitute.For<IGovNotifyService>();
     private readonly StatusChangedLedgerMonitoringService _sut;
 
     public StatusChangedLedgerMonitoringServiceTests()
     {
-        var nullLogger = NullLogger<StatusChangedLedgerMonitoringService>.Instance;
-        var instrumentation = new StatusChangedLedgerMonitoringServiceInstrumentation(nullLogger);
-        
         _sut = new StatusChangedLedgerMonitoringService(
-            instrumentation,
+            new StatusChangedLedgerMonitoringServiceInstrumentation(
+                NullLogger<StatusChangedLedgerMonitoringService>.Instance),
             _lastRanService,
             _ledgerStore,
-            _threadingService,
             _govNotifyService);
     }
 
     private static CensusStatusChange AChange(
         string laeStab,
         string email,
-        ReturnStatusCodes status,
+        ReturnStatusCodes status = ReturnStatusCodes.Authorised,
         string schoolName = "A test School") =>
         new()
         {
@@ -46,13 +41,22 @@ public class StatusChangedLedgerMonitoringServiceTests
             DcId = 1172
         };
 
+    private void GivenChanges(params CensusStatusChange[] changes)
+    {
+        _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>())
+            .Returns(Result.Success(DateTime.UtcNow.AddDays(-1)));
+        _ledgerStore.GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Success(changes.ToList()));
+        _lastRanService.SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Success());
+    }
+
     [Fact]
     public async Task InvokeAsync_should_abort_workflow_when_retrieving_last_ran_timestamp_fails()
     {
         // Arrange
-        _lastRanService
-            .GetTimestampAsync(Arg.Any<CancellationToken>())
-            .Returns(Result.Failure<DateTime>("Blob read failure"));
+        _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>())
+            .Returns(Result.Failure<DateTime>("Ledger unreachable"));
 
         // Act
         await _sut.InvokeAsync();
@@ -70,12 +74,9 @@ public class StatusChangedLedgerMonitoringServiceTests
         // every qualifying change it has ever had.
 
         // Arrange
-        _lastRanService
-            .GetTimestampAsync(Arg.Any<CancellationToken>())
+        _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success(LastRanService.NeverRun));
-
-        _lastRanService
-            .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+        _lastRanService.SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success());
 
         // Act
@@ -83,26 +84,19 @@ public class StatusChangedLedgerMonitoringServiceTests
 
         // Assert
         await _lastRanService.Received(1).SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
-
         await _ledgerStore.DidNotReceive().GetWhatHasChangedAsync(
             Arg.Any<DateTime>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-
-        await _threadingService.DidNotReceive().Batch(
-            Arg.Any<IEnumerable<Notification>>(),
-            Arg.Any<CancellationToken>(),
-            Arg.Any<Func<Notification, CancellationToken, Task<bool>>>());
+        await _govNotifyService.DidNotReceive().SendMessage(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, dynamic>>());
     }
 
     [Fact]
     public async Task InvokeAsync_should_abort_workflow_when_retrieving_ledger_changes_fails()
     {
         // Arrange
-        _lastRanService
-            .GetTimestampAsync(Arg.Any<CancellationToken>())
-            .Returns(Result.Success(new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc)));
-
-        _ledgerStore
-            .GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+        _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>())
+            .Returns(Result.Success(DateTime.UtcNow.AddDays(-1)));
+        _ledgerStore.GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(Result.Failure<List<CensusStatusChange>>("Database connection timeout"));
 
         // Act
@@ -110,145 +104,114 @@ public class StatusChangedLedgerMonitoringServiceTests
 
         // Assert
         await _lastRanService.DidNotReceive().SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
-        await _threadingService.DidNotReceive().Batch(
-            Arg.Any<IEnumerable<Notification>>(),
-            Arg.Any<CancellationToken>(),
-            Arg.Any<Func<Notification, CancellationToken, Task<bool>>>());
+        await _govNotifyService.DidNotReceive().SendMessage(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, dynamic>>());
     }
 
     [Fact]
-    public async Task InvokeAsync_should_turn_every_change_into_a_notification_for_its_own_recipient()
+    public async Task InvokeAsync_should_send_one_notification_per_change()
     {
         // The query pairs each change with its registered recipients, so a school with two
-        // contacts arrives as two changes and becomes two notifications.
+        // contacts arrives as two changes and becomes two emails.
 
         // Arrange
-        var changes = new List<CensusStatusChange>
-        {
-            AChange("1111111", "head@school1.sch.uk", ReturnStatusCodes.Authorised, "School One"),
-            AChange("1111111", "office@school1.sch.uk", ReturnStatusCodes.Authorised, "School One"),
-            AChange("2222222", "admin@school2.sch.uk", ReturnStatusCodes.Submitted, "School Two")
-        };
+        GivenChanges(
+            AChange("1111111", "head@school1.sch.uk", schoolName: "School One"),
+            AChange("1111111", "office@school1.sch.uk", schoolName: "School One"),
+            AChange("2222222", "admin@school2.sch.uk", ReturnStatusCodes.Submitted, "School Two"));
 
-        _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>())
-            .Returns(Result.Success(DateTime.UtcNow.AddDays(-1)));
-        _ledgerStore.GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Success(changes));
-        _lastRanService.SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Success());
-
-        List<Notification>? captured = null;
-        await _threadingService.Batch(
-            Arg.Do<IEnumerable<Notification>>(items => captured = items.ToList()),
-            Arg.Any<CancellationToken>(),
-            Arg.Any<Func<Notification, CancellationToken, Task<bool>>>());
+        _govNotifyService.SendMessage(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, dynamic>>())
+            .Returns(Result.Success(new NotificationResult()));
 
         // Act
         await _sut.InvokeAsync();
 
         // Assert
-        captured.ShouldNotBeNull();
-        captured.Count.ShouldBe(3);
+        await _govNotifyService.Received(1).SendMessage(
+            GovNotifyTemplates.CensusStatusChange, "head@school1.sch.uk",
+            Arg.Is<Dictionary<string, dynamic>>(d => MatchesPersonalisation(d, "Authorised", "School One")));
 
-        captured.ShouldContain(n =>
-            n.LaeStab == "1111111" && n.Recipient == "head@school1.sch.uk" &&
-            n.Status == "Authorised" && n.School == "School One");
+        await _govNotifyService.Received(1).SendMessage(
+            GovNotifyTemplates.CensusStatusChange, "office@school1.sch.uk",
+            Arg.Is<Dictionary<string, dynamic>>(d => MatchesPersonalisation(d, "Authorised", "School One")));
 
-        captured.ShouldContain(n =>
-            n.LaeStab == "1111111" && n.Recipient == "office@school1.sch.uk" &&
-            n.Status == "Authorised" && n.School == "School One");
-
-        captured.ShouldContain(n =>
-            n.LaeStab == "2222222" && n.Recipient == "admin@school2.sch.uk" &&
-            n.Status == "Submitted" && n.School == "School Two");
+        await _govNotifyService.Received(1).SendMessage(
+            GovNotifyTemplates.CensusStatusChange, "admin@school2.sch.uk",
+            Arg.Is<Dictionary<string, dynamic>>(d => MatchesPersonalisation(d, "Submitted", "School Two")));
 
         await _lastRanService.Received(1).SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task InvokeAsync_should_send_email_via_gov_notify_inside_batch_worker()
+    public async Task InvokeAsync_should_keep_going_when_one_recipient_is_rejected()
     {
-        // Arrange
-        await ArrangeSingleChangeAsync();
-        var worker = await CaptureWorkerAsync();
+        // An address Notify won't accept comes back as a warning, which is a problem with that one
+        // recipient and not a reason to stop telling everybody else.
 
-        _govNotifyService
-            .SendMessage(GovNotifyTemplates.CensusStatusChange, "head@school1.sch.uk",
-                Arg.Any<Dictionary<string, dynamic>>())
+        // Arrange
+        GivenChanges(
+            AChange("1111111", "bad-address"),
+            AChange("2222222", "fine@school.sch.uk"));
+
+        _govNotifyService.SendMessage(Arg.Any<string>(), "bad-address", Arg.Any<Dictionary<string, dynamic>>())
+            .Returns(Result.Warning(new NotificationResult(), "The recipient email address is invalid."));
+
+        _govNotifyService.SendMessage(Arg.Any<string>(), "fine@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>())
             .Returns(Result.Success(new NotificationResult()));
 
-        var notification = ANotification()
-            .WithLaeStab("1111111")
-            .WithRecipient("head@school1.sch.uk")
-            .WithStatus("Authorised")
-            .WithSchool("School One")
-            .Build();
-
         // Act
-        var workerResult = await worker(notification, CancellationToken.None);
+        await _sut.InvokeAsync();
 
         // Assert
-        workerResult.ShouldBeTrue();
         await _govNotifyService.Received(1).SendMessage(
-            GovNotifyTemplates.CensusStatusChange,
-            "head@school1.sch.uk",
-            Arg.Is<Dictionary<string, dynamic>>(d => MatchesPersonalisation(d, "Authorised", "School One")));
+            Arg.Any<string>(), "fine@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>());
     }
 
     [Fact]
-    public async Task InvokeAsync_should_return_false_in_batch_worker_when_gov_notify_service_fails()
+    public async Task InvokeAsync_should_stop_sending_when_notify_reports_a_failure()
     {
+        // A rate limit or a bad key is a problem with the whole run, so there is no point working
+        // through the rest of the list.
+
         // Arrange
-        await ArrangeSingleChangeAsync();
-        var worker = await CaptureWorkerAsync();
+        GivenChanges(
+            AChange("1111111", "first@school.sch.uk"),
+            AChange("2222222", "second@school.sch.uk"));
 
-        _govNotifyService
-            .SendMessage(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, dynamic>>())
-            .Returns(Result.Failure<NotificationResult>("Notify API rate limit exceeded"));
-
-        var notification = ANotification()
-            .WithRecipient("head@school1.sch.uk")
-            .WithStatus("Authorised")
-            .WithSchool("School One")
-            .Build();
+        _govNotifyService.SendMessage(Arg.Any<string>(), "first@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>())
+            .Returns(Result.Failure<NotificationResult>("Gov Notify rate limit exceeded."));
 
         // Act
-        var workerResult = await worker(notification, CancellationToken.None);
-
-        // Assert
-        workerResult.ShouldBeFalse();
-    }
-
-    private async Task ArrangeSingleChangeAsync()
-    {
-        var changes = new List<CensusStatusChange>
-        {
-            AChange("1111111", "head@school1.sch.uk", ReturnStatusCodes.Authorised, "School One")
-        };
-
-        _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>())
-            .Returns(Result.Success(DateTime.UtcNow.AddDays(-1)));
-        _ledgerStore.GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Success(changes));
-        _lastRanService.SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Success());
-
-        await Task.CompletedTask;
-    }
-
-    private async Task<Func<Notification, CancellationToken, Task<bool>>> CaptureWorkerAsync()
-    {
-        Func<Notification, CancellationToken, Task<bool>>? captured = null;
-
-        await _threadingService.Batch(
-            Arg.Any<IEnumerable<Notification>>(),
-            Arg.Any<CancellationToken>(),
-            Arg.Do<Func<Notification, CancellationToken, Task<bool>>>(worker => captured = worker));
-
         await _sut.InvokeAsync();
 
-        captured.ShouldNotBeNull();
-        return captured;
+        // Assert
+        await _govNotifyService.DidNotReceive().SendMessage(
+            Arg.Any<string>(), "second@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>());
+    }
+
+    [Fact]
+    public async Task InvokeAsync_should_keep_going_when_a_send_throws()
+    {
+        // The last run date has already moved by this point, so giving up on the run would lose
+        // every notification after the one that threw.
+
+        // Arrange
+        GivenChanges(
+            AChange("1111111", "throws@school.sch.uk"),
+            AChange("2222222", "fine@school.sch.uk"));
+
+        _govNotifyService.SendMessage(Arg.Any<string>(), "throws@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>())
+            .Returns<Result<NotificationResult>>(_ => throw new HttpRequestException("Connection reset"));
+
+        _govNotifyService.SendMessage(Arg.Any<string>(), "fine@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>())
+            .Returns(Result.Success(new NotificationResult()));
+
+        // Act
+        await _sut.InvokeAsync();
+
+        // Assert
+        await _govNotifyService.Received(1).SendMessage(
+            Arg.Any<string>(), "fine@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>());
     }
 
     private static bool MatchesPersonalisation(

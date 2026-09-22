@@ -41,6 +41,14 @@ public sealed partial class StatusChangedLedgerMonitoringServiceInstrumentation(
         Message = "Notification not delivered: {Error}")]
     public partial void NotificationRejected(string? error);
 
+    [LoggerMessage(Level = LogLevel.Warning,
+        Message = "Could not reach Notify for {Recipient}, moving on to the next one")]
+    public partial void NotificationFailed(Exception exception, string recipient);
+
+    [LoggerMessage(Level = LogLevel.Warning,
+        Message = "Stopped sending, {Remaining} notifications were not attempted")]
+    public partial void SendingStopped(int remaining);
+
     [LoggerMessage(Level = LogLevel.Information,
         Message = "Run finished in {ElapsedMilliseconds}ms")]
     public partial void RunFinished(double elapsedMilliseconds);

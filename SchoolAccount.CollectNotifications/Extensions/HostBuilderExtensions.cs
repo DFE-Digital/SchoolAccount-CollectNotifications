@@ -25,13 +25,11 @@ public static class HostBuilderExtensions
         }
 
         builder.AddValidatedOptions<GovNotifyOptions>(GovNotifyOptions.SectionName);
-        builder.AddValidatedOptions<ThreadingOptions>(ThreadingOptions.SectionName);
         builder.AddValidatedOptions<CensusOptions>(CensusOptions.SectionName);
 
         builder.Services.AddDatabase<LedgerDatabase>(builder.Configuration);
         builder.Services.AddSingleton<ILedgerStore, LedgerStore>();
 
-        builder.Services.AddSingleton<IThreadingService, ThreadingService>();
         builder.Services.AddSingleton<ILastRanService, LastRanService>();
         builder.Services.AddSingleton<IGovNotifyService, GovNotifyService>();
         builder.Services.AddSingleton<StatusChangedLedgerMonitoringServiceInstrumentation>();

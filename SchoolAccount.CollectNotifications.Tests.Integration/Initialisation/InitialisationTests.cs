@@ -12,10 +12,6 @@ public partial class InitialisationTests
     private const string LedgerConnectionString =
         "Server=localhost;Database=CollectStateLedger;User Id=sa;Password=test;TrustServerCertificate=true";
 
-    private const string ThreadingMaxParallelism = "5";
-    private const string ThreadingBatchAmount = "25";
-    private const string ThreadingBatchWait = "2";
-    private const string ThreadingItemWait = "0";
     private const string CensusJobName = "collect-notifications";
     private const string CensusCollection = "SchoolCensus2025_Spring";
 
@@ -23,10 +19,6 @@ public partial class InitialisationTests
     {
         ["ConnectionStrings:LedgerDatabase"] = LedgerConnectionString,
         ["GovNotify:ApiKey"] = ValidDummyGovNotifyApiKey,
-        ["Threading:MaxDegreeOfParallelism"] = ThreadingMaxParallelism,
-        ["Threading:BatchAmount"] = ThreadingBatchAmount,
-        ["Threading:BatchWaitAmountInMs"] = ThreadingBatchWait,
-        ["Threading:ItemWaitAmountInMs"] = ThreadingItemWait,
         ["Census:JobName"] = CensusJobName,
         ["Census:Collection"] = CensusCollection,
         ["Census:AllowedStatuses:0"] = "7",
