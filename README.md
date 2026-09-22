@@ -1,30 +1,27 @@
 # SchoolAccount – Collect Notifications
 
 A .NET 10 console app that watches the Census ledger for changes to a school's return status and emails the people 
-enrolled for that school using GOV.UK Notify. It runs once and then exits, so it's designed to be triggered on a 
+registered for that school using GOV.UK Notify. It runs once and then exits, so it's designed to be triggered on a 
 schedule, running on a Azure Container App Jobs.
 
 ## How it works
 
 Each run does the following:
 
-1. **Load recipients.** Reads the list of enrolled recipients (`LaeStab` + `Email`) from the enrolment store. Rows 
-missing either value are skipped.
-2. **Get the last run time.** Reads `{containerName}/collect/lastran.json` from Azure Blob Storage. If there isn't one, 
+1. **Get the last run time.** Reads `{containerName}/collect/lastran.json` from Azure Blob Storage. If there isn't one, 
 it falls back to `1753-01-01` (the SQL Server minimum date).
-3. **Find status changes.** Queries the `CollectReturnStatus` table in the ledger database for the enrolled LAESTABs. 
-For each school, the latest row updated since the last run is compared with the latest row from before the last run. 
-A school counts as changed if its `ReturnStatusCode` is different, or if it has no earlier row at all.
-4. **Build notifications.** Creates one notification per recipient per changed school.
-5. **Save the run time.** Writes the time this run started (UTC) back to blob storage.
-6. **Send emails.** Sends the notifications through GOV.UK Notify in rate-limited, parallel batches using the 
+2. **Find status changes.** Queries the `CollectReturnStatus` table in the ledger database, joined to 
+`RegisteredUsers` so each change arrives already paired with the people to tell. For each school the latest row is 
+compared with the row immediately before it, and it counts as changed if the `ReturnStatusCode` differs, or if there 
+is no earlier row. Only changes where either end is Approved or Authorised are returned.
+3. **Save the run time.** Writes the time this run started (UTC) back to blob storage.
+4. **Send emails.** Sends the notifications through GOV.UK Notify in rate-limited, parallel batches using the 
 `CensusStatusChange` template.
 
 ```mermaid
 flowchart LR
-    A[Enrolment Store<br/>CSV or Db] --> D[StatusChangedLegerMonitoringService]
     B[(Azure Blob<br/>lastran.json)] <--> D
-    C[(Ledger DB<br/>CollectReturnStatus)] --> D
+    C[(Ledger DB<br/>CollectReturnStatus<br/>+ RegisteredUsers)] --> D[StatusChangedLedgerMonitoringService]
     D --> E[ThreadingService<br/>batched + parallel]
     E --> F[GOV.UK Notify]
 ```
@@ -48,37 +45,6 @@ user secrets. Options marked as required are validated when the app starts, so i
 | Key                                | Description                                        |
 |------------------------------------|----------------------------------------------------|
 | `ConnectionStrings:LedgerDatabase` | SQL Server connection string for the Census ledger |
-
-### Enrolment store
-
-The app chooses the store based on what is configured. If `Enrollment:Db:ConnectionString` is set it uses the database 
-store, otherwise it uses the file store.
-
-#### File store (CSV or Excel)
-
-| Key                         | Default | Description |
-| --------------------------- | ------- | ----------- |
-| `Enrollment:Csv:FilePath`   | –       | Path to the file. Required when the database store isn't configured |
-| `Enrollment:Csv:SheetName`  | First sheet | Sheet to read (Excel only) |
-| `Enrollment:Csv:StartCell`  | `A1`    | Cell where the header row starts (Excel only) |
-
-The file needs a header row with these columns:
-
-```csv
-LaeStab,Email
-1234567,head@example-school.sch.uk
-1234567,office@example-school.sch.uk
-```
-
-#### Database store
-
-| Key                                    | Default | Description |
-| -------------------------------------- | ------- | ----------- |
-| `Enrollment:Db:ConnectionString`       | –       | SQL Server connection string |
-| `Enrollment:Db:CommandTimeoutSeconds`  | `30`    | Command timeout |
-
-> The database store isn't implemented yet, there is a example of how that would look, but no table has been tested
-> against it yet.
 
 ### GOV.UK Notify (required)
 
@@ -129,16 +95,6 @@ If any send fails, the remaining batches are stopped.
   },
   "GovNotify": {                    // Required.
     "ApiKey": ""                    // Required. Api from GovNotify.
-  },
-  "Enrollment": {                   // Required.
-    "Csv": {                        // One of two optional blocks
-      "FilePath": "",               // Optional. The local filepath to a excel sheet, this is needed if BlobName is emtpy.
-      "BlobName": ""                // Optional. The azure blob path name to a excel sheet, this is needed if FilePath is emtpy.
-    },
-    "Db": {                         // One of two optional blocks
-      "ConnectionString": "",       // Required. The connection string to where to obtain db records
-      "CommandTimeoutSeconds": 0    // Optional. Defaults to 30 seconds.
-    }
   },
   "AzureBlobStorage": {             // Optional.
     "ConnectionString": "",         // Required. The site address to where the blob is contained.
@@ -238,7 +194,7 @@ dotnet test SchoolAccount.CollectNotifications.Tests.Integration
 - Handling cancellation tokens and throwing `OperationCanceledException` directions.
 
 #### **Workflow Orchestration** by `StatusChangedLegerMonitoringServiceTests`
-- Validating end-to-end processing pipeline from enrolment loading to blob tracking and database queries.
+- Validating end-to-end processing pipeline from blob tracking through to the ledger queries.
 - Skipping invalid or incomplete recipient records.
 - Matching changed schools to recipients and building notification payloads.
 - Passing notification batches into `IThreadingService` and executing GOV.UK Notify dispatches.
@@ -257,12 +213,10 @@ dotnet test SchoolAccount.CollectNotifications.Tests.Integration
 #### **Test Data Builders** located in `Builders/`
 - Fluent builder helpers to create clean, reusable test fixtures:
   - `CollectReturnStatusBuilder` to build a ledger row (`ComparableCollectReturnStatus`);
-  - `EnrolledRecipientBuilder` to build a record for a beta enrolled user;
   - `NotificationBuilder` to allow us to emulate sending a request to the GovNotify service.
 
 #### **App Initialisation Tests** by `InitialisationTests`
   - `InitialisationTests.ServiceResolution.cs`: Host container bootstrapping, environment verification, and core service resolution.
-  - `InitialisationTests.EnrollmentRegistration.cs`: Conditional dependency injection switching between DB and CSV enrolment stores.
   - `InitialisationTests.BlobStorageRegistration.cs`: Blob storage service registration (ConnectionString vs ServiceUri vs Blanked fallback).
   - `InitialisationTests.OptionsValidation.cs`: Fail-fast startup validation for required API keys, paths, and options binding.
 
@@ -287,14 +241,13 @@ docker build -f SchoolAccount.CollectNotifications/Dockerfile -t schoolaccount-c
 docker run --rm \
   -e ConnectionStrings__LedgerDatabase=\"<connection-string>\" \
   -e GovNotify__ApiKey=\"<your-key>\" \
-  -e Enrollment__Csv__FilePath=\"/data/recipients.csv\" \
   -v \"$(pwd)/data:/data:ro\" \
   schoolaccount-collect-notifications
 ```
 
 ## First run behaviour
 
-When there is no `lastran.json` (or blob storage isn't configured), the last run date falls back to `1753-01-01`. This means **every enrolled school with a ledger row counts as changed, so every recipient gets an email.**
+When there is no `lastran.json` (or blob storage isn't configured), the last run date falls back to `1753-01-01`. This means **every school with a ledger row and a registered user counts as changed, so everyone gets an email.**
 
 To avoid this, create the blob before the first real run. `runDate` is an OLE Automation date (days since 30 December 1899), for example `46280.0` is 15 September 2026:
 
@@ -309,10 +262,10 @@ The run date is stored in UTC, so the `UpdatedAt` values in the ledger are expec
 ```
 SchoolAccount.CollectNotifications/
 ├── Extensions/        # Dependency injection and options setup
-├── Interfaces/        # IBlobStorageService, IDbConnectionFactory, IEnrollmentStore, IThreadingService
+├── Interfaces/        # IBlobStorageService, IDbConnectionFactory, ILedgerStore, IThreadingService
 ├── Models/
 │   ├── Databases/     # Marker types used to tell database connections apart
-│   ├── Dtos/          # EnrolledRecipient, Notification, NotificationResult
+│   ├── Dtos/          # CensusStatusChange, Notification, NotificationResult
 │   ├── Enums/         
 │   ├── Options/       # Strongly typed configuration
 │   └── Result.cs      # Result / Result<T> for handling errors without exceptions
@@ -323,7 +276,6 @@ SchoolAccount.CollectNotifications/
 │   ├── StatusChangedLegerMonitoringService.cs   # Main workflow
 │   └── ThreadingService.cs                      # Batched, parallel processing
 ├── Stores/
-│   ├── Enrollment/    # CSV/Excel and database recipient stores
 │   └── LedgerStore.cs # Status change query and status filter extensions
 ├── Dockerfile
 └── Program.cs
@@ -348,7 +300,6 @@ SchoolAccount.CollectNotifications.Tests.Integration/
 | ------- | -------- |
 | `Dapper` + `Microsoft.Data.SqlClient` | Querying SQL Server |
 | `GovukNotify` | Sending emails |
-| `MiniExcel` | Reading the recipients file (CSV or Excel) |
 | `Azure.Storage.Blobs` + `Azure.Identity` | Storing the last run date |
 
 ### Code Coverage

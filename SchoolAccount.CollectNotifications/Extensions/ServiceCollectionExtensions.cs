@@ -5,10 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models;
-using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services.BlobStorage;
-using SchoolAccount.CollectNotifications.Stores.Enrollment;
 
 namespace SchoolAccount.CollectNotifications.Extensions;
 
@@ -28,38 +26,6 @@ public static class ServiceCollectionExtensions
         return services.AddDatabase<TDb>(factory);
     }
 
-    public static IServiceCollection AddEnrollmentStores(this IServiceCollection services, IConfiguration configuration)
-    {
-        var dbSection = configuration.GetSection(EnrollmentDbOptions.SectionName);
-        var useDb = !string.IsNullOrWhiteSpace(dbSection[nameof(EnrollmentDbOptions.ConnectionString)]);
-
-        if (useDb)
-        {
-            services.AddOptions<EnrollmentDbOptions>()
-                .Bind(dbSection)
-                .ValidateDataAnnotations()
-                .ValidateOnStart();
-
-            services.AddDatabase<EnrollmentDatabase>(() => dbSection[nameof(EnrollmentDbOptions.ConnectionString)]!);
-            services.AddSingleton<EnrollmentDbStore>();
-            services.AddSingleton<IEnrollmentStore>(sp => sp.GetRequiredService<EnrollmentDbStore>());
-        }
-        else
-        {
-            services.AddOptions<EnrollmentCsvOptions>()
-                .Bind(configuration.GetSection(EnrollmentCsvOptions.SectionName))
-                .Validate(x => !string.IsNullOrEmpty(x.FilePath) || !string.IsNullOrWhiteSpace(x.BlobName),
-                    $"Either properties \"{nameof(EnrollmentCsvOptions.FilePath)}\" or \"{nameof(EnrollmentCsvOptions.BlobName)}\" must be set.")
-                .ValidateDataAnnotations()
-                .ValidateOnStart();
-
-            services.AddSingleton<EnrollmentCsvStore>();
-            services.AddSingleton<IEnrollmentStore>(sp => sp.GetRequiredService<EnrollmentCsvStore>());
-        }
-
-        return services;
-    }
-    
     public static IServiceCollection AddAzureBlobStorage(this IServiceCollection services, IConfiguration configuration)
     {
         var section = configuration.GetSection(AzureBlobStorageOptions.SectionName);

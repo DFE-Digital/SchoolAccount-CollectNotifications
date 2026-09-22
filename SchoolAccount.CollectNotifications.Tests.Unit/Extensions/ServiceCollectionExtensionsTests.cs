@@ -9,7 +9,6 @@ using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services.BlobStorage;
-using SchoolAccount.CollectNotifications.Stores.Enrollment;
 
 namespace SchoolAccount.CollectNotifications.Tests.Unit.Extensions;
 
@@ -64,100 +63,6 @@ public class ServiceCollectionExtensionsTests
         // Act & Assert
         var ex = Should.Throw<ArgumentException>(() => services.AddDatabase<LedgerDatabase>(configuration));
         ex.Message.ShouldContain("Connection string for LedgerDatabase was not found.");
-    }
-
-    [Fact]
-    public void When_adding_enrollment_store_and_when_connection_string_is_provided_should_register_db_store()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                [$"{EnrollmentDbOptions.SectionName}:ConnectionString"] = "Server=localhost;Database=Enrollment;"
-            })
-            .Build();
-
-        // Act
-        services.AddEnrollmentStores(configuration);
-        var provider = services.BuildServiceProvider();
-
-        // Assert
-        var store = provider.GetService<IEnrollmentStore>();
-        store.ShouldNotBeNull();
-        store.ShouldBeOfType<EnrollmentDbStore>();
-
-        var dbStore = provider.GetService<EnrollmentDbStore>();
-        dbStore.ShouldNotBeNull();
-        dbStore.ShouldBeSameAs(store);
-
-        var dbOptions = provider.GetService<IOptions<EnrollmentDbOptions>>();
-        dbOptions.ShouldNotBeNull();
-        dbOptions.Value.ConnectionString.ShouldBe("Server=localhost;Database=Enrollment;");
-    }
-
-    [Fact]
-    public void When_adding_enrollment_store_and_connection_string_is_not_provided_should_register_csv_store()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        services.AddSingleton(Substitute.For<IBlobStorageService>());
-        
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                [$"{EnrollmentCsvOptions.SectionName}:FilePath"] = "recipients.csv"
-            })
-            .Build();
-
-        // Act
-        services.AddEnrollmentStores(configuration);
-        var provider = services.BuildServiceProvider();
-
-        // Assert
-        var store = provider.GetService<IEnrollmentStore>();
-        store.ShouldNotBeNull();
-        store.ShouldBeOfType<EnrollmentCsvStore>();
-
-        var csvStore = provider.GetService<EnrollmentCsvStore>();
-        csvStore.ShouldNotBeNull();
-        csvStore.ShouldBeSameAs(store);
-
-        var csvOptions = provider.GetService<IOptions<EnrollmentCsvOptions>>();
-        csvOptions.ShouldNotBeNull();
-        csvOptions.Value.FilePath.ShouldBe("recipients.csv");
-    }
-
-    [Fact]
-    public void When_adding_enrollment_store_and_blob_name_is_provided_should_register_csv_store()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        services.AddSingleton(Substitute.For<IBlobStorageService>());
-        
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                [$"{EnrollmentCsvOptions.SectionName}:BlobName"] = "recipients.xlsx"
-            })
-            .Build();
-
-        // Act
-        services.AddEnrollmentStores(configuration);
-        var provider = services.BuildServiceProvider();
-
-        // Assert
-        var store = provider.GetService<IEnrollmentStore>();
-        store.ShouldNotBeNull();
-        store.ShouldBeOfType<EnrollmentCsvStore>();
-
-        var csvStore = provider.GetService<EnrollmentCsvStore>();
-        csvStore.ShouldNotBeNull();
-        csvStore.ShouldBeSameAs(store);
-
-        var csvOptions = provider.GetService<IOptions<EnrollmentCsvOptions>>();
-        csvOptions.ShouldNotBeNull();
-        csvOptions.Value.BlobName.ShouldBe("recipients.xlsx");
     }
 
     [Fact]

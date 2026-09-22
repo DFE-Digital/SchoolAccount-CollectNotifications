@@ -12,7 +12,6 @@ public partial class InitialisationTests
     private const string LedgerConnectionString =
         "Server=localhost;Database=CollectStateLedger;User Id=sa;Password=test;TrustServerCertificate=true";
 
-    private const string EnrollmentCsvFilePath = "/path/to/recipients.csv";
     private const string ThreadingMaxParallelism = "5";
     private const string ThreadingBatchAmount = "25";
     private const string ThreadingBatchWait = "2";
@@ -22,7 +21,6 @@ public partial class InitialisationTests
     {
         ["ConnectionStrings:LedgerDatabase"] = LedgerConnectionString,
         ["GovNotify:ApiKey"] = ValidDummyGovNotifyApiKey,
-        ["Enrollment:Csv:FilePath"] = EnrollmentCsvFilePath,
         ["Threading:MaxDegreeOfParallelism"] = ThreadingMaxParallelism,
         ["Threading:BatchAmount"] = ThreadingBatchAmount,
         ["Threading:BatchWaitAmountInMs"] = ThreadingBatchWait,
