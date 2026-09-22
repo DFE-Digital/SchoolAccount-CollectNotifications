@@ -52,6 +52,20 @@ user secrets. Options marked as required are validated when the app starts, so i
 | `GovNotify:FromAddress` | No       | Passed to Notify as the reply-to value |
 | `GovNotify:DelayBetweenSendsInMs` | No | Pause between each send. Defaults to `0`. Nothing needs it at beta volumes, it's there to turn up if Notify starts rate limiting us |
 
+### Azure App Configuration
+
+Off unless switched on, so local runs and the tests don't reach for it. Deployed environments set
+`Enabled` to `true` and take their settings from the store.
+
+| Key                              | Description |
+| -------------------------------- | ----------- |
+| `AzureAppConfiguration:Enabled`  | `true` to load configuration from App Configuration. Anything else, including absent, leaves it off |
+| `AzureAppConfiguration:Endpoint` | The store's endpoint. Required when `Enabled` is `true`, and startup fails without it |
+
+Key Vault references in the store are resolved by the app rather than by App Configuration, so the
+identity needs `Key Vault Secrets User` on the vault as well as `App Configuration Data Reader` on
+the store.
+
 ### Census
 
 All three are required. Each one fails quietly if it isn't set, so they're validated at startup.

@@ -43,6 +43,29 @@ public partial class InitialisationTests
         exception.OptionsType.ShouldBe(typeof(GovNotifyOptions));
     }
 
+    [Fact]
+    public void ConfigureService_should_throw_when_azure_app_configuration_is_enabled_without_an_endpoint()
+    {
+        // Arrange, Act & Assert
+        var exception = Should.Throw<InvalidOperationException>(() => CreateHost(new Dictionary<string, string?>
+        {
+            ["AzureAppConfiguration:Enabled"] = "true"
+        }));
+
+        exception.Message.ShouldContain("AzureAppConfiguration:Endpoint");
+    }
+
+    [Fact]
+    public void ConfigureService_should_not_reach_for_azure_app_configuration_when_it_is_not_enabled()
+    {
+        // No endpoint configured and it builds fine, so nothing tried to connect.
+
+        // Arrange, Act & Assert
+        using var host = CreateHost();
+
+        host.ShouldNotBeNull();
+    }
+
     [Theory]
     [InlineData("Census:JobName")]
     [InlineData("Census:Collection")]

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SchoolAccount.CollectNotifications.Interfaces;
@@ -10,16 +11,21 @@ namespace SchoolAccount.CollectNotifications.Extensions;
 
 public static class HostBuilderExtensions
 {
-    private const string IntegrationTestEnvironment = "IntegrationTest";
+    private const string AppConfigurationEnabledKey = "AzureAppConfiguration:Enabled";
+    private const string AppConfigurationEndpointKey = "AzureAppConfiguration:Endpoint";
 
     public static HostApplicationBuilder Configure(this HostApplicationBuilder builder)
     {
-        if (!builder.Environment.IsDevelopment()
-            && !builder.Environment.IsEnvironment(IntegrationTestEnvironment))
+        var useAppConfiguration = builder.Configuration.GetValue<bool>(AppConfigurationEnabledKey);
+
+        if (useAppConfiguration)
         {
-            var endpoint = builder.Configuration["AzureAppConfiguration:Endpoint"]
-                           ?? throw new InvalidOperationException(
-                               "The setting `AzureAppConfiguration:Endpoint` was not found.");
+            var endpoint = builder.Configuration[AppConfigurationEndpointKey];
+
+            if (string.IsNullOrWhiteSpace(endpoint))
+            {
+                throw new InvalidOperationException($"The setting `{AppConfigurationEndpointKey}` was not found.");
+            }
 
             builder.Configuration.AddAzureAppConfiguration(endpoint);
         }

@@ -10,6 +10,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <!-- A console app doesn't pick these up by default the way a web project does. -->
+      <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+      <Content Include="appsettings.Development.json" CopyToOutputDirectory="PreserveNewest" DependentUpon="appsettings.json" />
+    </ItemGroup>
+
+    <ItemGroup>
       <InternalsVisibleTo Include="SchoolAccount.CollectNotifications.Tests.Common" />
       <InternalsVisibleTo Include="SchoolAccount.CollectNotifications.Tests.Unit" />
     </ItemGroup>
@@ -20,6 +26,7 @@
       <PackageReference Include="GovukNotify" Version="8.2.0" />
       <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.3" />
       <PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" Version="8.6.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.12" />
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
       <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.12" />
     </ItemGroup>
