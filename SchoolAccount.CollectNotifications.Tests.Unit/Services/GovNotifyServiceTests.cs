@@ -72,90 +72,66 @@ public class GovNotifyServiceTests
         result.Value.Outcome.ShouldBe(response);
     }
 
-    [Fact]
-    public async Task When_sending_a_message_it_should_return_warning_when_email_address_is_invalid()
+    [Theory]
+    // In the shape the Notify client actually produces, "Status code {code}. ..."
+    [InlineData("""Status code 400. The following errors occured [{"error":"ValidationError","message":"email_address Not a valid email address"}]""")]
+    [InlineData("""Status code 400. The following errors occured [{"error":"BadRequestError","message":"Can't send to this recipient using a team-only API key"}]""")]
+    public async Task When_sending_a_message_it_should_warn_rather_than_fail_when_the_problem_is_with_the_recipient(
+        string notifyMessage)
     {
+        // A warning tells the caller to log this one and carry on to everybody else.
+
         // Arrange
         _notificationClient
-            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns<EmailNotificationResponse>(_ =>
-                throw new NotifyClientException("Status code 400: Not a valid email address"));
+            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(),
+                Arg.Any<string>(), Arg.Any<string>())
+            .Returns<EmailNotificationResponse>(_ => throw new NotifyClientException(notifyMessage));
 
         // Act
         var result = await _sut.SendMessage(TemplateId, Recipient);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        result.Error.ShouldBe("The recipient email address is invalid.");
-        result.Value.ShouldNotBeNull();
+        result.Error.ShouldBe(notifyMessage);
     }
 
-    [Fact]
-    public async Task When_sending_a_message_it_should_return_warning_when_team_member_restriction_is_encountered()
+    [Theory]
+    [InlineData("""Status code 429. The following errors occured [{"error":"TooManyRequestsError","message":"Exceeded send limits (50) for today"}]""")]
+    [InlineData("""Status code 500. The following errors occured [{"error":"Exception","message":"Internal server error"}]""")]
+    [InlineData("Something without a status code at all")]
+    public async Task When_sending_a_message_it_should_fail_when_the_problem_is_with_the_whole_run(
+        string notifyMessage)
     {
+        // A failure stops the run: a rate limit, a server problem, or anything we can't classify.
+
         // Arrange
         _notificationClient
-            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns<EmailNotificationResponse>(_ =>
-                throw new NotifyClientException("Status code 400: can only send to team members with a trial API key"));
-
-        // Act
-        var result = await _sut.SendMessage(TemplateId, Recipient);
-
-        // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Error.ShouldBe("Cannot send to non-team members with a test API key.");
-        result.Value.ShouldNotBeNull();
-    }
-
-    [Fact]
-    public async Task When_sending_a_message_it_should_return_failure_when_rate_limit_exceeded()
-    {
-        // Arrange
-        _notificationClient
-            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns<EmailNotificationResponse>(_ =>
-                throw new NotifyClientException("Status code 429: Exceeded rate limit for key"));
+            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(),
+                Arg.Any<string>(), Arg.Any<string>())
+            .Returns<EmailNotificationResponse>(_ => throw new NotifyClientException(notifyMessage));
 
         // Act
         var result = await _sut.SendMessage(TemplateId, Recipient);
 
         // Assert
         result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBe("Gov Notify rate limit exceeded.");
+        result.Error.ShouldBe(notifyMessage);
     }
 
     [Fact]
-    public async Task When_sending_a_message_it_should_return_failure_when_auth_exception_is_thrown()
+    public async Task When_sending_a_message_it_should_fail_when_the_api_key_is_rejected()
     {
         // Arrange
         _notificationClient
-            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns<EmailNotificationResponse>(_ =>
-                throw new NotifyAuthException("Invalid API key"));
+            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(),
+                Arg.Any<string>(), Arg.Any<string>())
+            .Returns<EmailNotificationResponse>(_ => throw new NotifyAuthException("Invalid API key"));
 
         // Act
         var result = await _sut.SendMessage(TemplateId, Recipient);
 
         // Assert
         result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBe("Authentication failed: Invalid API key");
-    }
-
-    [Fact]
-    public async Task When_sending_a_message_it_should_return_failure_when_general_notify_client_exception_is_thrown()
-    {
-        // Arrange
-        _notificationClient
-            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns<EmailNotificationResponse>(_ =>
-                throw new NotifyClientException("General service error"));
-
-        // Act
-        var result = await _sut.SendMessage(TemplateId, Recipient);
-
-        // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBe("General service error");
+        result.Error.ShouldBe("Invalid API key");
     }
 }
