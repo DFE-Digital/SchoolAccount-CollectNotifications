@@ -12,6 +12,7 @@ namespace SchoolAccount.CollectNotifications.Tests.Unit.Services;
 
 public class StatusChangedLedgerMonitoringServiceTests
 {
+    private readonly CancellationToken _cancellationToken = TestContext.Current.CancellationToken;
     private readonly ILastRanService _lastRanService = Substitute.For<ILastRanService>();
     private readonly ILedgerStore _ledgerStore = Substitute.For<ILedgerStore>();
     private readonly IGovNotifyService _govNotifyService = Substitute.For<IGovNotifyService>();
@@ -70,7 +71,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             .Returns(Result.Failure<DateTime>("Ledger unreachable"));
 
         // Act
-        await _sut.InvokeAsync();
+        await _sut.InvokeAsync(_cancellationToken);
 
         // Assert
         await _ledgerStore.DidNotReceive().GetWhatHasChangedAsync(
@@ -91,7 +92,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             .Returns(Result.Success());
 
         // Act
-        await _sut.InvokeAsync();
+        await _sut.InvokeAsync(_cancellationToken);
 
         // Assert
         await _lastRanService.Received(1).SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
@@ -111,7 +112,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             .Returns(Result.Failure<List<CensusStatusChange>>("Database connection timeout"));
 
         // Act
-        await _sut.InvokeAsync();
+        await _sut.InvokeAsync(_cancellationToken);
 
         // Assert
         await _lastRanService.DidNotReceive().SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
@@ -135,7 +136,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             .Returns(Result.Success(new NotificationResult()));
 
         // Act
-        await _sut.InvokeAsync();
+        await _sut.InvokeAsync(_cancellationToken);
 
         // Assert
         await _govNotifyService.Received(1).SendMessage(
@@ -171,7 +172,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             .Returns(Result.Success(new NotificationResult()));
 
         // Act
-        await _sut.InvokeAsync();
+        await _sut.InvokeAsync(_cancellationToken);
 
         // Assert
         await _govNotifyService.Received(1).SendMessage(
@@ -193,7 +194,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             .Returns(Result.Failure<NotificationResult>("Gov Notify rate limit exceeded."));
 
         // Act
-        await _sut.InvokeAsync();
+        await _sut.InvokeAsync(_cancellationToken);
 
         // Assert
         await _govNotifyService.DidNotReceive().SendMessage(
@@ -218,7 +219,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             .Returns(Result.Success(new NotificationResult()));
 
         // Act
-        await _sut.InvokeAsync();
+        await _sut.InvokeAsync(_cancellationToken);
 
         // Assert
         await _govNotifyService.Received(1).SendMessage(
@@ -245,7 +246,7 @@ public class StatusChangedLedgerMonitoringServiceTests
 
         // Act
         var stopwatch = Stopwatch.StartNew();
-        await sut.InvokeAsync();
+        await sut.InvokeAsync(_cancellationToken);
         stopwatch.Stop();
 
         // Assert

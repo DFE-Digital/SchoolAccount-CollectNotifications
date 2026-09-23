@@ -28,7 +28,7 @@ public partial class LedgerStoreIntegrationTests
             }));
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(LastRunDate);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate, cancellationToken: _cancellationToken);
 
         // Assert
         result.IsFailure.ShouldBeTrue();
@@ -59,10 +59,10 @@ public partial class LedgerStoreIntegrationTests
                 .WithUpdatedAt(LastRunDate.AddHours(1))
         ];
 
-        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(LastRunDate);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate, cancellationToken: _cancellationToken);
 
         // Assert
         result.Value.Count.ShouldBe(2);
@@ -93,10 +93,10 @@ public partial class LedgerStoreIntegrationTests
                 .WithUpdatedAt(LastRunDate.AddHours(1))
         ];
 
-        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(LastRunDate);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate, cancellationToken: _cancellationToken);
 
         // Assert
         var change = result.Value.ShouldHaveSingleItem();
@@ -135,10 +135,10 @@ public partial class LedgerStoreIntegrationTests
                 .WithUpdatedAt(LastRunDate.AddHours(1))
         ];
 
-        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(LastRunDate);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate, cancellationToken: _cancellationToken);
 
         // Assert
         var change = result.Value.ShouldHaveSingleItem();
@@ -166,10 +166,11 @@ public partial class LedgerStoreIntegrationTests
                 .WithUpdatedAt(LastRunDate.AddHours(1))
         ];
 
-        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(LastRunDate, limitToApprovedStatuses: false);
+        var result = await store.GetWhatHasChangedAsync(
+            LastRunDate, limitToApprovedStatuses: false, cancellationToken: _cancellationToken);
 
         // Assert
         var change = result.Value.ShouldHaveSingleItem();
@@ -197,10 +198,10 @@ public partial class LedgerStoreIntegrationTests
                 .WithCollection("SomeOtherCensus")
         ];
 
-        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(LastRunDate);
+        var result = await store.GetWhatHasChangedAsync(LastRunDate, cancellationToken: _cancellationToken);
 
         // Assert
         result.Value.ShouldBeEmpty();

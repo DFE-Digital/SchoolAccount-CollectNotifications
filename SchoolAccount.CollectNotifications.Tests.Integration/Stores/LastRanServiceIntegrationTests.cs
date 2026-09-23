@@ -14,6 +14,7 @@ namespace SchoolAccount.CollectNotifications.Tests.Integration.Stores;
 /// </summary>
 public class LastRanServiceIntegrationTests : IAsyncLifetime
 {
+    private readonly CancellationToken _cancellationToken = TestContext.Current.CancellationToken;
     private readonly string _jobName = $"test-{Guid.NewGuid():N}";
     private readonly DbConnectionFactory<LedgerDatabase> _connectionFactory = new(TestDatabaseHelper.ConnectionString);
 
@@ -21,7 +22,7 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
-        await using var conn = await TestDatabaseHelper.OpenConnectionAsync();
+        await using var conn = await TestDatabaseHelper.OpenConnectionAsync(_cancellationToken);
         await conn.ExecuteAsync("DELETE FROM JobStatus WHERE Name = @Name;", new { Name = _jobName });
         await _connectionFactory.DisposeAsync();
     }
@@ -39,7 +40,7 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
         var sut = new LastRanService(unreachable, Options.Create(new CensusOptions { JobName = _jobName }));
 
         // Act
-        var result = await sut.GetTimestampAsync();
+        var result = await sut.GetTimestampAsync(_cancellationToken);
 
         // Assert
         result.IsFailure.ShouldBeTrue();
@@ -56,7 +57,7 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
         var sut = new LastRanService(unreachable, Options.Create(new CensusOptions { JobName = _jobName }));
 
         // Act
-        var result = await sut.SetTimestampAsync(DateTime.UtcNow);
+        var result = await sut.SetTimestampAsync(DateTime.UtcNow, _cancellationToken);
 
         // Assert
         result.IsFailure.ShouldBeTrue();
@@ -70,7 +71,7 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
         var sut = CreateService();
 
         // Act
-        var result = await sut.GetTimestampAsync();
+        var result = await sut.GetTimestampAsync(_cancellationToken);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -85,8 +86,8 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
         var ranAt = new DateTime(2026, 9, 21, 22, 30, 0, DateTimeKind.Utc);
 
         // Act
-        var saved = await sut.SetTimestampAsync(ranAt);
-        var readBack = await sut.GetTimestampAsync();
+        var saved = await sut.SetTimestampAsync(ranAt, _cancellationToken);
+        var readBack = await sut.GetTimestampAsync(_cancellationToken);
 
         // Assert
         saved.IsSuccess.ShouldBeTrue();
@@ -102,14 +103,14 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
         var secondRun = new DateTime(2026, 9, 21, 22, 30, 0, DateTimeKind.Utc);
 
         // Act
-        await sut.SetTimestampAsync(firstRun);
-        await sut.SetTimestampAsync(secondRun);
+        await sut.SetTimestampAsync(firstRun, _cancellationToken);
+        await sut.SetTimestampAsync(secondRun, _cancellationToken);
 
         // Assert
-        var readBack = await sut.GetTimestampAsync();
+        var readBack = await sut.GetTimestampAsync(_cancellationToken);
         readBack.Value.ShouldBe(secondRun, TimeSpan.FromSeconds(1));
 
-        await using var conn = await TestDatabaseHelper.OpenConnectionAsync();
+        await using var conn = await TestDatabaseHelper.OpenConnectionAsync(_cancellationToken);
         var rows = await conn.ExecuteScalarAsync<int>(
             "SELECT COUNT(*) FROM JobStatus WHERE Name = @Name;", new { Name = _jobName });
         rows.ShouldBe(1);

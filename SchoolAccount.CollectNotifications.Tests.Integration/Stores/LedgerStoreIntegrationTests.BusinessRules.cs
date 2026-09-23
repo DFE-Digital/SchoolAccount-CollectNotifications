@@ -34,10 +34,10 @@ public partial class LedgerStoreIntegrationTests
             StatusAt(laeStab, ReturnStatusCodes.AmendedBySource, new DateTime(2026, 9, 20, 11, 0, 0, DateTimeKind.Utc))
         ];
 
-        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(lastRunDate);
+        var result = await store.GetWhatHasChangedAsync(lastRunDate, cancellationToken: _cancellationToken);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -70,10 +70,10 @@ public partial class LedgerStoreIntegrationTests
             StatusAt(laeStab, ReturnStatusCodes.AmendedBySource, new DateTime(2026, 9, 20, 11, 0, 0, DateTimeKind.Utc))
         ];
 
-        await TestDatabaseHelper.InsertReturnStatusesAsync(history);
+        await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(lastRunDate);
+        var result = await store.GetWhatHasChangedAsync(lastRunDate, cancellationToken: _cancellationToken);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();

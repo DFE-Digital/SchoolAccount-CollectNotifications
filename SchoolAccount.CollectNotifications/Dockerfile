@@ -5,6 +5,7 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
 COPY ["SchoolAccount.CollectNotifications/SchoolAccount.CollectNotifications.csproj", "SchoolAccount.CollectNotifications/"]
 RUN dotnet restore "SchoolAccount.CollectNotifications/SchoolAccount.CollectNotifications.csproj"
 COPY . .

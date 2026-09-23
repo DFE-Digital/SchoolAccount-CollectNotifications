@@ -13,6 +13,7 @@ public partial class LedgerStoreIntegrationTests : IAsyncLifetime
     private const string TestCollection = "Census";
     private const string DefaultEmail = "head@school.sch.uk";
 
+    private readonly CancellationToken _cancellationToken = TestContext.Current.CancellationToken;
     private readonly List<string> _createdLaeStabs = [];
     private readonly DbConnectionFactory<LedgerDatabase> _connectionFactory = new(TestDatabaseHelper.ConnectionString);
 

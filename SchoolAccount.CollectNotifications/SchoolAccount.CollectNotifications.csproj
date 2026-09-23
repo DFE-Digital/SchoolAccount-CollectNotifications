@@ -21,14 +21,14 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Azure.Identity" Version="1.21.0" />
-      <PackageReference Include="Dapper" Version="2.1.79" />
-      <PackageReference Include="GovukNotify" Version="8.2.0" />
-      <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.3" />
-      <PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" Version="8.6.0" />
-      <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.12" />
-      <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
-      <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.12" />
+      <PackageReference Include="Azure.Identity" />
+      <PackageReference Include="Dapper" />
+      <PackageReference Include="GovukNotify" />
+      <PackageReference Include="Microsoft.Data.SqlClient" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" />
+      <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
     </ItemGroup>
 
 </Project>
