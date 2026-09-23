@@ -20,7 +20,6 @@ public partial class LedgerStoreIntegrationTests : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
-        await _connectionFactory.DisposeAsync();
         if (_createdLaeStabs.Count > 0)
         {
             await TestDatabaseHelper.DeleteReturnStatusesByLaeStabAsync(_createdLaeStabs);

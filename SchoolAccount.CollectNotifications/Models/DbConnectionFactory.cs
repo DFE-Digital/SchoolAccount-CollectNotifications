@@ -4,27 +4,13 @@ using SchoolAccount.CollectNotifications.Interfaces;
 
 namespace SchoolAccount.CollectNotifications.Models;
 
-public sealed class DbConnectionFactory(string connectionString) : IDbConnectionFactory, IDisposable, IAsyncDisposable
+public sealed class DbConnectionFactory(string connectionString) : IDbConnectionFactory
 {
-    private SqlConnection? _connection;
-    
     public async Task<DbConnection> OpenAsync(CancellationToken ct = default)
     {
-        _connection = new SqlConnection(connectionString);
-        await _connection.OpenAsync(ct);
-        return _connection;
-    }
+        var connection = new SqlConnection(connectionString);
+        await connection.OpenAsync(ct);
 
-    public void Dispose()
-    {
-        _connection?.Dispose();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_connection != null)
-        {
-            await _connection.DisposeAsync();
-        }
+        return connection;
     }
 }

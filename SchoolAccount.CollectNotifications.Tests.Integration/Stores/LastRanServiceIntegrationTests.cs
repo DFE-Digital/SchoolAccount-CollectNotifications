@@ -23,7 +23,6 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
     {
         await using var conn = await TestDatabaseHelper.OpenConnectionAsync(_cancellationToken);
         await conn.ExecuteAsync("DELETE FROM JobStatus WHERE Name = @Name;", new { Name = _jobName });
-        await _connectionFactory.DisposeAsync();
     }
 
     private LastRanService CreateService() =>
@@ -33,7 +32,7 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
     public async Task When_the_database_cannot_be_reached_it_should_return_a_failure_rather_than_throw()
     {
         // Arrange
-        await using var unreachable = new DbConnectionFactory(
+        var unreachable = new DbConnectionFactory(
             "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1");
 
         var sut = new LastRanService(unreachable, Options.Create(new CensusOptions { JobName = _jobName }));
@@ -50,7 +49,7 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
     public async Task When_the_database_cannot_be_reached_it_should_return_a_failure_when_saving_too()
     {
         // Arrange
-        await using var unreachable = new DbConnectionFactory(
+        var unreachable = new DbConnectionFactory(
             "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1");
 
         var sut = new LastRanService(unreachable, Options.Create(new CensusOptions { JobName = _jobName }));

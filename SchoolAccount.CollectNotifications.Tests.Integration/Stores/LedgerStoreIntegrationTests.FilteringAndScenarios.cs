@@ -15,7 +15,7 @@ public partial class LedgerStoreIntegrationTests
     public async Task When_getting_what_has_changed_it_should_return_a_failure_when_the_database_cannot_be_reached()
     {
         // Arrange
-        await using var unreachable = new DbConnectionFactory(
+        var unreachable = new DbConnectionFactory(
             "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1");
 
         var store = new LedgerStore(
