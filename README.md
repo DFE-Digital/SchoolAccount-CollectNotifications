@@ -280,7 +280,7 @@ SchoolAccount.CollectNotifications.Tests.Integration/
 ### Code Coverage
 
 You can manually generate a test coverage report. Which files are included is
-controlled by [coverage.config](.config/coverage.config). To generate the same report locally, run 
+controlled by [coverage.config](coverage.config). To generate the same report locally, run 
 [coverage.sh](coverage.sh) from the repository root:
 
 ```bash

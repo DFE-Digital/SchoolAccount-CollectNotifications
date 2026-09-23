@@ -12,9 +12,11 @@ on:
 env:
   DOTNET_VERSION: "10.x"
   MIN_LINE_COVERAGE: "50"
+  SOLUTION_FILE: SchoolAccount-CollectNotifications.slnx
   MAIN_BRANCH: refs/heads/main
-  CONTAINERAPP_NAME: schoolaccount-collectnotifications-app
+  IMAGE_NAME: ghcr.io/dfe-digital/schoolaccount-collectnotifications
   CONTAINERAPP_RESOURCE_GROUP: s268d01rg-uks-sa-ace
+  CONTAINERAPP_NAME: schoolaccount-collectnotifications-app
 
 jobs:
   build:
@@ -35,7 +37,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore ${{ env.SOLUTION_FILE }}
 
       - name: Check formatting
         run: |
@@ -43,10 +45,10 @@ jobs:
           dotnet csharpier check .
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test SchoolAccount.CollectNotifications.Tests.Unit --configuration Release --no-restore --no-build -- --report-trx --coverage --coverage-output-format cobertura --coverage-settings ${{ github.workspace }}/.config/coverage.config
+        run: dotnet test SchoolAccount.CollectNotifications.Tests.Unit --configuration Release --no-restore --no-build -- --report-trx --coverage --coverage-output-format cobertura --coverage-settings ${{ github.workspace }}/coverage.config
 
       - name: Test report
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -85,7 +87,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/dfe-digital/schoolaccount-collectnotifications
+          images: ${{ env.IMAGE_NAME }}
           tags: |
             type=sha
             type=raw,value=latest,enable=${{ github.ref == env.MAIN_BRANCH }}
@@ -107,7 +109,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
 
       - name: Publish
-        run: dotnet publish --configuration Release --no-restore --no-build
+        run: dotnet publish ${{ env.SOLUTION_FILE }} --configuration Release --no-restore --no-build
 
       - name: Azure Login
         if: github.event_name == 'push' && github.ref == env.MAIN_BRANCH
