@@ -509,3 +509,5 @@ certs/
 
 # MacOS specific files
 .[Dd][Ss]_[Ss]tore
+# Schema checked out by CI from the ledger database repository
+ledger-database/

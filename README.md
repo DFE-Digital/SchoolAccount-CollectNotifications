@@ -165,6 +165,14 @@ dotnet test SchoolAccount.CollectNotifications.Tests.Unit
 dotnet test SchoolAccount.CollectNotifications.Tests.Integration
 ```
 
+#### In CI
+
+The build workflow runs the whole solution, integration tests included. It starts SQL Server as a service container
+and applies the schema from
+[SchoolAccount-CollectStateLedgerDatabase](https://github.com/DFE-Digital/SchoolAccount-CollectStateLedgerDatabase),
+so a schema change that breaks these tests shows up on the next build here. The workflow checks that repository out
+at its default branch, which means it tracks whatever is current rather than a pinned version.
+
 ### Test coverage
 
 #### **Workflow Orchestration** by `StatusChangedLedgerMonitoringServiceTests`

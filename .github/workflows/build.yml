@@ -11,12 +11,15 @@ on:
 
 env:
   DOTNET_VERSION: "10.x"
-  MIN_LINE_COVERAGE: "50"
+  MIN_LINE_COVERAGE: "70"
   SOLUTION_FILE: SchoolAccount-CollectNotifications.slnx
   MAIN_BRANCH: refs/heads/main
   IMAGE_NAME: ghcr.io/dfe-digital/schoolaccount-collectnotifications
   CONTAINERAPP_RESOURCE_GROUP: s268d01rg-uks-sa-ace
   CONTAINERAPP_NAME: schoolaccount-collectnotifications-app
+  LEDGER_DATABASE_REPOSITORY: DFE-Digital/SchoolAccount-CollectStateLedgerDatabase
+  LEDGER_DATABASE_IMAGE: mcr.microsoft.com/mssql/server:2022-latest
+  LEDGER_DATABASE_PASSWORD: "MyStrongPassword123!"
 
 jobs:
   build:
@@ -27,6 +30,23 @@ jobs:
       packages: write
       checks: write
       pull-requests: write
+
+    # The env context is not available here, so the image and password are repeated
+    # from the env block above.
+    services:
+      ledger-database:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: "MyStrongPassword123!"
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P $MSSQL_SA_PASSWORD -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 10s
 
     steps:
       - uses: actions/checkout@v6
@@ -47,8 +67,26 @@ jobs:
       - name: Build
         run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
 
+      - name: Check out the ledger database schema
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ env.LEDGER_DATABASE_REPOSITORY }}
+          path: ledger-database
+
+      - name: Apply the ledger database schema
+        run: |
+          for script in database tables stored-procedures; do
+            docker run --rm --network host \
+              --volume "${{ github.workspace }}/ledger-database/sql:/sql:ro" \
+              --entrypoint /opt/mssql-tools18/bin/sqlcmd \
+              ${{ env.LEDGER_DATABASE_IMAGE }} \
+              -C -b -S localhost,1433 -U sa -P "${{ env.LEDGER_DATABASE_PASSWORD }}" -d master -i "/sql/$script.sql"
+          done
+
       - name: Test
-        run: dotnet test SchoolAccount.CollectNotifications.Tests.Unit --configuration Release --no-restore --no-build -- --report-trx --coverage --coverage-output-format cobertura --coverage-settings ${{ github.workspace }}/coverage.config
+        env:
+          "ConnectionStrings:LedgerDatabase": Server=localhost,1433;Database=CollectStateLedger;User Id=sa;Password=${{ env.LEDGER_DATABASE_PASSWORD }};TrustServerCertificate=true
+        run: dotnet test ${{ env.SOLUTION_FILE }} --configuration Release --no-restore --no-build -- --report-trx --coverage --coverage-output-format cobertura --coverage-settings ${{ github.workspace }}/coverage.config
 
       - name: Test report
         uses: EnricoMi/publish-unit-test-result-action@v2

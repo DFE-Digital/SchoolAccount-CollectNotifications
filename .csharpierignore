@@ -1,3 +1,4 @@
 .idea/
 Directory.Packages.props
 Directory.Build.props
+ledger-database/
