@@ -10,12 +10,17 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddDatabase(
         this IServiceCollection services,
         IConfiguration configuration,
-        string connectionStringName)
+        string connectionStringName
+    )
     {
-        var connectionString = configuration.GetConnectionString(connectionStringName)
-                               ?? throw new ArgumentException(
-                                   $"Connection string for {connectionStringName} was not found.");
+        var connectionString =
+            configuration.GetConnectionString(connectionStringName)
+            ?? throw new ArgumentException(
+                $"Connection string for {connectionStringName} was not found."
+            );
 
-        return services.AddSingleton<IDbConnectionFactory>(_ => new DbConnectionFactory(connectionString));
+        return services.AddSingleton<IDbConnectionFactory>(_ => new DbConnectionFactory(
+            connectionString
+        ));
     }
 }

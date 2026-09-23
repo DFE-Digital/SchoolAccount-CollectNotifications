@@ -11,10 +11,8 @@ namespace SchoolAccount.CollectNotifications.Services;
 /// <summary>
 /// Tracks when this job last completed, in the ledger database's JobStatus table.
 /// </summary>
-public class LastRanService(
-    IDbConnectionFactory factory,
-    IOptions<CensusOptions> censusOptions
-) : ILastRanService
+public class LastRanService(IDbConnectionFactory factory, IOptions<CensusOptions> censusOptions)
+    : ILastRanService
 {
     /// <summary>
     /// What we report when the job has no row yet. Everything in the ledger is after this, so a
@@ -22,13 +20,15 @@ public class LastRanService(
     /// </summary>
     public static readonly DateTime NeverRun = (DateTime)SqlDateTime.MinValue;
 
-    public async Task<Result<DateTime>> GetTimestampAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<DateTime>> GetTimestampAsync(
+        CancellationToken cancellationToken = default
+    )
     {
         const string sql = """
-                           SELECT LastRun
-                           FROM JobStatus
-                           WHERE Name = @Name;
-                           """;
+            SELECT LastRun
+            FROM JobStatus
+            WHERE Name = @Name;
+            """;
 
         try
         {
@@ -38,7 +38,9 @@ public class LastRanService(
                 new CommandDefinition(
                     sql,
                     new { Name = censusOptions.Value.JobName },
-                    cancellationToken: cancellationToken));
+                    cancellationToken: cancellationToken
+                )
+            );
 
             return Result.Success(lastRun ?? NeverRun);
         }
@@ -48,17 +50,20 @@ public class LastRanService(
         }
     }
 
-    public async Task<Result> SetTimestampAsync(DateTime timestamp, CancellationToken cancellationToken = default)
+    public async Task<Result> SetTimestampAsync(
+        DateTime timestamp,
+        CancellationToken cancellationToken = default
+    )
     {
         const string sql = """
-                           UPDATE JobStatus
-                           SET LastRun = @LastRun
-                           WHERE Name = @Name;
+            UPDATE JobStatus
+            SET LastRun = @LastRun
+            WHERE Name = @Name;
 
-                           IF @@ROWCOUNT = 0
-                               INSERT INTO JobStatus (Name, LastRun)
-                               VALUES (@Name, @LastRun);
-                           """;
+            IF @@ROWCOUNT = 0
+                INSERT INTO JobStatus (Name, LastRun)
+                VALUES (@Name, @LastRun);
+            """;
 
         try
         {
@@ -68,7 +73,9 @@ public class LastRanService(
                 new CommandDefinition(
                     sql,
                     new { Name = censusOptions.Value.JobName, LastRun = timestamp },
-                    cancellationToken: cancellationToken));
+                    cancellationToken: cancellationToken
+                )
+            );
 
             return Result.Success();
         }

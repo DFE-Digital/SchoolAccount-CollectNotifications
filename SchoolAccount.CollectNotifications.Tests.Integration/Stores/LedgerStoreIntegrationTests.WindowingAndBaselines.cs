@@ -29,7 +29,10 @@ public partial class LedgerStoreIntegrationTests
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(LastRunDate, cancellationToken: _cancellationToken);
+        var result = await store.GetWhatHasChangedAsync(
+            LastRunDate,
+            cancellationToken: _cancellationToken
+        );
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -64,7 +67,10 @@ public partial class LedgerStoreIntegrationTests
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(LastRunDate, cancellationToken: _cancellationToken);
+        var result = await store.GetWhatHasChangedAsync(
+            LastRunDate,
+            cancellationToken: _cancellationToken
+        );
 
         // Assert
         var change = result.Value.ShouldHaveSingleItem();
@@ -95,7 +101,10 @@ public partial class LedgerStoreIntegrationTests
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(LastRunDate, cancellationToken: _cancellationToken);
+        var result = await store.GetWhatHasChangedAsync(
+            LastRunDate,
+            cancellationToken: _cancellationToken
+        );
 
         // Assert
         result.Value.ShouldBeEmpty();
@@ -135,7 +144,10 @@ public partial class LedgerStoreIntegrationTests
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(LastRunDate, cancellationToken: _cancellationToken);
+        var result = await store.GetWhatHasChangedAsync(
+            LastRunDate,
+            cancellationToken: _cancellationToken
+        );
 
         // Assert
         var change = result.Value.ShouldHaveSingleItem();
@@ -166,7 +178,10 @@ public partial class LedgerStoreIntegrationTests
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(LastRunDate, cancellationToken: _cancellationToken);
+        var result = await store.GetWhatHasChangedAsync(
+            LastRunDate,
+            cancellationToken: _cancellationToken
+        );
 
         // Assert
         result.Value.ShouldBeEmpty();

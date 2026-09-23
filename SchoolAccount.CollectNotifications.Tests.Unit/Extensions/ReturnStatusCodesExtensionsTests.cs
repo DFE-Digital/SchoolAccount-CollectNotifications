@@ -35,7 +35,10 @@ public class ReturnStatusCodesExtensionsTests
     [InlineData(ReturnStatusCodes.ReconciliationInProgress, "Reconciliation_in_Progress")]
     [InlineData(ReturnStatusCodes.MatchingFailed, "Matching_Failed")]
     [InlineData(ReturnStatusCodes.ReconciliationFailed, "Reconciliation_Failed")]
-    public void Getting_name_should_return_correct_description_for_known_status(ReturnStatusCodes status, string expectedDescription)
+    public void Getting_name_should_return_correct_description_for_known_status(
+        ReturnStatusCodes status,
+        string expectedDescription
+    )
     {
         // Act
         var result = status.GetHumanName();

@@ -27,17 +27,40 @@ public partial class LedgerStoreIntegrationTests
 
         List<CollectReturnStatus> history =
         [
-            StatusAt(laeStab, ReturnStatusCodes.NoData, new DateTime(2026, 9, 10, 11, 0, 0, DateTimeKind.Utc)),
-            StatusAt(laeStab, ReturnStatusCodes.LoadedAndValidated, new DateTime(2026, 9, 17, 11, 0, 0, DateTimeKind.Utc)),
-            StatusAt(laeStab, ReturnStatusCodes.Approved, new DateTime(2026, 9, 18, 11, 0, 0, DateTimeKind.Utc)),
-            StatusAt(laeStab, ReturnStatusCodes.Rejected, new DateTime(2026, 9, 19, 11, 0, 0, DateTimeKind.Utc)),
-            StatusAt(laeStab, ReturnStatusCodes.AmendedBySource, new DateTime(2026, 9, 20, 11, 0, 0, DateTimeKind.Utc)),
+            StatusAt(
+                laeStab,
+                ReturnStatusCodes.NoData,
+                new DateTime(2026, 9, 10, 11, 0, 0, DateTimeKind.Utc)
+            ),
+            StatusAt(
+                laeStab,
+                ReturnStatusCodes.LoadedAndValidated,
+                new DateTime(2026, 9, 17, 11, 0, 0, DateTimeKind.Utc)
+            ),
+            StatusAt(
+                laeStab,
+                ReturnStatusCodes.Approved,
+                new DateTime(2026, 9, 18, 11, 0, 0, DateTimeKind.Utc)
+            ),
+            StatusAt(
+                laeStab,
+                ReturnStatusCodes.Rejected,
+                new DateTime(2026, 9, 19, 11, 0, 0, DateTimeKind.Utc)
+            ),
+            StatusAt(
+                laeStab,
+                ReturnStatusCodes.AmendedBySource,
+                new DateTime(2026, 9, 20, 11, 0, 0, DateTimeKind.Utc)
+            ),
         ];
 
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(lastRunDate, cancellationToken: _cancellationToken);
+        var result = await store.GetWhatHasChangedAsync(
+            lastRunDate,
+            cancellationToken: _cancellationToken
+        );
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -64,23 +87,46 @@ public partial class LedgerStoreIntegrationTests
 
         List<CollectReturnStatus> history =
         [
-            StatusAt(laeStab, ReturnStatusCodes.NoData, new DateTime(2026, 9, 10, 11, 0, 0, DateTimeKind.Utc)),
-            StatusAt(laeStab, ReturnStatusCodes.LoadedAndValidated, new DateTime(2026, 9, 17, 11, 0, 0, DateTimeKind.Utc)),
-            StatusAt(laeStab, ReturnStatusCodes.Rejected, new DateTime(2026, 9, 19, 11, 0, 0, DateTimeKind.Utc)),
-            StatusAt(laeStab, ReturnStatusCodes.AmendedBySource, new DateTime(2026, 9, 20, 11, 0, 0, DateTimeKind.Utc)),
+            StatusAt(
+                laeStab,
+                ReturnStatusCodes.NoData,
+                new DateTime(2026, 9, 10, 11, 0, 0, DateTimeKind.Utc)
+            ),
+            StatusAt(
+                laeStab,
+                ReturnStatusCodes.LoadedAndValidated,
+                new DateTime(2026, 9, 17, 11, 0, 0, DateTimeKind.Utc)
+            ),
+            StatusAt(
+                laeStab,
+                ReturnStatusCodes.Rejected,
+                new DateTime(2026, 9, 19, 11, 0, 0, DateTimeKind.Utc)
+            ),
+            StatusAt(
+                laeStab,
+                ReturnStatusCodes.AmendedBySource,
+                new DateTime(2026, 9, 20, 11, 0, 0, DateTimeKind.Utc)
+            ),
         ];
 
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
 
         // Act
-        var result = await store.GetWhatHasChangedAsync(lastRunDate, cancellationToken: _cancellationToken);
+        var result = await store.GetWhatHasChangedAsync(
+            lastRunDate,
+            cancellationToken: _cancellationToken
+        );
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldBeEmpty();
     }
 
-    private static CollectReturnStatus StatusAt(string laeStab, ReturnStatusCodes status, DateTime updatedAt) =>
+    private static CollectReturnStatus StatusAt(
+        string laeStab,
+        ReturnStatusCodes status,
+        DateTime updatedAt
+    ) =>
         ACollectReturnStatus()
             .WithLaeStab(laeStab)
             .WithSchoolName("A test School")

@@ -36,9 +36,9 @@ public static class ReturnStatusCodesExtensions
         { ReturnStatusCodes.MatchingFailed, "Matching_Failed" },
         { ReturnStatusCodes.ReconciliationFailed, "Reconciliation_Failed" },
     };
-    
+
     public static string GetHumanName(this ReturnStatusCodes status)
     {
-        return StatusDescriptions.GetValueOrDefault(status, "Unavailable"); 
+        return StatusDescriptions.GetValueOrDefault(status, "Unavailable");
     }
 }

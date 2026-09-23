@@ -13,10 +13,13 @@ public class ServiceCollectionExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:LedgerDatabase"] = "Server=sql.example.com;Database=Ledger;",
-            })
+            .AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:LedgerDatabase"] =
+                        "Server=sql.example.com;Database=Ledger;",
+                }
+            )
             .Build();
 
         // Act
@@ -38,8 +41,9 @@ public class ServiceCollectionExtensionsTests
             .Build();
 
         // Act & Assert
-        var ex = Should.Throw<ArgumentException>(() => services.AddDatabase(configuration, "LedgerDatabase"));
+        var ex = Should.Throw<ArgumentException>(() =>
+            services.AddDatabase(configuration, "LedgerDatabase")
+        );
         ex.Message.ShouldContain("Connection string for LedgerDatabase was not found.");
     }
-
 }

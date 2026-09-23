@@ -24,7 +24,9 @@ public static class HostBuilderExtensions
 
             if (string.IsNullOrWhiteSpace(endpoint))
             {
-                throw new InvalidOperationException($"The setting `{_appConfigurationEndpointKey}` was not found.");
+                throw new InvalidOperationException(
+                    $"The setting `{_appConfigurationEndpointKey}` was not found."
+                );
             }
 
             builder.Configuration.AddAzureAppConfiguration(endpoint);
@@ -44,10 +46,14 @@ public static class HostBuilderExtensions
         return builder;
     }
 
-    private static void AddValidatedOptions<TOptions>(this HostApplicationBuilder builder, string sectionName)
+    private static void AddValidatedOptions<TOptions>(
+        this HostApplicationBuilder builder,
+        string sectionName
+    )
         where TOptions : class
     {
-        builder.Services.AddOptions<TOptions>()
+        builder
+            .Services.AddOptions<TOptions>()
             .Bind(builder.Configuration.GetSection(sectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();

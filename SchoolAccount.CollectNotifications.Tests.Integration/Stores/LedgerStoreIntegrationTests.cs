@@ -14,7 +14,9 @@ public partial class LedgerStoreIntegrationTests : IAsyncLifetime
 
     private readonly CancellationToken _cancellationToken = TestContext.Current.CancellationToken;
     private readonly List<string> _createdLaeStabs = [];
-    private readonly DbConnectionFactory _connectionFactory = new(TestDatabaseHelper.ConnectionString);
+    private readonly DbConnectionFactory _connectionFactory = new(
+        TestDatabaseHelper.ConnectionString
+    );
 
     public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 
@@ -22,8 +24,14 @@ public partial class LedgerStoreIntegrationTests : IAsyncLifetime
     {
         if (_createdLaeStabs.Count > 0)
         {
-            await TestDatabaseHelper.DeleteReturnStatusesByLaeStabAsync(_createdLaeStabs, CancellationToken.None);
-            await TestDatabaseHelper.DeleteRegisteredUsersByLaeStabAsync(_createdLaeStabs, CancellationToken.None);
+            await TestDatabaseHelper.DeleteReturnStatusesByLaeStabAsync(
+                _createdLaeStabs,
+                CancellationToken.None
+            );
+            await TestDatabaseHelper.DeleteRegisteredUsersByLaeStabAsync(
+                _createdLaeStabs,
+                CancellationToken.None
+            );
         }
     }
 
@@ -42,16 +50,20 @@ public partial class LedgerStoreIntegrationTests : IAsyncLifetime
     {
         await TestDatabaseHelper.InsertRegisteredUsersAsync(
             laeStab,
-            emails.Length > 0 ? emails : [DefaultEmail]);
+            emails.Length > 0 ? emails : [DefaultEmail]
+        );
     }
 
     private LedgerStore CreateLedgerStore(List<ReturnStatusCodes>? allowedStatuses = null)
     {
-        var censusOptions = Options.Create(new CensusOptions
-        {
-            AllowedStatuses = allowedStatuses ?? [ReturnStatusCodes.Authorised, ReturnStatusCodes.Approved],
-            Collection = TestCollection,
-        });
+        var censusOptions = Options.Create(
+            new CensusOptions
+            {
+                AllowedStatuses =
+                    allowedStatuses ?? [ReturnStatusCodes.Authorised, ReturnStatusCodes.Approved],
+                Collection = TestCollection,
+            }
+        );
 
         return new LedgerStore(_connectionFactory, censusOptions);
     }

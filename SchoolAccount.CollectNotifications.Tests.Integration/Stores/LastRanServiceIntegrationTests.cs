@@ -15,14 +15,19 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
 {
     private readonly CancellationToken _cancellationToken = TestContext.Current.CancellationToken;
     private readonly string _jobName = $"test-{Guid.NewGuid():N}";
-    private readonly DbConnectionFactory _connectionFactory = new(TestDatabaseHelper.ConnectionString);
+    private readonly DbConnectionFactory _connectionFactory = new(
+        TestDatabaseHelper.ConnectionString
+    );
 
     public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 
     public async ValueTask DisposeAsync()
     {
         await using var conn = await TestDatabaseHelper.OpenConnectionAsync(_cancellationToken);
-        await conn.ExecuteAsync("DELETE FROM JobStatus WHERE Name = @Name;", new { Name = _jobName });
+        await conn.ExecuteAsync(
+            "DELETE FROM JobStatus WHERE Name = @Name;",
+            new { Name = _jobName }
+        );
     }
 
     private LastRanService CreateService() =>
@@ -33,9 +38,13 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
     {
         // Arrange
         var unreachable = new DbConnectionFactory(
-            "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1");
+            "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1"
+        );
 
-        var sut = new LastRanService(unreachable, Options.Create(new CensusOptions { JobName = _jobName }));
+        var sut = new LastRanService(
+            unreachable,
+            Options.Create(new CensusOptions { JobName = _jobName })
+        );
 
         // Act
         var result = await sut.GetTimestampAsync(_cancellationToken);
@@ -50,9 +59,13 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
     {
         // Arrange
         var unreachable = new DbConnectionFactory(
-            "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1");
+            "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1"
+        );
 
-        var sut = new LastRanService(unreachable, Options.Create(new CensusOptions { JobName = _jobName }));
+        var sut = new LastRanService(
+            unreachable,
+            Options.Create(new CensusOptions { JobName = _jobName })
+        );
 
         // Act
         var result = await sut.SetTimestampAsync(DateTime.UtcNow, _cancellationToken);
@@ -110,7 +123,9 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
 
         await using var conn = await TestDatabaseHelper.OpenConnectionAsync(_cancellationToken);
         var rows = await conn.ExecuteScalarAsync<int>(
-            "SELECT COUNT(*) FROM JobStatus WHERE Name = @Name;", new { Name = _jobName });
+            "SELECT COUNT(*) FROM JobStatus WHERE Name = @Name;",
+            new { Name = _jobName }
+        );
         rows.ShouldBe(1);
     }
 }

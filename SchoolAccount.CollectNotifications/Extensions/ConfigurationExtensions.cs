@@ -7,7 +7,8 @@ public static class ConfigurationExtensions
 {
     public static IConfigurationBuilder AddAzureAppConfiguration(
         this IConfigurationBuilder configurationBuilder,
-        string endpoint)
+        string endpoint
+    )
     {
         var credentials = new DefaultAzureCredential();
 

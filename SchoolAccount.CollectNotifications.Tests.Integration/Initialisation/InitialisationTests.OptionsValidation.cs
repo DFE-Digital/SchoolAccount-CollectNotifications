@@ -11,13 +11,12 @@ public partial class InitialisationTests
     public async Task Should_throw_options_validation_exception_on_host_start_when_gov_notify_api_key_is_missing()
     {
         // Arrange
-        using var host = CreateHost(new Dictionary<string, string?>
-        {
-            ["GovNotify:ApiKey"] = "",
-        });
+        using var host = CreateHost(new Dictionary<string, string?> { ["GovNotify:ApiKey"] = "" });
 
         // Act & Assert
-        var exception = await Should.ThrowAsync<OptionsValidationException>(async () => await host.StartAsync());
+        var exception = await Should.ThrowAsync<OptionsValidationException>(async () =>
+            await host.StartAsync()
+        );
 
         exception.OptionsType.ShouldBe(typeof(GovNotifyOptions));
     }
@@ -26,10 +25,11 @@ public partial class InitialisationTests
     public void ConfigureService_should_throw_when_azure_app_configuration_is_enabled_without_an_endpoint()
     {
         // Arrange, Act & Assert
-        var exception = Should.Throw<InvalidOperationException>(() => CreateHost(new Dictionary<string, string?>
-        {
-            ["AzureAppConfiguration:Enabled"] = "true",
-        }));
+        var exception = Should.Throw<InvalidOperationException>(() =>
+            CreateHost(
+                new Dictionary<string, string?> { ["AzureAppConfiguration:Enabled"] = "true" }
+            )
+        );
 
         exception.Message.ShouldContain("AzureAppConfiguration:Endpoint");
     }
@@ -49,16 +49,16 @@ public partial class InitialisationTests
     [InlineData("Census:JobName")]
     [InlineData("Census:Collection")]
     public async Task Should_throw_options_validation_exception_on_host_start_when_a_required_census_setting_is_missing(
-        string settingKey)
+        string settingKey
+    )
     {
         // Arrange
-        using var host = CreateHost(new Dictionary<string, string?>
-        {
-            [settingKey] = "",
-        });
+        using var host = CreateHost(new Dictionary<string, string?> { [settingKey] = "" });
 
         // Act & Assert
-        var exception = await Should.ThrowAsync<OptionsValidationException>(async () => await host.StartAsync());
+        var exception = await Should.ThrowAsync<OptionsValidationException>(async () =>
+            await host.StartAsync()
+        );
 
         exception.OptionsType.ShouldBe(typeof(CensusOptions));
     }
@@ -67,14 +67,18 @@ public partial class InitialisationTests
     public async Task Should_throw_options_validation_exception_on_host_start_when_no_allowed_statuses_are_configured()
     {
         // Arrange
-        using var host = CreateHost(new Dictionary<string, string?>
-        {
-            ["Census:AllowedStatuses:0"] = null,
-            ["Census:AllowedStatuses:1"] = null,
-        });
+        using var host = CreateHost(
+            new Dictionary<string, string?>
+            {
+                ["Census:AllowedStatuses:0"] = null,
+                ["Census:AllowedStatuses:1"] = null,
+            }
+        );
 
         // Act & Assert
-        var exception = await Should.ThrowAsync<OptionsValidationException>(async () => await host.StartAsync());
+        var exception = await Should.ThrowAsync<OptionsValidationException>(async () =>
+            await host.StartAsync()
+        );
 
         exception.OptionsType.ShouldBe(typeof(CensusOptions));
     }
@@ -83,15 +87,17 @@ public partial class InitialisationTests
     public void Should_bind_census_options_correctly_when_valid_values_are_provided()
     {
         const string testJobName = "collect-notifications";
-        
+
         // Arrange
-        using var host = CreateHost(new Dictionary<string, string?>
-        {
-            ["Census:AllowedStatuses:0"] = "7",
-            ["Census:AllowedStatuses:1"] = "10",
-            ["Census:AllowedStatuses:2"] = "1",
-            ["Census:JobName"] = testJobName,
-        });
+        using var host = CreateHost(
+            new Dictionary<string, string?>
+            {
+                ["Census:AllowedStatuses:0"] = "7",
+                ["Census:AllowedStatuses:1"] = "10",
+                ["Census:AllowedStatuses:2"] = "1",
+                ["Census:JobName"] = testJobName,
+            }
+        );
 
         // Act
         using var scope = host.Services.CreateScope();
@@ -100,11 +106,12 @@ public partial class InitialisationTests
 
         // Assert
         censusOptions.ShouldSatisfyAllConditions(
-            x => x.AllowedStatuses.ShouldBe([
-                ReturnStatusCodes.Approved,
-                ReturnStatusCodes.Authorised,
-                ReturnStatusCodes.NoData,
-            ]),
+            x =>
+                x.AllowedStatuses.ShouldBe([
+                    ReturnStatusCodes.Approved,
+                    ReturnStatusCodes.Authorised,
+                    ReturnStatusCodes.NoData,
+                ]),
             x => x.JobName.ShouldBe(testJobName)
         );
     }

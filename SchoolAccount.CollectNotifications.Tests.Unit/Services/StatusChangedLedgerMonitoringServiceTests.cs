@@ -26,21 +26,26 @@ public class StatusChangedLedgerMonitoringServiceTests
     private StatusChangedLedgerMonitoringService CreateService(int delayBetweenSendsInMs = 0) =>
         new(
             new StatusChangedLedgerMonitoringServiceInstrumentation(
-                NullLogger<StatusChangedLedgerMonitoringService>.Instance),
+                NullLogger<StatusChangedLedgerMonitoringService>.Instance
+            ),
             _lastRanService,
             _ledgerStore,
             _govNotifyService,
-            Options.Create(new GovNotifyOptions
-            {
-                ApiKey = "test-key",
-                DelayBetweenSendsInMs = delayBetweenSendsInMs,
-            }));
+            Options.Create(
+                new GovNotifyOptions
+                {
+                    ApiKey = "test-key",
+                    DelayBetweenSendsInMs = delayBetweenSendsInMs,
+                }
+            )
+        );
 
     private static CensusStatusChange AChange(
         string laeStab,
         string email,
         ReturnStatusCodes status = ReturnStatusCodes.Authorised,
-        string schoolName = "A test School") =>
+        string schoolName = "A test School"
+    ) =>
         new()
         {
             SchoolName = schoolName,
@@ -55,11 +60,18 @@ public class StatusChangedLedgerMonitoringServiceTests
 
     private void GivenChanges(params CensusStatusChange[] changes)
     {
-        _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>())
+        _lastRanService
+            .GetTimestampAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success(DateTime.UtcNow.AddDays(-1)));
-        _ledgerStore.GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+        _ledgerStore
+            .GetWhatHasChangedAsync(
+                Arg.Any<DateTime>(),
+                Arg.Any<bool>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Result.Success(changes.ToList()));
-        _lastRanService.SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+        _lastRanService
+            .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success());
     }
 
@@ -67,16 +79,24 @@ public class StatusChangedLedgerMonitoringServiceTests
     public async Task InvokeAsync_should_abort_workflow_when_retrieving_last_ran_timestamp_fails()
     {
         // Arrange
-        _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>())
+        _lastRanService
+            .GetTimestampAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Failure<DateTime>("Ledger unreachable"));
 
         // Act
         await _sut.InvokeAsync(_cancellationToken);
 
         // Assert
-        await _ledgerStore.DidNotReceive().GetWhatHasChangedAsync(
-            Arg.Any<DateTime>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await _lastRanService.DidNotReceive().SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+        await _ledgerStore
+            .DidNotReceive()
+            .GetWhatHasChangedAsync(
+                Arg.Any<DateTime>(),
+                Arg.Any<bool>(),
+                Arg.Any<CancellationToken>()
+            );
+        await _lastRanService
+            .DidNotReceive()
+            .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -86,38 +106,65 @@ public class StatusChangedLedgerMonitoringServiceTests
         // every qualifying change it has ever had.
 
         // Arrange
-        _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>())
+        _lastRanService
+            .GetTimestampAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success(LastRanService.NeverRun));
-        _lastRanService.SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+        _lastRanService
+            .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success());
 
         // Act
         await _sut.InvokeAsync(_cancellationToken);
 
         // Assert
-        await _lastRanService.Received(1).SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
-        await _ledgerStore.DidNotReceive().GetWhatHasChangedAsync(
-            Arg.Any<DateTime>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await _govNotifyService.DidNotReceive().SendMessage(
-            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, dynamic>>());
+        await _lastRanService
+            .Received(1)
+            .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+        await _ledgerStore
+            .DidNotReceive()
+            .GetWhatHasChangedAsync(
+                Arg.Any<DateTime>(),
+                Arg.Any<bool>(),
+                Arg.Any<CancellationToken>()
+            );
+        await _govNotifyService
+            .DidNotReceive()
+            .SendMessage(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<Dictionary<string, dynamic>>()
+            );
     }
 
     [Fact]
     public async Task InvokeAsync_should_abort_workflow_when_retrieving_ledger_changes_fails()
     {
         // Arrange
-        _lastRanService.GetTimestampAsync(Arg.Any<CancellationToken>())
+        _lastRanService
+            .GetTimestampAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success(DateTime.UtcNow.AddDays(-1)));
-        _ledgerStore.GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+        _ledgerStore
+            .GetWhatHasChangedAsync(
+                Arg.Any<DateTime>(),
+                Arg.Any<bool>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Result.Failure<List<CensusStatusChange>>("Database connection timeout"));
 
         // Act
         await _sut.InvokeAsync(_cancellationToken);
 
         // Assert
-        await _lastRanService.DidNotReceive().SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
-        await _govNotifyService.DidNotReceive().SendMessage(
-            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, dynamic>>());
+        await _lastRanService
+            .DidNotReceive()
+            .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+        await _govNotifyService
+            .DidNotReceive()
+            .SendMessage(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<Dictionary<string, dynamic>>()
+            );
     }
 
     [Fact]
@@ -130,28 +177,54 @@ public class StatusChangedLedgerMonitoringServiceTests
         GivenChanges(
             AChange("1111111", "head@school1.sch.uk", schoolName: "School One"),
             AChange("1111111", "office@school1.sch.uk", schoolName: "School One"),
-            AChange("2222222", "admin@school2.sch.uk", ReturnStatusCodes.Submitted, "School Two"));
+            AChange("2222222", "admin@school2.sch.uk", ReturnStatusCodes.Submitted, "School Two")
+        );
 
-        _govNotifyService.SendMessage(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, dynamic>>())
+        _govNotifyService
+            .SendMessage(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<Dictionary<string, dynamic>>()
+            )
             .Returns(Result.Success(new NotificationResult()));
 
         // Act
         await _sut.InvokeAsync(_cancellationToken);
 
         // Assert
-        await _govNotifyService.Received(1).SendMessage(
-            GovNotifyTemplates.CensusStatusChange, "head@school1.sch.uk",
-            Arg.Is<Dictionary<string, dynamic>>(d => MatchesPersonalisation(d, "Authorised", "School One")));
+        await _govNotifyService
+            .Received(1)
+            .SendMessage(
+                GovNotifyTemplates.CensusStatusChange,
+                "head@school1.sch.uk",
+                Arg.Is<Dictionary<string, dynamic>>(d =>
+                    MatchesPersonalisation(d, "Authorised", "School One")
+                )
+            );
 
-        await _govNotifyService.Received(1).SendMessage(
-            GovNotifyTemplates.CensusStatusChange, "office@school1.sch.uk",
-            Arg.Is<Dictionary<string, dynamic>>(d => MatchesPersonalisation(d, "Authorised", "School One")));
+        await _govNotifyService
+            .Received(1)
+            .SendMessage(
+                GovNotifyTemplates.CensusStatusChange,
+                "office@school1.sch.uk",
+                Arg.Is<Dictionary<string, dynamic>>(d =>
+                    MatchesPersonalisation(d, "Authorised", "School One")
+                )
+            );
 
-        await _govNotifyService.Received(1).SendMessage(
-            GovNotifyTemplates.CensusStatusChange, "admin@school2.sch.uk",
-            Arg.Is<Dictionary<string, dynamic>>(d => MatchesPersonalisation(d, "Submitted", "School Two")));
+        await _govNotifyService
+            .Received(1)
+            .SendMessage(
+                GovNotifyTemplates.CensusStatusChange,
+                "admin@school2.sch.uk",
+                Arg.Is<Dictionary<string, dynamic>>(d =>
+                    MatchesPersonalisation(d, "Submitted", "School Two")
+                )
+            );
 
-        await _lastRanService.Received(1).SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+        await _lastRanService
+            .Received(1)
+            .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -161,22 +234,33 @@ public class StatusChangedLedgerMonitoringServiceTests
         // recipient and not a reason to stop telling everybody else.
 
         // Arrange
-        GivenChanges(
-            AChange("1111111", "bad-address"),
-            AChange("2222222", "fine@school.sch.uk"));
+        GivenChanges(AChange("1111111", "bad-address"), AChange("2222222", "fine@school.sch.uk"));
 
-        _govNotifyService.SendMessage(Arg.Any<string>(), "bad-address", Arg.Any<Dictionary<string, dynamic>>())
-            .Returns(Result.Warning(new NotificationResult(), "The recipient email address is invalid."));
+        _govNotifyService
+            .SendMessage(Arg.Any<string>(), "bad-address", Arg.Any<Dictionary<string, dynamic>>())
+            .Returns(
+                Result.Warning(new NotificationResult(), "The recipient email address is invalid.")
+            );
 
-        _govNotifyService.SendMessage(Arg.Any<string>(), "fine@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>())
+        _govNotifyService
+            .SendMessage(
+                Arg.Any<string>(),
+                "fine@school.sch.uk",
+                Arg.Any<Dictionary<string, dynamic>>()
+            )
             .Returns(Result.Success(new NotificationResult()));
 
         // Act
         await _sut.InvokeAsync(_cancellationToken);
 
         // Assert
-        await _govNotifyService.Received(1).SendMessage(
-            Arg.Any<string>(), "fine@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>());
+        await _govNotifyService
+            .Received(1)
+            .SendMessage(
+                Arg.Any<string>(),
+                "fine@school.sch.uk",
+                Arg.Any<Dictionary<string, dynamic>>()
+            );
     }
 
     [Fact]
@@ -188,17 +272,28 @@ public class StatusChangedLedgerMonitoringServiceTests
         // Arrange
         GivenChanges(
             AChange("1111111", "first@school.sch.uk"),
-            AChange("2222222", "second@school.sch.uk"));
+            AChange("2222222", "second@school.sch.uk")
+        );
 
-        _govNotifyService.SendMessage(Arg.Any<string>(), "first@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>())
+        _govNotifyService
+            .SendMessage(
+                Arg.Any<string>(),
+                "first@school.sch.uk",
+                Arg.Any<Dictionary<string, dynamic>>()
+            )
             .Returns(Result.Failure<NotificationResult>("Gov Notify rate limit exceeded."));
 
         // Act
         await _sut.InvokeAsync(_cancellationToken);
 
         // Assert
-        await _govNotifyService.DidNotReceive().SendMessage(
-            Arg.Any<string>(), "second@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>());
+        await _govNotifyService
+            .DidNotReceive()
+            .SendMessage(
+                Arg.Any<string>(),
+                "second@school.sch.uk",
+                Arg.Any<Dictionary<string, dynamic>>()
+            );
     }
 
     [Fact]
@@ -210,20 +305,38 @@ public class StatusChangedLedgerMonitoringServiceTests
         // Arrange
         GivenChanges(
             AChange("1111111", "throws@school.sch.uk"),
-            AChange("2222222", "fine@school.sch.uk"));
+            AChange("2222222", "fine@school.sch.uk")
+        );
 
-        _govNotifyService.SendMessage(Arg.Any<string>(), "throws@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>())
-            .Returns<Result<NotificationResult>>(_ => throw new HttpRequestException("Connection reset"));
+        _govNotifyService
+            .SendMessage(
+                Arg.Any<string>(),
+                "throws@school.sch.uk",
+                Arg.Any<Dictionary<string, dynamic>>()
+            )
+            .Returns<Result<NotificationResult>>(_ =>
+                throw new HttpRequestException("Connection reset")
+            );
 
-        _govNotifyService.SendMessage(Arg.Any<string>(), "fine@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>())
+        _govNotifyService
+            .SendMessage(
+                Arg.Any<string>(),
+                "fine@school.sch.uk",
+                Arg.Any<Dictionary<string, dynamic>>()
+            )
             .Returns(Result.Success(new NotificationResult()));
 
         // Act
         await _sut.InvokeAsync(_cancellationToken);
 
         // Assert
-        await _govNotifyService.Received(1).SendMessage(
-            Arg.Any<string>(), "fine@school.sch.uk", Arg.Any<Dictionary<string, dynamic>>());
+        await _govNotifyService
+            .Received(1)
+            .SendMessage(
+                Arg.Any<string>(),
+                "fine@school.sch.uk",
+                Arg.Any<Dictionary<string, dynamic>>()
+            );
     }
 
     [Fact]
@@ -239,9 +352,15 @@ public class StatusChangedLedgerMonitoringServiceTests
         GivenChanges(
             AChange("1111111", "first@school.sch.uk"),
             AChange("2222222", "second@school.sch.uk"),
-            AChange("3333333", "third@school.sch.uk"));
+            AChange("3333333", "third@school.sch.uk")
+        );
 
-        _govNotifyService.SendMessage(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, dynamic>>())
+        _govNotifyService
+            .SendMessage(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<Dictionary<string, dynamic>>()
+            )
             .Returns(Result.Success(new NotificationResult()));
 
         // Act
@@ -253,14 +372,20 @@ public class StatusChangedLedgerMonitoringServiceTests
         // Three sends means two gaps, so nothing before the first one.
         stopwatch.Elapsed.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(delayMs * 2));
 
-        await _govNotifyService.Received(3).SendMessage(
-            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, dynamic>>());
+        await _govNotifyService
+            .Received(3)
+            .SendMessage(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<Dictionary<string, dynamic>>()
+            );
     }
 
     private static bool MatchesPersonalisation(
         Dictionary<string, dynamic>? dict,
         string expectedStatus,
-        string expectedSchoolName)
+        string expectedSchoolName
+    )
     {
         if (dict is null)
         {
@@ -272,6 +397,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             return false;
         }
 
-        return dict.TryGetValue("school_name", out var school) && Equals(school, expectedSchoolName);
+        return dict.TryGetValue("school_name", out var school)
+            && Equals(school, expectedSchoolName);
     }
 }

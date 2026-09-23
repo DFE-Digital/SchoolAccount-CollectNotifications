@@ -2,8 +2,11 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace SchoolAccount.CollectNotifications.Models.Enums;
 
-[SuppressMessage("Design", "CA1027:Mark enums with FlagsAttribute",
-    Justification = "These are COLLECT's status codes. A return is in one state at a time, they are never combined.")]
+[SuppressMessage(
+    "Design",
+    "CA1027:Mark enums with FlagsAttribute",
+    Justification = "These are COLLECT's status codes. A return is in one state at a time, they are never combined."
+)]
 public enum ReturnStatusCodes
 {
     NoData = 1,

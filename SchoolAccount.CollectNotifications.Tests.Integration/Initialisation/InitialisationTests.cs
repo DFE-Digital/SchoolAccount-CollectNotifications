@@ -47,11 +47,13 @@ public partial class InitialisationTests
 
         // DisableDefaults keeps this hermetic. Without it the builder picks up environment
         // variables and appsettings from wherever the tests happen to be running.
-        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
-        {
-            EnvironmentName = "IntegrationTest",
-            DisableDefaults = true,
-        });
+        var builder = Host.CreateApplicationBuilder(
+            new HostApplicationBuilderSettings
+            {
+                EnvironmentName = "IntegrationTest",
+                DisableDefaults = true,
+            }
+        );
 
         builder.Configuration.AddInMemoryCollection(config);
 

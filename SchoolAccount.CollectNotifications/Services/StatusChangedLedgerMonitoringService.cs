@@ -1,7 +1,7 @@
+using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Extensions;
 using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models;
-using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Models.Dtos;
 using SchoolAccount.CollectNotifications.Models.Options;
 
@@ -43,7 +43,11 @@ public class StatusChangedLedgerMonitoringService(
             return;
         }
 
-        var changes = await ledgerStore.GetWhatHasChangedAsync(lastRan.Value, true, cancellationToken);
+        var changes = await ledgerStore.GetWhatHasChangedAsync(
+            lastRan.Value,
+            true,
+            cancellationToken
+        );
 
         if (changes.IsFailure)
         {
@@ -55,12 +59,13 @@ public class StatusChangedLedgerMonitoringService(
 
         // The query already pairs each change with its registered recipients, so a school with two
         // registered contacts arrives here as two changes.
-        var whatToNotify = changes.Value
-            .Select(change => new Notification(
+        var whatToNotify = changes
+            .Value.Select(change => new Notification(
                 change.LaeStab,
                 change.Email,
                 change.ReturnStatusCode.GetHumanName(),
-                change.SchoolName))
+                change.SchoolName
+            ))
             .ToList();
 
         var timestampUpdate = await lastRanService.SetTimestampAsync(runningAt, cancellationToken);
@@ -71,7 +76,9 @@ public class StatusChangedLedgerMonitoringService(
             return;
         }
 
-        var delayBetweenSends = TimeSpan.FromMilliseconds(govNotifyOptions.Value.DelayBetweenSendsInMs);
+        var delayBetweenSends = TimeSpan.FromMilliseconds(
+            govNotifyOptions.Value.DelayBetweenSendsInMs
+        );
 
         for (var i = 0; i < whatToNotify.Count; i++)
         {
@@ -96,7 +103,8 @@ public class StatusChangedLedgerMonitoringService(
                     {
                         { "status", notify.Status },
                         { "school_name", notify.School },
-                    });
+                    }
+                );
             }
             catch (Exception exception)
             {

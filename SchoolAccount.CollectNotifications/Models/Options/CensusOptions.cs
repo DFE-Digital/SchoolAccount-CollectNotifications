@@ -13,6 +13,7 @@ public sealed class CensusOptions
     /// </summary>
     [Required, MinLength(1)]
     public List<ReturnStatusCodes> AllowedStatuses { get; init; } = [];
+
     /// <summary>
     /// Identifies this job's row in the ledger's JobStatus table, where the last run time lives.
     /// </summary>
