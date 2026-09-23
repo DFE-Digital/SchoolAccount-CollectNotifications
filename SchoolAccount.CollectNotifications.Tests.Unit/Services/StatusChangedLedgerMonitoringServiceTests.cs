@@ -33,7 +33,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             Options.Create(new GovNotifyOptions
             {
                 ApiKey = "test-key",
-                DelayBetweenSendsInMs = delayBetweenSendsInMs
+                DelayBetweenSendsInMs = delayBetweenSendsInMs,
             }));
 
     private static CensusStatusChange AChange(
@@ -50,7 +50,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             PreviousReturnStatusCode = ReturnStatusCodes.LoadedAndValidated,
             UpdatedAt = new DateTime(2026, 9, 21, 22, 0, 0, DateTimeKind.Utc),
             Collection = "SchoolCensus2025_Spring",
-            DcId = 1172
+            DcId = 1172,
         };
 
     private void GivenChanges(params CensusStatusChange[] changes)

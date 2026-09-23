@@ -18,7 +18,7 @@ public class GovNotifyServiceTests
     private readonly IOptions<GovNotifyOptions> _options = Options.Create(new GovNotifyOptions
     {
         ApiKey = "test-api-key-12345",
-        FromAddress = "default-reply-to-id"
+        FromAddress = "default-reply-to-id",
     });
 
     private readonly GovNotifyService _sut;
@@ -55,7 +55,7 @@ public class GovNotifyServiceTests
         var options = new EmailOptions
         {
             Reference = "custom-client-ref",
-            ReplyTo = "custom-reply-to-id"
+            ReplyTo = "custom-reply-to-id",
         };
         var response = new EmailNotificationResponse { id = "notification-uuid-456" };
 

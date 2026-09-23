@@ -31,7 +31,7 @@ public partial class LedgerStoreIntegrationTests
             StatusAt(laeStab, ReturnStatusCodes.LoadedAndValidated, new DateTime(2026, 9, 17, 11, 0, 0, DateTimeKind.Utc)),
             StatusAt(laeStab, ReturnStatusCodes.Approved, new DateTime(2026, 9, 18, 11, 0, 0, DateTimeKind.Utc)),
             StatusAt(laeStab, ReturnStatusCodes.Rejected, new DateTime(2026, 9, 19, 11, 0, 0, DateTimeKind.Utc)),
-            StatusAt(laeStab, ReturnStatusCodes.AmendedBySource, new DateTime(2026, 9, 20, 11, 0, 0, DateTimeKind.Utc))
+            StatusAt(laeStab, ReturnStatusCodes.AmendedBySource, new DateTime(2026, 9, 20, 11, 0, 0, DateTimeKind.Utc)),
         ];
 
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
@@ -67,7 +67,7 @@ public partial class LedgerStoreIntegrationTests
             StatusAt(laeStab, ReturnStatusCodes.NoData, new DateTime(2026, 9, 10, 11, 0, 0, DateTimeKind.Utc)),
             StatusAt(laeStab, ReturnStatusCodes.LoadedAndValidated, new DateTime(2026, 9, 17, 11, 0, 0, DateTimeKind.Utc)),
             StatusAt(laeStab, ReturnStatusCodes.Rejected, new DateTime(2026, 9, 19, 11, 0, 0, DateTimeKind.Utc)),
-            StatusAt(laeStab, ReturnStatusCodes.AmendedBySource, new DateTime(2026, 9, 20, 11, 0, 0, DateTimeKind.Utc))
+            StatusAt(laeStab, ReturnStatusCodes.AmendedBySource, new DateTime(2026, 9, 20, 11, 0, 0, DateTimeKind.Utc)),
         ];
 
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);

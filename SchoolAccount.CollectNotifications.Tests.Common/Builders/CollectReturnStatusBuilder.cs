@@ -9,9 +9,9 @@ public class CollectReturnStatusBuilder
     private string _schoolName = "Default Test School";
     private string _laeStab = "1234567";
     private ReturnStatusCodes _returnStatusCode = ReturnStatusCodes.Authorised;
-    private int _errors = 0;
-    private int _queries = 0;
-    private int _okdErrorsQueries = 0;
+    private int _errors;
+    private int _queries;
+    private int _okdErrorsQueries;
     private string _hash = "default-hash";
     private DateTime _updatedAt = DateTime.UtcNow;
     private int _dcId = 1;
@@ -116,7 +116,7 @@ public class CollectReturnStatusBuilder
             UpdatedAt = _updatedAt,
             DcId = _dcId,
             Collection = _collection,
-            DataReturnId = _dataReturnId
+            DataReturnId = _dataReturnId,
         };
     }
 

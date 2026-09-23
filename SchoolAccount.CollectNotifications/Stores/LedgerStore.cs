@@ -3,14 +3,13 @@ using Dapper;
 using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models;
-using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Models.Dtos;
 using SchoolAccount.CollectNotifications.Models.Options;
 
 namespace SchoolAccount.CollectNotifications.Stores;
 
 public class LedgerStore(
-    IDbConnectionFactory<LedgerDatabase> factory,
+    IDbConnectionFactory factory,
     IOptions<CensusOptions> censusOptions
 ) : ILedgerStore
 {
@@ -82,9 +81,9 @@ public class LedgerStore(
                 sql,
                 new
                 {
-                    Collection = censusOptions.Value.Collection,
+                    censusOptions.Value.Collection,
                     LastRunDate = lastRunDate,
-                    NotifiableStatuses = censusOptions.Value.AllowedStatuses
+                    NotifiableStatuses = censusOptions.Value.AllowedStatuses,
                 },
                 cancellationToken: cancellationToken);
 

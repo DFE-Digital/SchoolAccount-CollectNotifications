@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace SchoolAccount.CollectNotifications.Models.Enums;
 
 public enum ReturnStatusCodes
@@ -32,5 +30,5 @@ public enum ReturnStatusCodes
     AwaitingReconciliation = 27,
     ReconciliationInProgress = 28,
     MatchingFailed = 29,
-    ReconciliationFailed = 30
+    ReconciliationFailed = 30,
 }

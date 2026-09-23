@@ -1,7 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using SchoolAccount.CollectNotifications.Interfaces;
-using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Services;
 using SchoolAccount.CollectNotifications.Stores;
 
@@ -23,6 +21,6 @@ public partial class InitialisationTests
         sp.GetRequiredService<ILedgerStore>().ShouldBeOfType<LedgerStore>();
         sp.GetRequiredService<ILastRanService>().ShouldBeOfType<LastRanService>();
         sp.GetRequiredService<IGovNotifyService>().ShouldBeOfType<GovNotifyService>();
-        sp.GetRequiredService<IDbConnectionFactory<LedgerDatabase>>().ShouldNotBeNull();
+        sp.GetRequiredService<IDbConnectionFactory>().ShouldNotBeNull();
     }
 }

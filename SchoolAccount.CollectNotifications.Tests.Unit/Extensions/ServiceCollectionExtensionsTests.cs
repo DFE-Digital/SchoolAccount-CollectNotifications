@@ -16,11 +16,11 @@ public class ServiceCollectionExtensionsTests
         const string expectedConnectionString = "Server=my-server;Database=testdb;";
 
         // Act
-        services.AddDatabase<LedgerDatabase>(() => expectedConnectionString);
+        services.AddDatabase(() => expectedConnectionString);
         var provider = services.BuildServiceProvider();
 
         // Assert
-        var factory = provider.GetService<IDbConnectionFactory<LedgerDatabase>>();
+        var factory = provider.GetService<IDbConnectionFactory>();
         factory.ShouldNotBeNull();
     }
 
@@ -32,7 +32,7 @@ public class ServiceCollectionExtensionsTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:LedgerDatabase"] = "Server=sql.example.com;Database=Ledger;"
+                ["ConnectionStrings:LedgerDatabase"] = "Server=sql.example.com;Database=Ledger;",
             })
             .Build();
 
@@ -41,7 +41,7 @@ public class ServiceCollectionExtensionsTests
         var provider = services.BuildServiceProvider();
 
         // Assert
-        var factory = provider.GetService<IDbConnectionFactory<LedgerDatabase>>();
+        var factory = provider.GetService<IDbConnectionFactory>();
         factory.ShouldNotBeNull();
     }
 

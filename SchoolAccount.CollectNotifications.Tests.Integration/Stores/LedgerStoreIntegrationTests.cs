@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Models;
-using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Models.Enums;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Stores;
@@ -15,7 +14,7 @@ public partial class LedgerStoreIntegrationTests : IAsyncLifetime
 
     private readonly CancellationToken _cancellationToken = TestContext.Current.CancellationToken;
     private readonly List<string> _createdLaeStabs = [];
-    private readonly DbConnectionFactory<LedgerDatabase> _connectionFactory = new(TestDatabaseHelper.ConnectionString);
+    private readonly DbConnectionFactory _connectionFactory = new(TestDatabaseHelper.ConnectionString);
 
     public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 
@@ -52,7 +51,7 @@ public partial class LedgerStoreIntegrationTests : IAsyncLifetime
         var censusOptions = Options.Create(new CensusOptions
         {
             AllowedStatuses = allowedStatuses ?? [ReturnStatusCodes.Authorised, ReturnStatusCodes.Approved],
-            Collection = TestCollection
+            Collection = TestCollection,
         });
 
         return new LedgerStore(_connectionFactory, censusOptions);

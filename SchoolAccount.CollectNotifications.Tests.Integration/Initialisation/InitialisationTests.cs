@@ -22,7 +22,7 @@ public partial class InitialisationTests
         ["Census:JobName"] = CensusJobName,
         ["Census:Collection"] = CensusCollection,
         ["Census:AllowedStatuses:0"] = "7",
-        ["Census:AllowedStatuses:1"] = "10"
+        ["Census:AllowedStatuses:1"] = "10",
     };
 
     /// <summary>
@@ -50,7 +50,7 @@ public partial class InitialisationTests
         var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
         {
             EnvironmentName = "IntegrationTest",
-            DisableDefaults = true
+            DisableDefaults = true,
         });
 
         builder.Configuration.AddInMemoryCollection(config);

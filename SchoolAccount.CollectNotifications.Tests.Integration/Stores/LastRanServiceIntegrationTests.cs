@@ -1,7 +1,6 @@
 using Dapper;
 using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Models;
-using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services;
 using SchoolAccount.CollectNotifications.Tests.Integration.Helpers;
@@ -16,7 +15,7 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
 {
     private readonly CancellationToken _cancellationToken = TestContext.Current.CancellationToken;
     private readonly string _jobName = $"test-{Guid.NewGuid():N}";
-    private readonly DbConnectionFactory<LedgerDatabase> _connectionFactory = new(TestDatabaseHelper.ConnectionString);
+    private readonly DbConnectionFactory _connectionFactory = new(TestDatabaseHelper.ConnectionString);
 
     public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 
@@ -34,7 +33,7 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
     public async Task When_the_database_cannot_be_reached_it_should_return_a_failure_rather_than_throw()
     {
         // Arrange
-        await using var unreachable = new DbConnectionFactory<LedgerDatabase>(
+        await using var unreachable = new DbConnectionFactory(
             "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1");
 
         var sut = new LastRanService(unreachable, Options.Create(new CensusOptions { JobName = _jobName }));
@@ -51,7 +50,7 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
     public async Task When_the_database_cannot_be_reached_it_should_return_a_failure_when_saving_too()
     {
         // Arrange
-        await using var unreachable = new DbConnectionFactory<LedgerDatabase>(
+        await using var unreachable = new DbConnectionFactory(
             "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1");
 
         var sut = new LastRanService(unreachable, Options.Create(new CensusOptions { JobName = _jobName }));

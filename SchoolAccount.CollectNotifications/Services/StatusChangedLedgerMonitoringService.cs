@@ -95,7 +95,7 @@ public class StatusChangedLedgerMonitoringService(
                     new Dictionary<string, dynamic>
                     {
                         { "status", notify.Status },
-                        { "school_name", notify.School }
+                        { "school_name", notify.School },
                     });
             }
             catch (Exception exception)

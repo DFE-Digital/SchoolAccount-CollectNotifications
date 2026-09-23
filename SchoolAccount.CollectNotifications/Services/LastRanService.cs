@@ -4,7 +4,6 @@ using Dapper;
 using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models;
-using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Models.Options;
 
 namespace SchoolAccount.CollectNotifications.Services;
@@ -13,7 +12,7 @@ namespace SchoolAccount.CollectNotifications.Services;
 /// Tracks when this job last completed, in the ledger database's JobStatus table.
 /// </summary>
 public class LastRanService(
-    IDbConnectionFactory<LedgerDatabase> factory,
+    IDbConnectionFactory factory,
     IOptions<CensusOptions> censusOptions
 ) : ILastRanService
 {

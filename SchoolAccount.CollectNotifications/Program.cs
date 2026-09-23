@@ -9,7 +9,7 @@ using SchoolAccount.CollectNotifications.Services;
 using var app = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
 {
     Args = args,
-    ContentRootPath = AppContext.BaseDirectory
+    ContentRootPath = AppContext.BaseDirectory,
 }).Configure().Build();
 
 // Starting the host is what runs the options validation registered by ValidateOnStart. Building it

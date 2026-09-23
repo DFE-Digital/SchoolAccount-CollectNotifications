@@ -4,7 +4,7 @@ using SchoolAccount.CollectNotifications.Interfaces;
 
 namespace SchoolAccount.CollectNotifications.Models;
 
-public sealed class DbConnectionFactory<TDb>(string connectionString) : IDbConnectionFactory<TDb>, IDisposable, IAsyncDisposable
+public sealed class DbConnectionFactory(string connectionString) : IDbConnectionFactory, IDisposable, IAsyncDisposable
 {
     private SqlConnection? _connection;
     

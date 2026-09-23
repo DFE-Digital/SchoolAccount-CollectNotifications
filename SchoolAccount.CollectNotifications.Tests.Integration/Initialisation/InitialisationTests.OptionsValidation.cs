@@ -13,7 +13,7 @@ public partial class InitialisationTests
         // Arrange
         using var host = CreateHost(new Dictionary<string, string?>
         {
-            ["GovNotify:ApiKey"] = ""
+            ["GovNotify:ApiKey"] = "",
         });
 
         // Act & Assert
@@ -31,7 +31,7 @@ public partial class InitialisationTests
         // Arrange
         using var host = CreateHost(new Dictionary<string, string?>
         {
-            ["GovNotify:FromAddress"] = "not-a-valid-email"
+            ["GovNotify:FromAddress"] = "not-a-valid-email",
         });
 
         // Act & Assert
@@ -49,7 +49,7 @@ public partial class InitialisationTests
         // Arrange, Act & Assert
         var exception = Should.Throw<InvalidOperationException>(() => CreateHost(new Dictionary<string, string?>
         {
-            ["AzureAppConfiguration:Enabled"] = "true"
+            ["AzureAppConfiguration:Enabled"] = "true",
         }));
 
         exception.Message.ShouldContain("AzureAppConfiguration:Endpoint");
@@ -117,7 +117,7 @@ public partial class InitialisationTests
             ["Census:AllowedStatuses:0"] = "7",
             ["Census:AllowedStatuses:1"] = "10",
             ["Census:AllowedStatuses:2"] = "1",
-            ["Census:JobName"] = testJobName
+            ["Census:JobName"] = testJobName,
         });
 
         // Act
@@ -130,7 +130,7 @@ public partial class InitialisationTests
             x => x.AllowedStatuses.ShouldBe([
                 ReturnStatusCodes.Approved,
                 ReturnStatusCodes.Authorised,
-                ReturnStatusCodes.NoData
+                ReturnStatusCodes.NoData,
             ]),
             x => x.JobName.ShouldBe(testJobName)
         );

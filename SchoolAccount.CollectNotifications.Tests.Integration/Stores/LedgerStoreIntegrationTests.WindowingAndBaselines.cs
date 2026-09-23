@@ -23,7 +23,7 @@ public partial class LedgerStoreIntegrationTests
                 .WithLaeStab(laeStab)
                 .WithSchoolName("St Mary's Primary")
                 .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-                .WithUpdatedAt(LastRunDate.AddHours(2))
+                .WithUpdatedAt(LastRunDate.AddHours(2)),
         ];
 
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
@@ -58,7 +58,7 @@ public partial class LedgerStoreIntegrationTests
             ACollectReturnStatus()
                 .WithLaeStab(laeStab)
                 .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-                .WithUpdatedAt(LastRunDate.AddHours(1))
+                .WithUpdatedAt(LastRunDate.AddHours(1)),
         ];
 
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
@@ -89,7 +89,7 @@ public partial class LedgerStoreIntegrationTests
             ACollectReturnStatus()
                 .WithLaeStab(laeStab)
                 .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-                .WithUpdatedAt(LastRunDate.AddHours(1))
+                .WithUpdatedAt(LastRunDate.AddHours(1)),
         ];
 
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
@@ -129,7 +129,7 @@ public partial class LedgerStoreIntegrationTests
             ACollectReturnStatus()
                 .WithLaeStab(laeStab)
                 .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-                .WithUpdatedAt(LastRunDate.AddHours(3))
+                .WithUpdatedAt(LastRunDate.AddHours(3)),
         ];
 
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
@@ -160,7 +160,7 @@ public partial class LedgerStoreIntegrationTests
             ACollectReturnStatus()
                 .WithLaeStab(laeStab)
                 .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-                .WithUpdatedAt(LastRunDate.AddDays(-1))
+                .WithUpdatedAt(LastRunDate.AddDays(-1)),
         ];
 
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);

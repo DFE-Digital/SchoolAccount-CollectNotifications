@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Models;
-using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Models.Dtos;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Stores;
@@ -16,7 +15,7 @@ public partial class LedgerStoreIntegrationTests
     public async Task When_getting_what_has_changed_it_should_return_a_failure_when_the_database_cannot_be_reached()
     {
         // Arrange
-        await using var unreachable = new DbConnectionFactory<LedgerDatabase>(
+        await using var unreachable = new DbConnectionFactory(
             "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1");
 
         var store = new LedgerStore(
@@ -24,7 +23,7 @@ public partial class LedgerStoreIntegrationTests
             Options.Create(new CensusOptions
             {
                 Collection = TestCollection,
-                AllowedStatuses = [ReturnStatusCodes.Approved]
+                AllowedStatuses = [ReturnStatusCodes.Approved],
             }));
 
         // Act
@@ -56,7 +55,7 @@ public partial class LedgerStoreIntegrationTests
             ACollectReturnStatus()
                 .WithLaeStab(laeStab)
                 .WithReturnStatusCode(ReturnStatusCodes.Approved)
-                .WithUpdatedAt(LastRunDate.AddHours(1))
+                .WithUpdatedAt(LastRunDate.AddHours(1)),
         ];
 
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
@@ -90,7 +89,7 @@ public partial class LedgerStoreIntegrationTests
             ACollectReturnStatus()
                 .WithLaeStab(unregistered)
                 .WithReturnStatusCode(ReturnStatusCodes.Authorised)
-                .WithUpdatedAt(LastRunDate.AddHours(1))
+                .WithUpdatedAt(LastRunDate.AddHours(1)),
         ];
 
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
@@ -132,7 +131,7 @@ public partial class LedgerStoreIntegrationTests
             ACollectReturnStatus()
                 .WithLaeStab(ignored)
                 .WithReturnStatusCode(ReturnStatusCodes.Rejected)
-                .WithUpdatedAt(LastRunDate.AddHours(1))
+                .WithUpdatedAt(LastRunDate.AddHours(1)),
         ];
 
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
@@ -163,7 +162,7 @@ public partial class LedgerStoreIntegrationTests
             ACollectReturnStatus()
                 .WithLaeStab(laeStab)
                 .WithReturnStatusCode(ReturnStatusCodes.Rejected)
-                .WithUpdatedAt(LastRunDate.AddHours(1))
+                .WithUpdatedAt(LastRunDate.AddHours(1)),
         ];
 
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
@@ -195,7 +194,7 @@ public partial class LedgerStoreIntegrationTests
                 .WithLaeStab(laeStab)
                 .WithReturnStatusCode(ReturnStatusCodes.Authorised)
                 .WithUpdatedAt(LastRunDate.AddHours(1))
-                .WithCollection("SomeOtherCensus")
+                .WithCollection("SomeOtherCensus"),
         ];
 
         await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
