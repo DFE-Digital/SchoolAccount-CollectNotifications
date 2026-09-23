@@ -3,7 +3,7 @@ using Dapper;
 using Microsoft.Data.SqlClient;
 using SchoolAccount.CollectNotifications.Models.Dtos;
 
-namespace SchoolAccount.CollectNotifications.Tests.Integration.Helpers;
+namespace SchoolAccount.CollectNotifications.IntegrationTests.Helpers;
 
 public static class TestDatabaseHelper
 {

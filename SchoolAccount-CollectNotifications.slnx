@@ -3,9 +3,9 @@
     <Project Path="SchoolAccount.CollectNotifications/SchoolAccount.CollectNotifications.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="SchoolAccount.CollectNotifications.Tests.Common/SchoolAccount.CollectNotifications.Tests.Common.csproj" />
-    <Project Path="SchoolAccount.CollectNotifications.Tests.Unit/SchoolAccount.CollectNotifications.Tests.Unit.csproj" />
-    <Project Path="SchoolAccount.CollectNotifications.Tests.Integration/SchoolAccount.CollectNotifications.Tests.Integration.csproj" />
+    <Project Path="SchoolAccount.CollectNotifications.TestCommon/SchoolAccount.CollectNotifications.TestCommon.csproj" />
+    <Project Path="SchoolAccount.CollectNotifications.UnitTests/SchoolAccount.CollectNotifications.UnitTests.csproj" />
+    <Project Path="SchoolAccount.CollectNotifications.IntegrationTests/SchoolAccount.CollectNotifications.IntegrationTests.csproj" />
   </Folder>
   <Folder Name="/solution/">
     <File Path=".gitignore" />

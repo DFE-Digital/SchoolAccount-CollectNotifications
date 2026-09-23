@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Options;
+using SchoolAccount.CollectNotifications.IntegrationTests.Helpers;
 using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Models.Enums;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Stores;
-using SchoolAccount.CollectNotifications.Tests.Integration.Helpers;
 
-namespace SchoolAccount.CollectNotifications.Tests.Integration.Stores;
+namespace SchoolAccount.CollectNotifications.IntegrationTests.Stores;
 
 public partial class LedgerStoreIntegrationTests : IAsyncLifetime
 {

@@ -1,7 +1,7 @@
 using SchoolAccount.CollectNotifications.Models.Dtos;
 using SchoolAccount.CollectNotifications.Models.Enums;
 
-namespace SchoolAccount.CollectNotifications.Tests.Common.Builders;
+namespace SchoolAccount.CollectNotifications.TestCommon.Builders;
 
 public class CollectReturnStatusBuilder
 {

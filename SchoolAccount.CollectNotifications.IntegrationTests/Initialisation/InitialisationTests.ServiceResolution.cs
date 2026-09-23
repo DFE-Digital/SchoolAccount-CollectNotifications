@@ -3,7 +3,7 @@ using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Services;
 using SchoolAccount.CollectNotifications.Stores;
 
-namespace SchoolAccount.CollectNotifications.Tests.Integration.Initialisation;
+namespace SchoolAccount.CollectNotifications.IntegrationTests.Initialisation;
 
 public partial class InitialisationTests
 {

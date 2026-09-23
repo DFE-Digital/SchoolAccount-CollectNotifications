@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Models.Enums;
 using SchoolAccount.CollectNotifications.Models.Options;
 
-namespace SchoolAccount.CollectNotifications.Tests.Integration.Initialisation;
+namespace SchoolAccount.CollectNotifications.IntegrationTests.Initialisation;
 
 public partial class InitialisationTests
 {

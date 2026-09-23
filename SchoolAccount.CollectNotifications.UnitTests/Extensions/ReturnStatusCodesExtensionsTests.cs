@@ -1,7 +1,7 @@
 using SchoolAccount.CollectNotifications.Extensions;
 using SchoolAccount.CollectNotifications.Models.Enums;
 
-namespace SchoolAccount.CollectNotifications.Tests.Unit.Extensions;
+namespace SchoolAccount.CollectNotifications.UnitTests.Extensions;
 
 public class ReturnStatusCodesExtensionsTests
 {

@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using SchoolAccount.CollectNotifications.Extensions;
 
-namespace SchoolAccount.CollectNotifications.Tests.Integration.Initialisation;
+namespace SchoolAccount.CollectNotifications.IntegrationTests.Initialisation;
 
 public partial class InitialisationTests
 {

@@ -1,4 +1,4 @@
-namespace SchoolAccount.CollectNotifications.Tests.Integration.Helpers;
+namespace SchoolAccount.CollectNotifications.IntegrationTests.Helpers;
 
 public static class LaeStabHelpers
 {

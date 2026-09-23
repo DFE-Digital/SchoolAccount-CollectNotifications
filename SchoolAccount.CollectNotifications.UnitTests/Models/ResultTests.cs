@@ -1,6 +1,6 @@
 using SchoolAccount.CollectNotifications.Models;
 
-namespace SchoolAccount.CollectNotifications.Tests.Unit.Models;
+namespace SchoolAccount.CollectNotifications.UnitTests.Models;
 
 public class ResultTests
 {

@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="SchoolAccount.CollectNotifications.Tests.Common" />
-    <InternalsVisibleTo Include="SchoolAccount.CollectNotifications.Tests.Unit" />
+    <InternalsVisibleTo Include="SchoolAccount.CollectNotifications.TestCommon" />
+    <InternalsVisibleTo Include="SchoolAccount.CollectNotifications.UnitTests" />
   </ItemGroup>
 
   <ItemGroup>

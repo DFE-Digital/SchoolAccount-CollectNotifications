@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SchoolAccount.CollectNotifications.Extensions;
 using SchoolAccount.CollectNotifications.Interfaces;
 
-namespace SchoolAccount.CollectNotifications.Tests.Unit.Extensions;
+namespace SchoolAccount.CollectNotifications.UnitTests.Extensions;
 
 public class ServiceCollectionExtensionsTests
 {

@@ -8,7 +8,7 @@ using SchoolAccount.CollectNotifications.Models.Enums;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services;
 
-namespace SchoolAccount.CollectNotifications.Tests.Unit.Services;
+namespace SchoolAccount.CollectNotifications.UnitTests.Services;
 
 public class StatusChangedLedgerMonitoringServiceTests
 {

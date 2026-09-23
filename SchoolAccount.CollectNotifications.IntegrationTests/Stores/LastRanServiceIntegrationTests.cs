@@ -1,11 +1,11 @@
 using Dapper;
 using Microsoft.Extensions.Options;
+using SchoolAccount.CollectNotifications.IntegrationTests.Helpers;
 using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services;
-using SchoolAccount.CollectNotifications.Tests.Integration.Helpers;
 
-namespace SchoolAccount.CollectNotifications.Tests.Integration.Stores;
+namespace SchoolAccount.CollectNotifications.IntegrationTests.Stores;
 
 /// <summary>
 /// The last run time is a row in the ledger's JobStatus table, so this is exercised against a real

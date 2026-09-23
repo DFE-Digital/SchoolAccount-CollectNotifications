@@ -134,9 +134,9 @@ DOTNET_ENVIRONMENT=Development dotnet run --project SchoolAccount.CollectNotific
 
 The solution is divided into three test projects:
 
-- **`SchoolAccount.CollectNotifications.Tests.Common`** is shared test fixtures, mock helpers, and fluent builders.
-- **`SchoolAccount.CollectNotifications.Tests.Unit`** is for fast, isolated unit tests mocking external I/O and dependencies.
-- **`SchoolAccount.CollectNotifications.Tests.Integration`** is the integration tests running against a local SQL Server Docker container (`localhost:1433`).
+- **`SchoolAccount.CollectNotifications.TestCommon`** is shared test fixtures, mock helpers, and fluent builders.
+- **`SchoolAccount.CollectNotifications.UnitTests`** is for fast, isolated unit tests mocking external I/O and dependencies.
+- **`SchoolAccount.CollectNotifications.IntegrationTests`** is the integration tests running against a local SQL Server Docker container (`localhost:1433`).
 
 ### Running tests
 
@@ -157,12 +157,12 @@ dotnet test
 
 #### Run only unit tests:
 ```bash
-dotnet test SchoolAccount.CollectNotifications.Tests.Unit
+dotnet test SchoolAccount.CollectNotifications.UnitTests
 ```
 
 #### Run only integration tests:
 ```bash
-dotnet test SchoolAccount.CollectNotifications.Tests.Integration
+dotnet test SchoolAccount.CollectNotifications.IntegrationTests
 ```
 
 #### In CI
@@ -264,15 +264,15 @@ SchoolAccount.CollectNotifications/
 ├── Dockerfile
 └── Program.cs
 
-SchoolAccount.CollectNotifications.Tests.Common/
+SchoolAccount.CollectNotifications.TestCommon/
 └── Builders/          # Fluent test object builders
 
-SchoolAccount.CollectNotifications.Tests.Unit/
+SchoolAccount.CollectNotifications.UnitTests/
 ├── Extensions/        # Options and validation unit tests
 ├── Services/          # Unit tests for domain services
 └── Stores/            # Unit tests for store operations and extension filters
 
-SchoolAccount.CollectNotifications.Tests.Integration/
+SchoolAccount.CollectNotifications.IntegrationTests/
 ├── Helpers/           # Database test connection, schema seeding, and cleanup helpers
 ├── Initialisation/    # Host bootstrapping, DI resolution, and fail-fast validation tests
 └── Stores/            # Integration tests against local Docker SQL Server instance

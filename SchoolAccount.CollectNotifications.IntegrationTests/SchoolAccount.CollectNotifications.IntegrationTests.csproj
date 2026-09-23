@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SchoolAccount.CollectNotifications.Tests.Common\SchoolAccount.CollectNotifications.Tests.Common.csproj" />
+    <ProjectReference Include="..\SchoolAccount.CollectNotifications.TestCommon\SchoolAccount.CollectNotifications.TestCommon.csproj" />
     <ProjectReference Include="..\SchoolAccount.CollectNotifications\SchoolAccount.CollectNotifications.csproj" />
   </ItemGroup>
 
