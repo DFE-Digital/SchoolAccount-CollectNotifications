@@ -11,7 +11,7 @@ on:
 
 env:
   DOTNET_VERSION: "10.x"
-  MIN_LINE_COVERAGE: "70"
+  MIN_LINE_COVERAGE: "85"
   SOLUTION_FILE: SchoolAccount-CollectNotifications.slnx
   MAIN_BRANCH: refs/heads/main
   IMAGE_NAME: ghcr.io/dfe-digital/schoolaccount-collectnotifications
