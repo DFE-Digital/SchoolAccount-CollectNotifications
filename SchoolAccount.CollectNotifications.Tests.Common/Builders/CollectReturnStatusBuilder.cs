@@ -120,8 +120,5 @@ public class CollectReturnStatusBuilder
         };
     }
 
-    public static implicit operator CollectReturnStatus(CollectReturnStatusBuilder builder)
-    {
-        return builder.Build();
-    }
+    public static implicit operator CollectReturnStatus(CollectReturnStatusBuilder builder) => builder.Build();
 }

@@ -17,10 +17,7 @@ public partial class InitialisationTests
         });
 
         // Act & Assert
-        var exception = await Should.ThrowAsync<OptionsValidationException>(async () =>
-        {
-            await host.StartAsync();
-        });
+        var exception = await Should.ThrowAsync<OptionsValidationException>(async () => await host.StartAsync());
 
         exception.OptionsType.ShouldBe(typeof(GovNotifyOptions));
     }
@@ -61,10 +58,7 @@ public partial class InitialisationTests
         });
 
         // Act & Assert
-        var exception = await Should.ThrowAsync<OptionsValidationException>(async () =>
-        {
-            await host.StartAsync();
-        });
+        var exception = await Should.ThrowAsync<OptionsValidationException>(async () => await host.StartAsync());
 
         exception.OptionsType.ShouldBe(typeof(CensusOptions));
     }
@@ -80,10 +74,7 @@ public partial class InitialisationTests
         });
 
         // Act & Assert
-        var exception = await Should.ThrowAsync<OptionsValidationException>(async () =>
-        {
-            await host.StartAsync();
-        });
+        var exception = await Should.ThrowAsync<OptionsValidationException>(async () => await host.StartAsync());
 
         exception.OptionsType.ShouldBe(typeof(CensusOptions));
     }

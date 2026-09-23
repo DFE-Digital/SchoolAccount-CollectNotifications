@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
 using Notify.Client;
@@ -42,7 +43,7 @@ public partial class GovNotifyService(
 
     private static int? StatusCodeOf(string message) =>
         StatusCodePrefix().Match(message) is { Success: true } match
-            ? int.Parse(match.Groups[1].Value)
+            ? int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture)
             : null;
 
     [GeneratedRegex(@"^Status code (\d+)")]

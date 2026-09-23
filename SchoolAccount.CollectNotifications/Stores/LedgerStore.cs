@@ -1,4 +1,5 @@
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using Dapper;
 using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Interfaces;
@@ -13,6 +14,10 @@ public class LedgerStore(
     IOptions<CensusOptions> censusOptions
 ) : ILedgerStore
 {
+    [SuppressMessage("Security Hotspot", "S2077:Formatting SQL queries is security-sensitive",
+        Justification = "The only thing interpolated is one of two constants chosen here. Every value "
+                        + "the query uses is a Dapper parameter. Removing limitToApprovedStatuses would "
+                        + "remove the interpolation altogether, which is the better fix.")]
     public async Task<Result<List<CensusStatusChange>>> GetWhatHasChangedAsync(
         DateTime lastRunDate,
         bool limitToApprovedStatuses = true,

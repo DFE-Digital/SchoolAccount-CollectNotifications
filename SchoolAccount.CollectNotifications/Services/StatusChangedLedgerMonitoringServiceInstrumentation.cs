@@ -1,7 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 
 namespace SchoolAccount.CollectNotifications.Services;
 
+[SuppressMessage("Major Code Smell", "S6672:Generic logger injection should match enclosing type",
+    Justification = "Deliberate. These entries are the service's, so they should be categorised under it "
+                    + "rather than under a class name that only exists to hold the log messages.")]
 public sealed partial class StatusChangedLedgerMonitoringServiceInstrumentation(
     ILogger<StatusChangedLedgerMonitoringService> logger)
 {

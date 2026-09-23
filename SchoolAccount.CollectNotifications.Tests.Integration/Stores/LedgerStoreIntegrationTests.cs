@@ -22,8 +22,8 @@ public partial class LedgerStoreIntegrationTests : IAsyncLifetime
     {
         if (_createdLaeStabs.Count > 0)
         {
-            await TestDatabaseHelper.DeleteReturnStatusesByLaeStabAsync(_createdLaeStabs);
-            await TestDatabaseHelper.DeleteRegisteredUsersByLaeStabAsync(_createdLaeStabs);
+            await TestDatabaseHelper.DeleteReturnStatusesByLaeStabAsync(_createdLaeStabs, CancellationToken.None);
+            await TestDatabaseHelper.DeleteRegisteredUsersByLaeStabAsync(_createdLaeStabs, CancellationToken.None);
         }
     }
 

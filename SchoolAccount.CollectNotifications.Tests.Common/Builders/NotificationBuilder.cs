@@ -43,8 +43,5 @@ public class NotificationBuilder
         return new Notification(_laeStab, _recipient, _status, _school);
     }
 
-    public static implicit operator Notification(NotificationBuilder builder)
-    {
-        return builder.Build();
-    }
+    public static implicit operator Notification(NotificationBuilder builder) => builder.Build();
 }
