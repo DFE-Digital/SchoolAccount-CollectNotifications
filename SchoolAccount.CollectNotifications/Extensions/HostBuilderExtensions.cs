@@ -2,7 +2,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SchoolAccount.CollectNotifications.Interfaces;
-using SchoolAccount.CollectNotifications.Models.Databases;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services;
 using SchoolAccount.CollectNotifications.Stores;
@@ -11,20 +10,21 @@ namespace SchoolAccount.CollectNotifications.Extensions;
 
 public static class HostBuilderExtensions
 {
-    private const string AppConfigurationEnabledKey = "AzureAppConfiguration:Enabled";
-    private const string AppConfigurationEndpointKey = "AzureAppConfiguration:Endpoint";
+    private const string _ledgerConnectionStringName = "LedgerDatabase";
+    private const string _appConfigurationEnabledKey = "AzureAppConfiguration:Enabled";
+    private const string _appConfigurationEndpointKey = "AzureAppConfiguration:Endpoint";
 
     public static HostApplicationBuilder Configure(this HostApplicationBuilder builder)
     {
-        var useAppConfiguration = builder.Configuration.GetValue<bool>(AppConfigurationEnabledKey);
+        var useAppConfiguration = builder.Configuration.GetValue<bool>(_appConfigurationEnabledKey);
 
         if (useAppConfiguration)
         {
-            var endpoint = builder.Configuration[AppConfigurationEndpointKey];
+            var endpoint = builder.Configuration[_appConfigurationEndpointKey];
 
             if (string.IsNullOrWhiteSpace(endpoint))
             {
-                throw new InvalidOperationException($"The setting `{AppConfigurationEndpointKey}` was not found.");
+                throw new InvalidOperationException($"The setting `{_appConfigurationEndpointKey}` was not found.");
             }
 
             builder.Configuration.AddAzureAppConfiguration(endpoint);
@@ -33,7 +33,7 @@ public static class HostBuilderExtensions
         builder.AddValidatedOptions<GovNotifyOptions>(GovNotifyOptions.SectionName);
         builder.AddValidatedOptions<CensusOptions>(CensusOptions.SectionName);
 
-        builder.Services.AddDatabase<LedgerDatabase>(builder.Configuration);
+        builder.Services.AddDatabase(builder.Configuration, _ledgerConnectionStringName);
         builder.Services.AddSingleton<ILedgerStore, LedgerStore>();
 
         builder.Services.AddSingleton<ILastRanService, LastRanService>();

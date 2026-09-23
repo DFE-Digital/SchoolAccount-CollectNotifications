@@ -2,30 +2,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SchoolAccount.CollectNotifications.Extensions;
 using SchoolAccount.CollectNotifications.Interfaces;
-using SchoolAccount.CollectNotifications.Models.Databases;
 
 namespace SchoolAccount.CollectNotifications.Tests.Unit.Extensions;
 
 public class ServiceCollectionExtensionsTests
 {
     [Fact]
-    public void Adding_a_database_with_connectionStringFactory_should_register_db_connection_factory()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        const string expectedConnectionString = "Server=my-server;Database=testdb;";
-
-        // Act
-        services.AddDatabase(() => expectedConnectionString);
-        var provider = services.BuildServiceProvider();
-
-        // Assert
-        var factory = provider.GetService<IDbConnectionFactory>();
-        factory.ShouldNotBeNull();
-    }
-
-    [Fact]
-    public void Adding_a_database_with_configuration_should_resolve_connection_string_by_type_name()
+    public void Adding_a_database_should_resolve_the_named_connection_string()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -37,7 +20,7 @@ public class ServiceCollectionExtensionsTests
             .Build();
 
         // Act
-        services.AddDatabase<LedgerDatabase>(configuration);
+        services.AddDatabase(configuration, "LedgerDatabase");
         var provider = services.BuildServiceProvider();
 
         // Assert
@@ -55,7 +38,7 @@ public class ServiceCollectionExtensionsTests
             .Build();
 
         // Act & Assert
-        var ex = Should.Throw<ArgumentException>(() => services.AddDatabase<LedgerDatabase>(configuration));
+        var ex = Should.Throw<ArgumentException>(() => services.AddDatabase(configuration, "LedgerDatabase"));
         ex.Message.ShouldContain("Connection string for LedgerDatabase was not found.");
     }
 
