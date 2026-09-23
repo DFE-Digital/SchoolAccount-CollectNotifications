@@ -20,17 +20,11 @@ public partial class GovNotifyService(
     public async Task<Result<NotificationResult>> SendMessage(
         string templateId,
         string recipient,
-        Dictionary<string, dynamic>? properties = null,
-        EmailOptions? options = null)
+        Dictionary<string, dynamic>? properties = null)
     {
         try
         {
-            var result = await _client.SendEmailAsync(
-                recipient,
-                templateId,
-                properties,
-                clientReference: options?.Reference,
-                emailReplyToId: options?.ReplyTo ?? settings.Value.FromAddress);
+            var result = await _client.SendEmailAsync(recipient, templateId, properties);
 
             return Result.Success(new NotificationResult { Outcome = result });
         }

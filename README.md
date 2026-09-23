@@ -48,8 +48,7 @@ user secrets. Options marked as required are validated when the app starts, so i
 
 | Key                     | Required | Description |
 | ----------------------- | -------- | ----------- |
-| `GovNotify:ApiKey`      | Yes      | Notify API key |
-| `GovNotify:FromAddress` | No       | Passed to Notify as the reply-to value |
+| `GovNotify:ApiKey`      | Yes      | Notify API key. The sender address, reply-to and templates all come from the service this key belongs to |
 | `GovNotify:DelayBetweenSendsInMs` | No | Pause between each send. Defaults to `0`. Nothing needs it at beta volumes, it's there to turn up if Notify starts rate limiting us |
 
 ### Azure App Configuration

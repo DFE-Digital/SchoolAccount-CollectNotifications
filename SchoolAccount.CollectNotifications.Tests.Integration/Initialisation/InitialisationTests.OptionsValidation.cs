@@ -26,24 +26,6 @@ public partial class InitialisationTests
     }
 
     [Fact]
-    public async Task Should_throw_options_validation_exception_on_host_start_when_gov_notify_from_address_is_invalid()
-    {
-        // Arrange
-        using var host = CreateHost(new Dictionary<string, string?>
-        {
-            ["GovNotify:FromAddress"] = "not-a-valid-email",
-        });
-
-        // Act & Assert
-        var exception = await Should.ThrowAsync<OptionsValidationException>(async () =>
-        {
-            await host.StartAsync();
-        });
-
-        exception.OptionsType.ShouldBe(typeof(GovNotifyOptions));
-    }
-
-    [Fact]
     public void ConfigureService_should_throw_when_azure_app_configuration_is_enabled_without_an_endpoint()
     {
         // Arrange, Act & Assert

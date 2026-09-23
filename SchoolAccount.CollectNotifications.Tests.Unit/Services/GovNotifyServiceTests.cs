@@ -2,7 +2,6 @@ using Microsoft.Extensions.Options;
 using Notify.Exceptions;
 using Notify.Interfaces;
 using Notify.Models.Responses;
-using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services;
 
@@ -18,7 +17,6 @@ public class GovNotifyServiceTests
     private readonly IOptions<GovNotifyOptions> _options = Options.Create(new GovNotifyOptions
     {
         ApiKey = "test-api-key-12345",
-        FromAddress = "default-reply-to-id",
     });
 
     private readonly GovNotifyService _sut;
@@ -36,35 +34,11 @@ public class GovNotifyServiceTests
         var response = new EmailNotificationResponse { id = "notification-uuid-123" };
 
         _notificationClient
-            .SendEmailAsync(Recipient, TemplateId, properties, null, "default-reply-to-id")
+            .SendEmailAsync(Recipient, TemplateId, properties)
             .Returns(response);
 
         // Act
         var result = await _sut.SendMessage(TemplateId, Recipient, properties);
-
-        // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Value.ShouldNotBeNull();
-        result.Value.Outcome.ShouldBe(response);
-    }
-
-    [Fact]
-    public async Task When_sending_a_message_it_should_use_custom_reply_to_and_reference_when_options_are_provided()
-    {
-        // Arrange
-        var options = new EmailOptions
-        {
-            Reference = "custom-client-ref",
-            ReplyTo = "custom-reply-to-id",
-        };
-        var response = new EmailNotificationResponse { id = "notification-uuid-456" };
-
-        _notificationClient
-            .SendEmailAsync(Recipient, TemplateId, null, "custom-client-ref", "custom-reply-to-id")
-            .Returns(response);
-
-        // Act
-        var result = await _sut.SendMessage(TemplateId, Recipient, options: options);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -83,8 +57,7 @@ public class GovNotifyServiceTests
 
         // Arrange
         _notificationClient
-            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(),
-                Arg.Any<string>(), Arg.Any<string>())
+            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>())
             .Returns<EmailNotificationResponse>(_ => throw new NotifyClientException(notifyMessage));
 
         // Act
@@ -106,8 +79,7 @@ public class GovNotifyServiceTests
 
         // Arrange
         _notificationClient
-            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(),
-                Arg.Any<string>(), Arg.Any<string>())
+            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>())
             .Returns<EmailNotificationResponse>(_ => throw new NotifyClientException(notifyMessage));
 
         // Act
@@ -123,8 +95,7 @@ public class GovNotifyServiceTests
     {
         // Arrange
         _notificationClient
-            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>(),
-                Arg.Any<string>(), Arg.Any<string>())
+            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>())
             .Returns<EmailNotificationResponse>(_ => throw new NotifyAuthException("Invalid API key"));
 
         // Act
