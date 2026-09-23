@@ -77,7 +77,7 @@ jobs:
 
       - name: Apply the ledger database schema
         run: |
-          for script in database tables stored-procedures; do
+          for script in database tables; do
             docker run --rm --network host \
               --volume "${{ github.workspace }}/ledger-database/sql:/sql:ro" \
               --entrypoint /opt/mssql-tools18/bin/sqlcmd \

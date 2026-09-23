@@ -168,9 +168,10 @@ dotnet test SchoolAccount.CollectNotifications.IntegrationTests
 #### In CI
 
 The build workflow runs the whole solution, integration tests included. It starts SQL Server as a service container
-and applies the schema from
+and applies `database.sql` and `tables.sql` from
 [SchoolAccount-CollectStateLedgerDatabase](https://github.com/DFE-Digital/SchoolAccount-CollectStateLedgerDatabase),
-so a schema change that breaks these tests shows up on the next build here. It is pinned to the
+so a schema change that breaks these tests shows up on the next build here. `stored-procedures.sql` is left out: it
+reads from COLLECTPortal, which this service never touches and CI does not have. It is pinned to the
 `notification-tables` branch, because `RegisteredUsers` and `JobStatus` have not been merged to `main` there yet.
 Once they are, drop `LEDGER_DATABASE_REF` from the workflow so it tracks the default branch.
 
