@@ -45,7 +45,6 @@ public class StatusChangedLedgerMonitoringService(
 
         var changes = await ledgerStore.GetWhatHasChangedAsync(
             lastRan.Value.Value,
-            true,
             cancellationToken
         );
 

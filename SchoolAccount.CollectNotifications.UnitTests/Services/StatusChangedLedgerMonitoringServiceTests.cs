@@ -64,11 +64,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             .GetTimestampAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<DateTime?>(DateTime.UtcNow.AddDays(-1)));
         _ledgerStore
-            .GetWhatHasChangedAsync(
-                Arg.Any<DateTime>(),
-                Arg.Any<bool>(),
-                Arg.Any<CancellationToken>()
-            )
+            .GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success(changes.ToList()));
         _lastRanService
             .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
@@ -89,11 +85,7 @@ public class StatusChangedLedgerMonitoringServiceTests
         // Assert
         await _ledgerStore
             .DidNotReceive()
-            .GetWhatHasChangedAsync(
-                Arg.Any<DateTime>(),
-                Arg.Any<bool>(),
-                Arg.Any<CancellationToken>()
-            );
+            .GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
         await _lastRanService
             .DidNotReceive()
             .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
@@ -122,11 +114,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
         await _ledgerStore
             .DidNotReceive()
-            .GetWhatHasChangedAsync(
-                Arg.Any<DateTime>(),
-                Arg.Any<bool>(),
-                Arg.Any<CancellationToken>()
-            );
+            .GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
         await _govNotifyService
             .DidNotReceive()
             .SendMessage(
@@ -144,11 +132,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             .GetTimestampAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<DateTime?>(DateTime.UtcNow.AddDays(-1)));
         _ledgerStore
-            .GetWhatHasChangedAsync(
-                Arg.Any<DateTime>(),
-                Arg.Any<bool>(),
-                Arg.Any<CancellationToken>()
-            )
+            .GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns(Result.Failure<List<CensusStatusChange>>("Database connection timeout"));
 
         // Act

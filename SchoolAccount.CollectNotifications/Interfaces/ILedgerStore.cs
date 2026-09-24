@@ -7,7 +7,6 @@ public interface ILedgerStore
 {
     Task<Result<List<CensusStatusChange>>> GetWhatHasChangedAsync(
         DateTime lastRunDate,
-        bool limitToApprovedStatuses = true,
         CancellationToken cancellationToken = default
     );
 }

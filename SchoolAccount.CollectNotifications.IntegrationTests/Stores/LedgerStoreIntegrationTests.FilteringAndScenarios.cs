@@ -163,41 +163,6 @@ public partial class LedgerStoreIntegrationTests
     }
 
     [Fact]
-    public async Task When_getting_what_has_changed_it_should_return_every_status_change_when_not_limited_to_notifiable_statuses()
-    {
-        // Arrange
-        var store = CreateLedgerStore([ReturnStatusCodes.Authorised]);
-        var laeStab = CreateTrackedLaeStab();
-        await RegisterAsync(laeStab);
-
-        List<CollectReturnStatus> history =
-        [
-            ACollectReturnStatus()
-                .WithLaeStab(laeStab)
-                .WithReturnStatusCode(ReturnStatusCodes.LoadedAndValidated)
-                .WithUpdatedAt(LastRunDate.AddDays(-1)),
-            ACollectReturnStatus()
-                .WithLaeStab(laeStab)
-                .WithReturnStatusCode(ReturnStatusCodes.Rejected)
-                .WithUpdatedAt(LastRunDate.AddHours(1)),
-        ];
-
-        await TestDatabaseHelper.InsertReturnStatusesAsync(history, _cancellationToken);
-
-        // Act
-        var result = await store.GetWhatHasChangedAsync(
-            LastRunDate,
-            limitToApprovedStatuses: false,
-            cancellationToken: _cancellationToken
-        );
-
-        // Assert
-        var change = result.Value.ShouldHaveSingleItem();
-        change.ReturnStatusCode.ShouldBe(ReturnStatusCodes.Rejected);
-        change.PreviousReturnStatusCode.ShouldBe(ReturnStatusCodes.LoadedAndValidated);
-    }
-
-    [Fact]
     public async Task When_getting_what_has_changed_it_should_ignore_rows_from_another_collection()
     {
         // The ledger holds every collection, so without the Collection filter a school's rows from

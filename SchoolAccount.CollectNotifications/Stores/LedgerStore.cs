@@ -1,5 +1,4 @@
 using System.Data.Common;
-using System.Diagnostics.CodeAnalysis;
 using Dapper;
 using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Interfaces;
@@ -12,16 +11,8 @@ namespace SchoolAccount.CollectNotifications.Stores;
 public class LedgerStore(IDbConnectionFactory factory, IOptions<CensusOptions> censusOptions)
     : ILedgerStore
 {
-    [SuppressMessage(
-        "Security Hotspot",
-        "S2077:Formatting SQL queries is security-sensitive",
-        Justification = "The only thing interpolated is one of two constants chosen here. Every value "
-            + "the query uses is a Dapper parameter. Removing limitToApprovedStatuses would "
-            + "remove the interpolation altogether, which is the better fix."
-    )]
     public async Task<Result<List<CensusStatusChange>>> GetWhatHasChangedAsync(
         DateTime lastRunDate,
-        bool limitToApprovedStatuses = true,
         CancellationToken cancellationToken = default
     )
     {
@@ -33,16 +24,7 @@ public class LedgerStore(IDbConnectionFactory factory, IOptions<CensusOptions> c
         // LAG gives each row the status of the row before it, so there is no self join and no
         // rank. Recipients are joined after the window function, not inside it: joining them
         // first multiplies the rows and the window ends up counting rows times emails.
-        var statusFilter = limitToApprovedStatuses
-            ? """
-                  AND (
-                      h.ReturnStatusCode IN @NotifiableStatuses
-                      OR h.PreviousReturnStatusCode IN @NotifiableStatuses
-                  )
-                """
-            : string.Empty;
-
-        var sql = $"""
+        const string sql = """
             WITH History AS (
                 SELECT
                     SchoolName,
@@ -76,7 +58,10 @@ public class LedgerStore(IDbConnectionFactory factory, IOptions<CensusOptions> c
                     h.PreviousReturnStatusCode IS NULL
                     OR h.ReturnStatusCode <> h.PreviousReturnStatusCode
                 )
-                {statusFilter}
+                AND (
+                    h.ReturnStatusCode IN @NotifiableStatuses
+                    OR h.PreviousReturnStatusCode IN @NotifiableStatuses
+                )
             ORDER BY h.LAEStab, h.UpdatedAt, ru.Email;
             """;
 
