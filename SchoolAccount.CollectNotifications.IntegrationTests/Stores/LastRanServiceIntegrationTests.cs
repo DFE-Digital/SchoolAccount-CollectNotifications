@@ -76,8 +76,11 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task When_the_job_has_never_run_it_should_return_the_minimum_sql_date()
+    public async Task When_the_job_has_never_run_it_should_report_no_timestamp()
     {
+        // Absent rather than a sentinel date, so the caller has to decide what a first run means
+        // instead of querying the ledger from the beginning of time by accident.
+
         // Arrange
         var sut = CreateService();
 
@@ -86,7 +89,7 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        result.Value.ShouldBe(new DateTime(1753, 1, 1, 0, 0, 0, DateTimeKind.Unspecified));
+        result.Value.ShouldBeNull();
     }
 
     [Fact]
@@ -102,7 +105,7 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
 
         // Assert
         saved.IsSuccess.ShouldBeTrue();
-        readBack.Value.ShouldBe(ranAt, TimeSpan.FromSeconds(1));
+        readBack.Value!.Value.ShouldBe(ranAt, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -119,7 +122,7 @@ public class LastRanServiceIntegrationTests : IAsyncLifetime
 
         // Assert
         var readBack = await sut.GetTimestampAsync(_cancellationToken);
-        readBack.Value.ShouldBe(secondRun, TimeSpan.FromSeconds(1));
+        readBack.Value!.Value.ShouldBe(secondRun, TimeSpan.FromSeconds(1));
 
         await using var conn = await TestDatabaseHelper.OpenConnectionAsync(_cancellationToken);
         var rows = await conn.ExecuteScalarAsync<int>(

@@ -1,5 +1,4 @@
 using System.Data.Common;
-using System.Data.SqlTypes;
 using Dapper;
 using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Interfaces;
@@ -14,13 +13,7 @@ namespace SchoolAccount.CollectNotifications.Services;
 public class LastRanService(IDbConnectionFactory factory, IOptions<CensusOptions> censusOptions)
     : ILastRanService
 {
-    /// <summary>
-    /// What we report when the job has no row yet. Everything in the ledger is after this, so a
-    /// run starting from here treats the whole history as new.
-    /// </summary>
-    public static readonly DateTime NeverRun = (DateTime)SqlDateTime.MinValue;
-
-    public async Task<Result<DateTime>> GetTimestampAsync(
+    public async Task<Result<DateTime?>> GetTimestampAsync(
         CancellationToken cancellationToken = default
     )
     {
@@ -42,11 +35,11 @@ public class LastRanService(IDbConnectionFactory factory, IOptions<CensusOptions
                 )
             );
 
-            return Result.Success(lastRun ?? NeverRun);
+            return Result.Success(lastRun);
         }
         catch (DbException exception)
         {
-            return Result.Failure<DateTime>(exception.Message);
+            return Result.Failure<DateTime?>(exception.Message);
         }
     }
 

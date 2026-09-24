@@ -27,9 +27,7 @@ public class StatusChangedLedgerMonitoringService(
             return;
         }
 
-        log.RunStarted(lastRan.Value, runningAt);
-
-        if (lastRan.Value == LastRanService.NeverRun)
+        if (lastRan.Value is null)
         {
             log.NoPreviousRunRecorded(runningAt);
 
@@ -43,8 +41,10 @@ public class StatusChangedLedgerMonitoringService(
             return;
         }
 
+        log.RunStarted(lastRan.Value.Value, runningAt);
+
         var changes = await ledgerStore.GetWhatHasChangedAsync(
-            lastRan.Value,
+            lastRan.Value.Value,
             true,
             cancellationToken
         );

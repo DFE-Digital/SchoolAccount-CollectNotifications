@@ -62,7 +62,7 @@ public class StatusChangedLedgerMonitoringServiceTests
     {
         _lastRanService
             .GetTimestampAsync(Arg.Any<CancellationToken>())
-            .Returns(Result.Success(DateTime.UtcNow.AddDays(-1)));
+            .Returns(Result.Success<DateTime?>(DateTime.UtcNow.AddDays(-1)));
         _ledgerStore
             .GetWhatHasChangedAsync(
                 Arg.Any<DateTime>(),
@@ -81,7 +81,7 @@ public class StatusChangedLedgerMonitoringServiceTests
         // Arrange
         _lastRanService
             .GetTimestampAsync(Arg.Any<CancellationToken>())
-            .Returns(Result.Failure<DateTime>("Ledger unreachable"));
+            .Returns(Result.Failure<DateTime?>("Ledger unreachable"));
 
         // Act
         await _sut.InvokeAsync(_cancellationToken);
@@ -108,7 +108,7 @@ public class StatusChangedLedgerMonitoringServiceTests
         // Arrange
         _lastRanService
             .GetTimestampAsync(Arg.Any<CancellationToken>())
-            .Returns(Result.Success(LastRanService.NeverRun));
+            .Returns(Result.Success<DateTime?>(null));
         _lastRanService
             .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success());
@@ -142,7 +142,7 @@ public class StatusChangedLedgerMonitoringServiceTests
         // Arrange
         _lastRanService
             .GetTimestampAsync(Arg.Any<CancellationToken>())
-            .Returns(Result.Success(DateTime.UtcNow.AddDays(-1)));
+            .Returns(Result.Success<DateTime?>(DateTime.UtcNow.AddDays(-1)));
         _ledgerStore
             .GetWhatHasChangedAsync(
                 Arg.Any<DateTime>(),

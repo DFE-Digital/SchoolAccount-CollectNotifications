@@ -9,7 +9,8 @@ schedule, running on a Azure Container App Jobs.
 Each run does the following:
 
 1. **Get the last run time.** Reads this job's row from the `JobStatus` table in the ledger database. If there
-isn't one, it falls back to `1753-01-01` (the SQL Server minimum date).
+isn't one this is the first run: it records the time this run started and sends nothing, so the first run
+establishes a starting point rather than treating the whole ledger as new.
 2. **Find status changes.** Queries the `CollectReturnStatus` table in the ledger database, joined to 
 `RegisteredUsers` so each change arrives already paired with the people to tell. For each school the latest row is 
 compared with the row immediately before it, and it counts as changed if the `ReturnStatusCode` differs, or if there 
