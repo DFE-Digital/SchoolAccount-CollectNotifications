@@ -33,7 +33,7 @@ jobs:
     # block above.
     services:
       ledger-database:
-        image: ghcr.io/dfe-digital/schoolaccount-collectstateledgerdatabase:docker-image
+        image: ghcr.io/dfe-digital/schoolaccount-collectstateledgerdatabase:latest
         env:
           MSSQL_SA_PASSWORD: "MyStrongPassword123!"
         ports:
