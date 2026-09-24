@@ -1,0 +1,134 @@
+using Dapper;
+using Microsoft.Extensions.Options;
+using SchoolAccount.CollectNotifications.IntegrationTests.Helpers;
+using SchoolAccount.CollectNotifications.Models;
+using SchoolAccount.CollectNotifications.Models.Options;
+using SchoolAccount.CollectNotifications.Services;
+
+namespace SchoolAccount.CollectNotifications.IntegrationTests.Stores;
+
+/// <summary>
+/// The last run time is a row in the ledger's JobStatus table, so this is exercised against a real
+/// database rather than a mocked store.
+/// </summary>
+public class LastRanServiceIntegrationTests : IAsyncLifetime
+{
+    private readonly CancellationToken _cancellationToken = TestContext.Current.CancellationToken;
+    private readonly string _jobName = $"test-{Guid.NewGuid():N}";
+    private readonly DbConnectionFactory _connectionFactory = new(
+        TestDatabaseHelper.ConnectionString
+    );
+
+    public ValueTask InitializeAsync() => ValueTask.CompletedTask;
+
+    public async ValueTask DisposeAsync()
+    {
+        await using var conn = await TestDatabaseHelper.OpenConnectionAsync(_cancellationToken);
+        await conn.ExecuteAsync(
+            "DELETE FROM JobStatus WHERE Name = @Name;",
+            new { Name = _jobName }
+        );
+    }
+
+    private LastRanService CreateService() =>
+        new(_connectionFactory, Options.Create(new CensusOptions { JobName = _jobName }));
+
+    [Fact]
+    public async Task When_the_database_cannot_be_reached_it_should_return_a_failure_rather_than_throw()
+    {
+        // Arrange
+        var unreachable = new DbConnectionFactory(
+            "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1"
+        );
+
+        var sut = new LastRanService(
+            unreachable,
+            Options.Create(new CensusOptions { JobName = _jobName })
+        );
+
+        // Act
+        var result = await sut.GetTimestampAsync(_cancellationToken);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldNotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task When_the_database_cannot_be_reached_it_should_return_a_failure_when_saving_too()
+    {
+        // Arrange
+        var unreachable = new DbConnectionFactory(
+            "Server=localhost,1;Database=nope;User Id=sa;Password=nope;TrustServerCertificate=true;Connect Timeout=1"
+        );
+
+        var sut = new LastRanService(
+            unreachable,
+            Options.Create(new CensusOptions { JobName = _jobName })
+        );
+
+        // Act
+        var result = await sut.SetTimestampAsync(DateTime.UtcNow, _cancellationToken);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldNotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task When_the_job_has_never_run_it_should_report_no_timestamp()
+    {
+        // Absent rather than a sentinel date, so the caller has to decide what a first run means
+        // instead of querying the ledger from the beginning of time by accident.
+
+        // Arrange
+        var sut = CreateService();
+
+        // Act
+        var result = await sut.GetTimestampAsync(_cancellationToken);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task When_setting_the_timestamp_for_the_first_time_it_should_insert_the_row()
+    {
+        // Arrange
+        var sut = CreateService();
+        var ranAt = new DateTime(2026, 9, 21, 22, 30, 0, DateTimeKind.Utc);
+
+        // Act
+        var saved = await sut.SetTimestampAsync(ranAt, _cancellationToken);
+        var readBack = await sut.GetTimestampAsync(_cancellationToken);
+
+        // Assert
+        saved.IsSuccess.ShouldBeTrue();
+        readBack.Value!.Value.ShouldBe(ranAt, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public async Task When_setting_the_timestamp_again_it_should_update_rather_than_add_a_second_row()
+    {
+        // Arrange
+        var sut = CreateService();
+        var firstRun = new DateTime(2026, 9, 20, 22, 30, 0, DateTimeKind.Utc);
+        var secondRun = new DateTime(2026, 9, 21, 22, 30, 0, DateTimeKind.Utc);
+
+        // Act
+        await sut.SetTimestampAsync(firstRun, _cancellationToken);
+        await sut.SetTimestampAsync(secondRun, _cancellationToken);
+
+        // Assert
+        var readBack = await sut.GetTimestampAsync(_cancellationToken);
+        readBack.Value!.Value.ShouldBe(secondRun, TimeSpan.FromSeconds(1));
+
+        await using var conn = await TestDatabaseHelper.OpenConnectionAsync(_cancellationToken);
+        var rows = await conn.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM JobStatus WHERE Name = @Name;",
+            new { Name = _jobName }
+        );
+        rows.ShouldBe(1);
+    }
+}
