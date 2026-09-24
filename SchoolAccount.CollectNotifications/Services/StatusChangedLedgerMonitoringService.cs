@@ -89,7 +89,7 @@ public class StatusChangedLedgerMonitoringService(
             }
 
             var notify = whatToNotify[i];
-            log.NotifyingRecipient(notify.Recipient, notify.LaeStab);
+            log.NotifyingRecipient(notify.LaeStab);
 
             Result<NotificationResult> result;
 
@@ -109,7 +109,7 @@ public class StatusChangedLedgerMonitoringService(
             {
                 // The watermark has already moved, so giving up on the whole run here would lose
                 // every notification after this one. Carry on and let the rest through.
-                log.NotificationFailed(exception, notify.Recipient);
+                log.NotificationFailed(exception, notify.LaeStab);
                 continue;
             }
 

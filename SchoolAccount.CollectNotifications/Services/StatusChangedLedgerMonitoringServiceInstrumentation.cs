@@ -55,17 +55,17 @@ public sealed partial class StatusChangedLedgerMonitoringServiceInstrumentation(
     )]
     public partial void CouldNotRecordRun(string? error);
 
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Notifying {Recipient} about {LaeStab}")]
-    public partial void NotifyingRecipient(string recipient, string laeStab);
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Notifying a recipient for {LaeStab}")]
+    public partial void NotifyingRecipient(string laeStab);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Notification not delivered: {Error}")]
     public partial void NotificationRejected(string? error);
 
     [LoggerMessage(
         Level = LogLevel.Warning,
-        Message = "Could not reach Notify for {Recipient}, moving on to the next one"
+        Message = "Could not reach Notify for {LaeStab}, moving on to the next one"
     )]
-    public partial void NotificationFailed(Exception exception, string recipient);
+    public partial void NotificationFailed(Exception exception, string laeStab);
 
     [LoggerMessage(
         Level = LogLevel.Warning,
