@@ -36,7 +36,7 @@ public static class HostBuilderExtensions
 
         builder.Services.AddDatabase();
         builder.Services.AddSingleton<ILedgerStore, LedgerStore>();
-        
+
         builder.Services.AddSingleton<ILastRanService, LastRanService>();
         builder.Services.AddSingleton<IGovNotifyService, GovNotifyService>();
         builder.Services.AddSingleton<StatusChangedLedgerMonitoringServiceInstrumentation>();

@@ -16,10 +16,7 @@ public class ServiceCollectionExtensionsTests
         var services = new ServiceCollection();
         services.AddSingleton(
             Options.Create(
-                new CensusOptions
-                {
-                    ConnectionString = "Server=sql.example.com;Database=Ledger;",
-                }
+                new CensusOptions { ConnectionString = "Server=sql.example.com;Database=Ledger;" }
             )
         );
 
