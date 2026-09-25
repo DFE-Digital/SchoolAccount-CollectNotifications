@@ -10,7 +10,6 @@ namespace SchoolAccount.CollectNotifications.Extensions;
 
 public static class HostBuilderExtensions
 {
-    private const string _ledgerConnectionStringName = "LedgerDatabase";
     private const string _appConfigurationEnabledKey = "AzureAppConfiguration:Enabled";
     private const string _appConfigurationEndpointKey = "AzureAppConfiguration:Endpoint";
 
@@ -35,9 +34,9 @@ public static class HostBuilderExtensions
         builder.AddValidatedOptions<GovNotifyOptions>(GovNotifyOptions.SectionName);
         builder.AddValidatedOptions<CensusOptions>(CensusOptions.SectionName);
 
-        builder.Services.AddDatabase(builder.Configuration, _ledgerConnectionStringName);
+        builder.Services.AddDatabase();
         builder.Services.AddSingleton<ILedgerStore, LedgerStore>();
-
+        
         builder.Services.AddSingleton<ILastRanService, LastRanService>();
         builder.Services.AddSingleton<IGovNotifyService, GovNotifyService>();
         builder.Services.AddSingleton<StatusChangedLedgerMonitoringServiceInstrumentation>();

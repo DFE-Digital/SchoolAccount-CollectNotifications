@@ -48,6 +48,7 @@ public partial class InitialisationTests
     [Theory]
     [InlineData("Census:JobName")]
     [InlineData("Census:Collection")]
+    [InlineData("Census:ConnectionString")]
     public async Task Should_throw_options_validation_exception_on_host_start_when_a_required_census_setting_is_missing(
         string settingKey
     )
@@ -112,7 +113,8 @@ public partial class InitialisationTests
                     ReturnStatusCodes.Authorised,
                     ReturnStatusCodes.NoData,
                 ]),
-            x => x.JobName.ShouldBe(testJobName)
+            x => x.JobName.ShouldBe(testJobName),
+            x => x.ConnectionString.ShouldBe(LedgerConnectionString)
         );
     }
 }
