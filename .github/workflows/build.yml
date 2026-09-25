@@ -73,7 +73,7 @@ jobs:
 
       - name: Test
         env:
-          "ConnectionStrings:LedgerDatabase": Server=localhost,1433;Database=CollectStateLedger;User Id=sa;Password=${{ env.LEDGER_DATABASE_PASSWORD }};TrustServerCertificate=true
+          "Census:ConnectionString": Server=localhost,1433;Database=CollectStateLedger;User Id=sa;Password=${{ env.LEDGER_DATABASE_PASSWORD }};TrustServerCertificate=true
         run: dotnet test ${{ env.SOLUTION_FILE }} --configuration Release --no-restore --no-build -- --report-trx --coverage --coverage-output-format cobertura --coverage-settings ${{ github.workspace }}/coverage.config
 
       - name: Test report
