@@ -27,4 +27,10 @@ public sealed class CensusOptions
     /// </summary>
     [Required, MinLength(1)]
     public string Collection { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Db Connection string
+    /// </summary>
+    [Required, MinLength(1)]
+    public string ConnectionString { get; init; } = string.Empty;
 }

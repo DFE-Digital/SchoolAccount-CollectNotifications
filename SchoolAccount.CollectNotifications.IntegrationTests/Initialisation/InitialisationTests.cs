@@ -17,8 +17,8 @@ public partial class InitialisationTests
 
     private static readonly Dictionary<string, string?> ValidBaseConfiguration = new()
     {
-        ["ConnectionStrings:LedgerDatabase"] = LedgerConnectionString,
         ["GovNotify:ApiKey"] = ValidDummyGovNotifyApiKey,
+        ["Census:ConnectionString"] = LedgerConnectionString,
         ["Census:JobName"] = CensusJobName,
         ["Census:Collection"] = CensusCollection,
         ["Census:AllowedStatuses:0"] = "7",
