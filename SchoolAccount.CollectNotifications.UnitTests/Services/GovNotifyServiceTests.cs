@@ -4,19 +4,23 @@ using Notify.Interfaces;
 using Notify.Models.Responses;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services;
+using SchoolAccount.CollectNotifications.TestCommon;
 
 namespace SchoolAccount.CollectNotifications.UnitTests.Services;
 
 public class GovNotifyServiceTests
 {
-    private const string TemplateId = "test-template-id";
     private const string Recipient = "user@school.sch.uk";
 
     private readonly IAsyncNotificationClient _notificationClient =
         Substitute.For<IAsyncNotificationClient>();
 
     private readonly IOptions<GovNotifyOptions> _options = Options.Create(
-        new GovNotifyOptions { ApiKey = "test-api-key-12345" }
+        new GovNotifyOptions
+        {
+            ApiKey = "test-api-key-12345",
+            TemplateKey = CommonProperties.TemplateKey,
+        }
     );
 
     private readonly GovNotifyService _sut;
@@ -37,10 +41,12 @@ public class GovNotifyServiceTests
         };
         var response = new EmailNotificationResponse { id = "notification-uuid-123" };
 
-        _notificationClient.SendEmailAsync(Recipient, TemplateId, properties).Returns(response);
+        _notificationClient
+            .SendEmailAsync(Recipient, CommonProperties.TemplateKey, properties)
+            .Returns(response);
 
         // Act
-        var result = await _sut.SendMessage(TemplateId, Recipient, properties);
+        var result = await _sut.SendMessage(CommonProperties.TemplateKey, Recipient, properties);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -64,13 +70,17 @@ public class GovNotifyServiceTests
 
         // Arrange
         _notificationClient
-            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>())
+            .SendEmailAsync(
+                Recipient,
+                CommonProperties.TemplateKey,
+                Arg.Any<Dictionary<string, dynamic>>()
+            )
             .Returns<EmailNotificationResponse>(_ =>
                 throw new NotifyClientException(notifyMessage)
             );
 
         // Act
-        var result = await _sut.SendMessage(TemplateId, Recipient);
+        var result = await _sut.SendMessage(CommonProperties.TemplateKey, Recipient);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -93,13 +103,17 @@ public class GovNotifyServiceTests
 
         // Arrange
         _notificationClient
-            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>())
+            .SendEmailAsync(
+                Recipient,
+                CommonProperties.TemplateKey,
+                Arg.Any<Dictionary<string, dynamic>>()
+            )
             .Returns<EmailNotificationResponse>(_ =>
                 throw new NotifyClientException(notifyMessage)
             );
 
         // Act
-        var result = await _sut.SendMessage(TemplateId, Recipient);
+        var result = await _sut.SendMessage(CommonProperties.TemplateKey, Recipient);
 
         // Assert
         result.IsFailure.ShouldBeTrue();
@@ -111,13 +125,17 @@ public class GovNotifyServiceTests
     {
         // Arrange
         _notificationClient
-            .SendEmailAsync(Recipient, TemplateId, Arg.Any<Dictionary<string, dynamic>>())
+            .SendEmailAsync(
+                Recipient,
+                CommonProperties.TemplateKey,
+                Arg.Any<Dictionary<string, dynamic>>()
+            )
             .Returns<EmailNotificationResponse>(_ =>
                 throw new NotifyAuthException("Invalid API key")
             );
 
         // Act
-        var result = await _sut.SendMessage(TemplateId, Recipient);
+        var result = await _sut.SendMessage(CommonProperties.TemplateKey, Recipient);
 
         // Assert
         result.IsFailure.ShouldBeTrue();
