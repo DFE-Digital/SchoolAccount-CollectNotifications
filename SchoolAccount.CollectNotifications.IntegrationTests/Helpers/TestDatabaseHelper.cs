@@ -7,12 +7,15 @@ namespace SchoolAccount.CollectNotifications.IntegrationTests.Helpers;
 
 public static class TestDatabaseHelper
 {
-    public const string DefaultConnectionString =
-        "Server=localhost;Database=CollectStateLedger;User Id=sa;Password=MyStrongPassword123!;TrustServerCertificate=true";
+    private const string ConnectionStringSetting = "Census:ConnectionString";
 
     public static string ConnectionString =>
-        Environment.GetEnvironmentVariable("ConnectionStrings:LedgerDatabase")
-        ?? DefaultConnectionString;
+        Environment.GetEnvironmentVariable(ConnectionStringSetting)
+        ?? throw new InvalidOperationException(
+            $"{ConnectionStringSetting} is not set, so there is no ledger database to test against. "
+                + "With SchoolAccount-LocalDevTools running, set it to "
+                + "Server=localhost;Database=CollectStateLedger;User Id=sa;Password=<password>;TrustServerCertificate=true"
+        );
 
     public static async Task<DbConnection> OpenConnectionAsync(
         CancellationToken cancellationToken = default

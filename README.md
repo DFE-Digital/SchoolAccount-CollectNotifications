@@ -41,9 +41,9 @@ user secrets. Options marked as required are validated when the app starts, so i
 
 ### Ledger database (required)
 
-| Key                                | Description                                        |
-|------------------------------------|----------------------------------------------------|
-| `ConnectionStrings:LedgerDatabase` | SQL Server connection string for the Census ledger |
+| Key                       | Description                                        |
+|---------------------------|----------------------------------------------------|
+| `Census:ConnectionString` | SQL Server connection string for the Census ledger |
 
 ### GOV.UK Notify (required)
 
@@ -80,15 +80,13 @@ All three are required. Each one fails quietly if it isn't set, so they're valid
 
 ```json
 {
-  "ConnectionStrings": {            // Required.
-    "LedgerDatabase": ""            // Required. Connection string to the ledger db.
-  },
   "GovNotify": {                    // Required.
     "ApiKey": ""                    // Required. Api from GovNotify.
   },
   "Census": {                       // Required.
     "AllowedStatuses": [],          // Required. The enum or int values of the ReturnStatueCodes which are allowed.
-    "JobName": ""                   // Required. Names this job's row in the ledger JobStatus table.
+    "JobName": "",                  // Required. Names this job's row in the ledger JobStatus table.
+    "ConnectionString": ""          // Required. Connection string to the ledger db.
   }
 }
 ```
@@ -118,7 +116,7 @@ The project has user secrets enabled. Keep API keys and connection strings out o
 
 ```bash
 dotnet user-secrets --project SchoolAccount.CollectNotifications set \"GovNotify:ApiKey\" \"<your-key>\"
-dotnet user-secrets --project SchoolAccount.CollectNotifications set \"ConnectionStrings:LedgerDatabase\" \"<connection-string>\"
+dotnet user-secrets --project SchoolAccount.CollectNotifications set \"Census:ConnectionString\" \"<connection-string>\"
 ```
 
 > User secrets are only loaded when the environment is `Development`. 
@@ -220,7 +218,7 @@ You can also do this via Docker by: Build from the repository root, as the Docke
 docker build -f SchoolAccount.CollectNotifications/Dockerfile -t schoolaccount-collect-notifications .
 
 docker run --rm \
-  -e ConnectionStrings__LedgerDatabase=\"<connection-string>\" \
+  -e Census__ConnectionString=\"<connection-string>\" \
   -e GovNotify__ApiKey=\"<your-key>\" \
   -v \"$(pwd)/data:/data:ro\" \
   schoolaccount-collect-notifications
