@@ -11,6 +11,8 @@ public partial class InitialisationTests
 
     private const string ValidDummyGovNotifyTemplateKey = "00000000-0000-0000-0000-000000000000";
 
+    private const string SchoolAccountUrl = "https://schoolaccount.education.gov.uk";
+
     private const string LedgerConnectionString =
         "Server=localhost;Database=CollectStateLedger;User Id=sa;Password=test;TrustServerCertificate=true";
 
@@ -21,6 +23,7 @@ public partial class InitialisationTests
     {
         ["GovNotify:ApiKey"] = ValidDummyGovNotifyApiKey,
         ["GovNotify:TemplateKey"] = ValidDummyGovNotifyTemplateKey,
+        ["GovNotify:SchoolAccountUrl"] = SchoolAccountUrl,
         ["Census:ConnectionString"] = LedgerConnectionString,
         ["Census:JobName"] = CensusJobName,
         ["Census:Collection"] = CensusCollection,

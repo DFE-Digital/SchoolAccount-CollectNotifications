@@ -10,6 +10,7 @@ public partial class InitialisationTests
     [Theory]
     [InlineData("GovNotify:ApiKey")]
     [InlineData("GovNotify:TemplateKey")]
+    [InlineData("GovNotify:SchoolAccountUrl")]
     public async Task Should_throw_options_validation_exception_on_host_start_when_a_required_gov_notify_setting_is_missing(
         string settingKey
     )

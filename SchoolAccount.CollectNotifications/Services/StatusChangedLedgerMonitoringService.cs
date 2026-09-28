@@ -102,6 +102,7 @@ public class StatusChangedLedgerMonitoringService(
                     {
                         { "status", notify.Status },
                         { "school_name", notify.School },
+                        { "school_account_url", govNotifyOptions.Value.SchoolAccountUrl },
                     }
                 );
             }
