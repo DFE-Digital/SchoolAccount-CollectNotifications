@@ -150,10 +150,10 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Update ACA Image
+      - name: Update ACA Job Image
         run: |
-          az containerapp update \
+          az containerapp job update \
             --subscription ${{ vars.AZURE_SUBSCRIPTION_ID }} \
-            --name ${{ vars.CONTAINERAPP_NAME }} \
+            --name ${{ vars.CONTAINERAPP_JOB_NAME }} \
             --resource-group ${{ vars.CONTAINERAPP_RESOURCE_GROUP }} \
             --image ${{ needs.build.outputs.image }}
