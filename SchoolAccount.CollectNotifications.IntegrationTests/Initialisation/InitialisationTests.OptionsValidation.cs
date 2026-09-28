@@ -7,11 +7,15 @@ namespace SchoolAccount.CollectNotifications.IntegrationTests.Initialisation;
 
 public partial class InitialisationTests
 {
-    [Fact]
-    public async Task Should_throw_options_validation_exception_on_host_start_when_gov_notify_api_key_is_missing()
+    [Theory]
+    [InlineData("GovNotify:ApiKey")]
+    [InlineData("GovNotify:TemplateKey")]
+    public async Task Should_throw_options_validation_exception_on_host_start_when_a_required_gov_notify_setting_is_missing(
+        string settingKey
+    )
     {
         // Arrange
-        using var host = CreateHost(new Dictionary<string, string?> { ["GovNotify:ApiKey"] = "" });
+        using var host = CreateHost(new Dictionary<string, string?> { [settingKey] = "" });
 
         // Act & Assert
         var exception = await Should.ThrowAsync<OptionsValidationException>(async () =>
