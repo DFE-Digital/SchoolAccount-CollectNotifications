@@ -54,6 +54,29 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Compute CalVer & Metadata
+        id: versioning
+        run: |
+          YEAR=$(date -u +'%Y')
+          MONTH=$(date -u +'%-m')
+          START_OF_MONTH=$(date -u +'%Y-%m-01 00:00:00')
+
+          REVISION=$(git rev-list --count --since="$START_OF_MONTH" HEAD)
+          [ "$REVISION" -eq 0 ] && REVISION=1
+
+          CALVER="${YEAR}.${MONTH}.${REVISION}"
+          SHORT_SHA=$(git rev-parse --short=7 HEAD)
+          CONVENIENCE_TAG="${CALVER}-${SHORT_SHA}"
+
+          echo "calver=$CALVER" >> $GITHUB_OUTPUT
+          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "convenience_tag=$CONVENIENCE_TAG" >> $GITHUB_OUTPUT
+          echo "informational_version=${CALVER}+${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+          echo "Computed Version: $CALVER ($CONVENIENCE_TAG)"
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -69,7 +92,12 @@ jobs:
           dotnet csharpier check .
 
       - name: Build
-        run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
+        run: >
+          dotnet build ${{ env.SOLUTION_FILE }}
+          --configuration Release
+          --no-restore
+          -p:Version=${{ steps.versioning.outputs.calver }}
+          -p:InformationalVersion=${{ steps.versioning.outputs.informational_version }}
 
       - name: Test
         env:
@@ -115,14 +143,16 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
+            type=raw,value=${{ steps.versioning.outputs.calver }}
+            type=raw,value=${{ steps.versioning.outputs.convenience_tag }}
             type=sha
             type=raw,value=latest,enable=${{ github.ref == env.MAIN_BRANCH }}
             type=ref,event=branch
 
-      - name: Get SHA image tag
+      - name: Get primary image tag
         id: image
         run: |
-          IMAGE=$(echo "${{ steps.meta.outputs.tags }}" | grep "sha-" | head -n 1)
+          IMAGE="${{ env.IMAGE_NAME }}:${{ steps.versioning.outputs.convenience_tag }}"
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
       - name: Build & Push Docker image
@@ -133,9 +163,18 @@ jobs:
           target: final
           push: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == env.MAIN_BRANCH) }}
           tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            VERSION=${{ steps.versioning.outputs.calver }}
+            INFORMATIONAL_VERSION=${{ steps.versioning.outputs.informational_version }}
 
       - name: Publish
-        run: dotnet publish ${{ env.SOLUTION_FILE }} --configuration Release --no-restore --no-build
+        run: >
+          dotnet publish ${{ env.SOLUTION_FILE }}
+          --configuration Release
+          --no-restore
+          --no-build
+          -p:Version=${{ steps.versioning.outputs.calver }}
+          -p:InformationalVersion=${{ steps.versioning.outputs.informational_version }}
 
   deploy:
     needs: build

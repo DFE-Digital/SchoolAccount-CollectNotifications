@@ -79,6 +79,17 @@ All three are required. Each one fails quietly if it isn't set, so they're valid
 | `Census:JobName`         | Names this job's row in the ledger's `JobStatus` table, where the last run date lives |
 | `Census:AllowedStatuses` | The statuses that make a change notifiable at either end of the transition (`ReturnStatusCodes`) |
 
+### Observability & Telemetry (Optional)
+
+The application supports OpenTelemetry for distributed tracing, structured logging, and metrics:
+
+| Key | Description |
+| --- | --- |
+| `APPLICATIONINSIGHTS_CONNECTION_STRING` | Azure Application Insights connection string. Used in deployed Container App Jobs to export directly to Azure Monitor using `DefaultAzureCredential`. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OpenTelemetry Protocol (OTLP) endpoint (e.g. `http://localhost:4317`). Used for local development with Rider or Docker collectors. |
+
+> If neither key is configured, OpenTelemetry exporters remain inactive and the app writes standard output to the console.
+
 ### Example `appsettings.Development.json`
 
 ```json
@@ -118,11 +129,57 @@ needed to run the integration tests.
 The project has user secrets enabled. Keep API keys and connection strings out of source control by setting them there:
 
 ```bash
-dotnet user-secrets --project SchoolAccount.CollectNotifications set \"GovNotify:ApiKey\" \"<your-key>\"
-dotnet user-secrets --project SchoolAccount.CollectNotifications set \"Census:ConnectionString\" \"<connection-string>\"
+dotnet user-secrets --project SchoolAccount.CollectNotifications set "GovNotify:ApiKey" "<your-key>"
+dotnet user-secrets --project SchoolAccount.CollectNotifications set "Census:ConnectionString" "<connection-string>"
 ```
 
 > User secrets are only loaded when the environment is `Development`. 
+
+### Observability & Local Telemetry Setup
+
+You can inspect traces, spans (SQL queries and GOV.UK Notify HTTP requests), and logs locally via either **Docker** or your **IDE (JetBrains Rider)**.
+
+#### Option A: Docker (Standalone .NET Aspire Dashboard or Jaeger)
+
+You can run a local OpenTelemetry collector/UI container in Docker:
+
+1. **Start the standalone Aspire Dashboard:**
+   ```bash
+   docker run --rm -it -p 18888:18888 -p 4317:4317 -d --name aspire-dashboard mcr.microsoft.com/dotnet/aspire-dashboard:latest
+   ```
+   *(Or for Jaeger: `docker run -d --name jaeger -p 16686:16686 -p 4317:4317 jaegertracing/all-in-one:latest`)*
+
+2. **Configure the application:**
+   ```bash
+   dotnet user-secrets --project SchoolAccount.CollectNotifications set "OTEL_EXPORTER_OTLP_ENDPOINT" "http://localhost:4317"
+   ```
+
+3. **View telemetry:**
+   Open `http://localhost:18888` in your browser. When you run the application, you can view waterfall traces, SQL commands, HTTP calls, and logs in the web UI.
+
+#### Option B: Rider / IDE (Built-in OpenTelemetry Tool Window)
+
+JetBrains Rider has a built-in OpenTelemetry receiver that captures traces and metrics directly inside the IDE:
+
+1. **Enable the receiver in Rider:**
+   - Open Rider **Settings / Preferences** (`⌘ ,` on macOS / `Ctrl + Alt + S` on Windows/Linux).
+   - Navigate to **Tools > OpenTelemetry**.
+   - Check **Enable OpenTelemetry receiver**. (Default gRPC endpoint is `http://localhost:4317`).
+2. **Configure the endpoint:**
+   - Set it in your Rider Run Configuration environment variables:
+     `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317`
+   - Or set it in user secrets:
+     ```bash
+     dotnet user-secrets --project SchoolAccount.CollectNotifications set "OTEL_EXPORTER_OTLP_ENDPOINT" "http://localhost:4317"
+     ```
+3. **Inspect telemetry:**
+   - Run the application.
+   - Open the **OpenTelemetry** tool window in Rider (`View > Tool Windows > OpenTelemetry`).
+   - You will see:
+     - End-to-end trace waterfalls of the job execution.
+     - Outbound HTTP requests to GOV.UK Notify with response statuses.
+     - SQL Server query spans with execution time and parameters.
+     - Structured log entries aligned to their respective operations.
 
 ### Run
 
@@ -130,7 +187,7 @@ dotnet user-secrets --project SchoolAccount.CollectNotifications set \"Census:Co
 DOTNET_ENVIRONMENT=Development dotnet run --project SchoolAccount.CollectNotifications
 ```
 
-> If you are using a run profile ensure you have `DOTNET_ENVIRONMENT=Development` set iwthin your enviroment variables.
+> If you are using a run profile ensure you have `DOTNET_ENVIRONMENT=Development` set within your environment variables.
 
 ## Testing
 
@@ -145,7 +202,7 @@ The solution is divided into three test projects:
 #### Prerequisites
 
 - `xunit`
-- `NSubsitute` for mocking dependencies and verifying interactions
+- `NSubstitute` for mocking dependencies and verifying interactions
 - `Shouldly` which is a fluent assertion library
 
 If you want to run the integration tests you will need a local database running, as a reminder this can be easily done 
@@ -215,7 +272,7 @@ You should be able to run this via a run profile which will be automatically bui
 
 ### Docker
 
-You can also do this via Docker by: Build from the repository root, as the Dockerfile expects the solution folder as its build context:
+You can also do this via Docker. Build from the repository root, as the Dockerfile expects the solution folder as its build context:
 
 ```bash
 docker build -f SchoolAccount.CollectNotifications/Dockerfile -t schoolaccount-collect-notifications .
@@ -250,7 +307,7 @@ The run date is stored in UTC, so the `UpdatedAt` values in the ledger are expec
 
 ```
 SchoolAccount.CollectNotifications/
-├── Extensions/        # Dependency injection and options setup
+├── Extensions/        # Dependency injection, monitoring and options setup
 ├── Interfaces/        # IDbConnectionFactory, IGovNotifyService, ILastRanService, ILedgerStore
 ├── Models/
 │   ├── Databases/     # Marker types used to tell database connections apart
@@ -261,7 +318,7 @@ SchoolAccount.CollectNotifications/
 ├── Services/
 │   ├── GovNotifyService.cs
 │   ├── LastRanService.cs   # Last run time, in the ledger JobStatus table
-│   ├── StatusChangedLedgerMonitoringService.cs  # Main workflow
+│   └── StatusChangedLedgerMonitoringService.cs  # Main workflow
 ├── Stores/
 │   └── LedgerStore.cs # Status change query, joined to registered recipients
 ├── Dockerfile
@@ -287,7 +344,11 @@ SchoolAccount.CollectNotifications.IntegrationTests/
 | ------- | -------- |
 | `Dapper` + `Microsoft.Data.SqlClient` | Querying SQL Server |
 | `GovukNotify` | Sending emails |
-| `Azure.Identity` | Authenticating to Azure App Configuration |
+| `Azure.Identity` | Authenticating to Azure App Configuration and Azure Monitor |
+| `Azure.Monitor.OpenTelemetry.Exporter` | Exporting traces, metrics, and logs to Azure Monitor / Application Insights |
+| `OpenTelemetry.Exporter.OpenTelemetryProtocol` | Exporting OTLP telemetry to local receivers (Rider, Aspire Dashboard, Jaeger) |
+| `OpenTelemetry.Instrumentation.Http` | Capturing HTTP client spans to GOV.UK Notify |
+| `OpenTelemetry.Instrumentation.SqlClient` | Capturing database spans and query execution times |
 
 ### Code Coverage
 
