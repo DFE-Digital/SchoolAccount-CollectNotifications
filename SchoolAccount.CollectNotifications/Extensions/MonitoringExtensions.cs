@@ -34,18 +34,20 @@ public static class MonitoringExtensions
 
         var version = GetServiceVersion();
         var serviceName = ServiceName;
-        if (builder.Configuration.GetValue<bool>(AppInsightsVersionedKey) && !string.IsNullOrWhiteSpace(version))
+        if (
+            builder.Configuration.GetValue<bool>(AppInsightsVersionedKey)
+            && !string.IsNullOrWhiteSpace(version)
+        )
         {
             serviceName += ":" + version.Split('+')[0];
         }
 
         var resourceBuilder = ResourceBuilder
             .CreateDefault()
-            .AddService(
-                serviceName: serviceName,
-                serviceVersion: version);
+            .AddService(serviceName: serviceName, serviceVersion: version);
 
-        builder.Services.AddOpenTelemetry()
+        builder
+            .Services.AddOpenTelemetry()
             .WithTracing(tracing =>
             {
                 tracing
@@ -69,9 +71,7 @@ public static class MonitoringExtensions
             })
             .WithMetrics(metrics =>
             {
-                metrics
-                    .SetResourceBuilder(resourceBuilder)
-                    .AddHttpClientInstrumentation();
+                metrics.SetResourceBuilder(resourceBuilder).AddHttpClientInstrumentation();
 
                 if (hasAppInsights)
                 {
@@ -115,7 +115,9 @@ public static class MonitoringExtensions
     internal static string GetServiceVersion()
     {
         var assembly = typeof(MonitoringExtensions).Assembly;
-        return assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        return assembly
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                ?.InformationalVersion
             ?? assembly.GetName().Version?.ToString()
             ?? string.Empty;
     }
