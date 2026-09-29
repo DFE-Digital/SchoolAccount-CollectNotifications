@@ -31,6 +31,8 @@ public static class HostBuilderExtensions
             builder.Configuration.AddAzureAppConfiguration(endpoint);
         }
 
+        builder.AddMonitoring();
+
         builder.AddValidatedOptions<GovNotifyOptions>(GovNotifyOptions.SectionName);
         builder.AddValidatedOptions<CensusOptions>(CensusOptions.SectionName);
 
