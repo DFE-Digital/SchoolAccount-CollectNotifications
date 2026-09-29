@@ -377,3 +377,10 @@ dotnet_diagnostic.S6605.severity = none
 
 # S6781: JWT secret keys should not be disclosed
 dotnet_diagnostic.S6781.severity = none
+
+# Test projects. They sit beside the app rather than under a tests folder, so the projects are
+# named here rather than matched by directory.
+[SchoolAccount.CollectNotifications.{TestCommon,UnitTests,IntegrationTests}/**.cs]
+
+# Test data is full of URLs that nothing resolves. Hardcoding them is the point.
+dotnet_diagnostic.S1075.severity = none
