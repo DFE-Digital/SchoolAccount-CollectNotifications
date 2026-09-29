@@ -14,7 +14,14 @@ RUN dotnet build "./SchoolAccount.CollectNotifications.csproj" -c $BUILD_CONFIGU
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./SchoolAccount.CollectNotifications.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+ARG VERSION=1.0.0
+ARG INFORMATIONAL_VERSION=1.0.0
+RUN dotnet publish "./SchoolAccount.CollectNotifications.csproj" \
+    -c $BUILD_CONFIGURATION \
+    -o /app/publish \
+    /p:UseAppHost=false \
+    /p:Version="$VERSION" \
+    /p:InformationalVersion="$INFORMATIONAL_VERSION"
 
 FROM base AS final
 WORKDIR /app
