@@ -29,10 +29,11 @@ flowchart LR
 
 The template (`GovNotifyTemplates.CensusStatusChange`) is sent with these personalisation fields:
 
-| Field         | Value                                                 |
-|---------------|-------------------------------------------------------|
-| `status`      | The new `ReturnStatusCode` (currently the raw number) |
-| `school_name` | The school name from the ledger row                   |
+| Field                | Value                                                           |
+|----------------------|-----------------------------------------------------------------|
+| `status`             | The new `ReturnStatusCode` in a human-readable format           |
+| `school_name`        | The school name from the ledger row                             |
+| `school_account_url` | From `GovNotify:SchoolAccountUrl`, the same for every recipient |
 
 ## Configuration
 
@@ -50,6 +51,8 @@ user secrets. Options marked as required are validated when the app starts, so i
 | Key                     | Required | Description |
 | ----------------------- | -------- | ----------- |
 | `GovNotify:ApiKey`      | Yes      | Notify API key. The sender address, reply-to and templates all come from the service this key belongs to |
+| `GovNotify:TemplateKey` | Yes      | Notify template to send. Must exist in the service the API key belongs to |
+| `GovNotify:SchoolAccountUrl` | Yes | Link the email sends people to, as the `school_account_url` field. Validated as a URL on start |
 | `GovNotify:DelayBetweenSendsInMs` | No | Pause between each send. Defaults to `0`. Nothing needs it at beta volumes, it's there to turn up if Notify starts rate limiting us |
 
 ### Azure App Configuration

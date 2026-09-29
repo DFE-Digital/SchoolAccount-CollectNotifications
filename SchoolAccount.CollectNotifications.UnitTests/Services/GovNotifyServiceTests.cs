@@ -20,6 +20,7 @@ public class GovNotifyServiceTests
         {
             ApiKey = "test-api-key-12345",
             TemplateKey = CommonProperties.TemplateKey,
+            SchoolAccountUrl = CommonProperties.SchoolAccountUrl,
         }
     );
 

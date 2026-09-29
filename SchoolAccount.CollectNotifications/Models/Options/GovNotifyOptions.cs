@@ -13,6 +13,13 @@ public sealed class GovNotifyOptions
     public required string TemplateKey { get; init; }
 
     /// <summary>
+    /// Where the email sends people, as the school_account_url personalisation field. Validated as
+    /// a URL on startup.
+    /// </summary>
+    [Required, Url]
+    public required string SchoolAccountUrl { get; init; }
+
+    /// <summary>
     /// How long to wait between sends. Zero, the default, sends as fast as the round trip allows,
     /// which at beta volumes is nowhere near Notify's limits. It's here so there's something to
     /// turn up if we ever do start getting rate limited.

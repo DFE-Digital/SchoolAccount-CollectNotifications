@@ -37,6 +37,7 @@ public class StatusChangedLedgerMonitoringServiceTests
                 {
                     ApiKey = "test-key",
                     TemplateKey = CommonProperties.TemplateKey,
+                    SchoolAccountUrl = CommonProperties.SchoolAccountUrl,
                     DelayBetweenSendsInMs = delayBetweenSendsInMs,
                 }
             )
@@ -383,7 +384,12 @@ public class StatusChangedLedgerMonitoringServiceTests
             return false;
         }
 
-        return dict.TryGetValue("school_name", out var school)
-            && Equals(school, expectedSchoolName);
+        if (!dict.TryGetValue("school_name", out var school) || !Equals(school, expectedSchoolName))
+        {
+            return false;
+        }
+
+        return dict.TryGetValue("school_account_url", out var url)
+            && Equals(url, CommonProperties.SchoolAccountUrl);
     }
 }
