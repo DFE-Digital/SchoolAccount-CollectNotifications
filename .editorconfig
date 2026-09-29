@@ -382,5 +382,5 @@ dotnet_diagnostic.S6781.severity = none
 # named here rather than matched by directory.
 [SchoolAccount.CollectNotifications.{TestCommon,UnitTests,IntegrationTests}/**.cs]
 
-# Test data is full of URLs that nothing resolves. Hardcoding them is the point.
+# S1075: Refactor your code not to use hardcoded absolute paths or URIs
 dotnet_diagnostic.S1075.severity = none
