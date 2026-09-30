@@ -24,7 +24,7 @@ public partial class LedgerStoreIntegrationTests
             Options.Create(
                 new CensusOptions
                 {
-                    Collection = TestCollection,
+                    CurrentOpenCensus = TestCollection,
                     AllowedStatuses = [ReturnStatusCodes.Approved],
                 }
             )

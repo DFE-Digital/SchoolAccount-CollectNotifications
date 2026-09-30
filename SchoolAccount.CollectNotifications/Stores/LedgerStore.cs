@@ -73,7 +73,7 @@ public class LedgerStore(IDbConnectionFactory factory, IOptions<CensusOptions> c
                 sql,
                 new
                 {
-                    censusOptions.Value.Collection,
+                    Collection = censusOptions.Value.CurrentOpenCensus,
                     LastRunDate = lastRunDate,
                     NotifiableStatuses = censusOptions.Value.AllowedStatuses,
                 },

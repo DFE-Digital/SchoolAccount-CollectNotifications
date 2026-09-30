@@ -73,11 +73,11 @@ the store.
 
 All three are required. Each one fails quietly if it isn't set, so they're validated at startup.
 
-| Key                      | Description |
-| ------------------------ | ----------- |
-| `Census:Collection`      | The collection to watch, matching the `Collection` column the ledger procedure writes, for example `SchoolCensus2025_Spring` |
-| `Census:JobName`         | Names this job's row in the ledger's `JobStatus` table, where the last run date lives |
-| `Census:AllowedStatuses` | The statuses that make a change notifiable at either end of the transition (`ReturnStatusCodes`) |
+| Key                        | Description |
+| -------------------------- | ----------- |
+| `Census:CurrentOpenCensus` | The census to watch, matching the `Collection` column the ledger procedure writes, for example `SchoolCensus2025_Spring` |
+| `Census:JobName`           | Names this job's row in the ledger's `JobStatus` table, where the last run date lives |
+| `Census:AllowedStatuses`   | The statuses that make a change notifiable at either end of the transition (`ReturnStatusCodes`) |
 
 ### Example `appsettings.Development.json`
 
