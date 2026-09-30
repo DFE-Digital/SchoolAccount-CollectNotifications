@@ -1,49 +1,46 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Extensions;
 using SchoolAccount.CollectNotifications.Interfaces;
+using SchoolAccount.CollectNotifications.Models;
+using SchoolAccount.CollectNotifications.Models.Options;
 
 namespace SchoolAccount.CollectNotifications.UnitTests.Extensions;
 
 public class ServiceCollectionExtensionsTests
 {
     [Fact]
-    public void Adding_a_database_should_resolve_the_named_connection_string()
+    public void Adding_a_database_should_resolve_db_connection_factory_using_census_options()
     {
         // Arrange
         var services = new ServiceCollection();
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(
-                new Dictionary<string, string?>
-                {
-                    ["ConnectionStrings:LedgerDatabase"] =
-                        "Server=sql.example.com;Database=Ledger;",
-                }
+        services.AddSingleton(
+            Options.Create(
+                new CensusOptions { ConnectionString = "Server=sql.example.com;Database=Ledger;" }
             )
-            .Build();
+        );
 
         // Act
-        services.AddDatabase(configuration, "LedgerDatabase");
+        services.AddDatabase();
         var provider = services.BuildServiceProvider();
 
         // Assert
         var factory = provider.GetService<IDbConnectionFactory>();
         factory.ShouldNotBeNull();
+        factory.ShouldBeOfType<DbConnectionFactory>();
     }
 
     [Fact]
-    public void Adding_a_database_with_missing_connection_string_in_configuration_should_throw_on_registration()
+    public void Resolving_database_factory_without_census_options_should_throw()
     {
         // Arrange
         var services = new ServiceCollection();
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>())
-            .Build();
+        services.AddDatabase();
+        var provider = services.BuildServiceProvider();
 
         // Act & Assert
-        var ex = Should.Throw<ArgumentException>(() =>
-            services.AddDatabase(configuration, "LedgerDatabase")
+        Should.Throw<InvalidOperationException>(() =>
+            provider.GetRequiredService<IDbConnectionFactory>()
         );
-        ex.Message.ShouldContain("Connection string for LedgerDatabase was not found.");
     }
 }

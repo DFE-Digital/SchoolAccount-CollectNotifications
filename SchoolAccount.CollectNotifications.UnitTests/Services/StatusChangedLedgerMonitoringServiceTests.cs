@@ -7,6 +7,7 @@ using SchoolAccount.CollectNotifications.Models.Dtos;
 using SchoolAccount.CollectNotifications.Models.Enums;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services;
+using SchoolAccount.CollectNotifications.TestCommon;
 
 namespace SchoolAccount.CollectNotifications.UnitTests.Services;
 
@@ -35,6 +36,8 @@ public class StatusChangedLedgerMonitoringServiceTests
                 new GovNotifyOptions
                 {
                     ApiKey = "test-key",
+                    TemplateKey = CommonProperties.TemplateKey,
+                    SchoolAccountUrl = CommonProperties.SchoolAccountUrl,
                     DelayBetweenSendsInMs = delayBetweenSendsInMs,
                 }
             )
@@ -179,7 +182,7 @@ public class StatusChangedLedgerMonitoringServiceTests
         await _govNotifyService
             .Received(1)
             .SendMessage(
-                GovNotifyTemplates.CensusStatusChange,
+                CommonProperties.TemplateKey,
                 "head@school1.sch.uk",
                 Arg.Is<Dictionary<string, dynamic>>(d =>
                     MatchesPersonalisation(d, "Authorised", "School One")
@@ -189,7 +192,7 @@ public class StatusChangedLedgerMonitoringServiceTests
         await _govNotifyService
             .Received(1)
             .SendMessage(
-                GovNotifyTemplates.CensusStatusChange,
+                CommonProperties.TemplateKey,
                 "office@school1.sch.uk",
                 Arg.Is<Dictionary<string, dynamic>>(d =>
                     MatchesPersonalisation(d, "Authorised", "School One")
@@ -199,7 +202,7 @@ public class StatusChangedLedgerMonitoringServiceTests
         await _govNotifyService
             .Received(1)
             .SendMessage(
-                GovNotifyTemplates.CensusStatusChange,
+                CommonProperties.TemplateKey,
                 "admin@school2.sch.uk",
                 Arg.Is<Dictionary<string, dynamic>>(d =>
                     MatchesPersonalisation(d, "Submitted", "School Two")
@@ -381,7 +384,12 @@ public class StatusChangedLedgerMonitoringServiceTests
             return false;
         }
 
-        return dict.TryGetValue("school_name", out var school)
-            && Equals(school, expectedSchoolName);
+        if (!dict.TryGetValue("school_name", out var school) || !Equals(school, expectedSchoolName))
+        {
+            return false;
+        }
+
+        return dict.TryGetValue("school_account_url", out var url)
+            && Equals(url, CommonProperties.SchoolAccountUrl);
     }
 }

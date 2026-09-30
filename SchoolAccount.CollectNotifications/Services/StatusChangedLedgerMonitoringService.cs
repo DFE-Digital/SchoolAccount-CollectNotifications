@@ -96,12 +96,13 @@ public class StatusChangedLedgerMonitoringService(
             try
             {
                 result = await govNotifyService.SendMessage(
-                    GovNotifyTemplates.CensusStatusChange,
+                    govNotifyOptions.Value.TemplateKey,
                     notify.Recipient,
                     new Dictionary<string, dynamic>
                     {
                         { "status", notify.Status },
                         { "school_name", notify.School },
+                        { "school_account_url", govNotifyOptions.Value.SchoolAccountUrl },
                     }
                 );
             }

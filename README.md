@@ -29,10 +29,11 @@ flowchart LR
 
 The template (`GovNotifyTemplates.CensusStatusChange`) is sent with these personalisation fields:
 
-| Field         | Value                                                 |
-|---------------|-------------------------------------------------------|
-| `status`      | The new `ReturnStatusCode` (currently the raw number) |
-| `school_name` | The school name from the ledger row                   |
+| Field                | Value                                                           |
+|----------------------|-----------------------------------------------------------------|
+| `status`             | The new `ReturnStatusCode` in a human-readable format           |
+| `school_name`        | The school name from the ledger row                             |
+| `school_account_url` | From `GovNotify:SchoolAccountUrl`, the same for every recipient |
 
 ## Configuration
 
@@ -41,15 +42,17 @@ user secrets. Options marked as required are validated when the app starts, so i
 
 ### Ledger database (required)
 
-| Key                                | Description                                        |
-|------------------------------------|----------------------------------------------------|
-| `ConnectionStrings:LedgerDatabase` | SQL Server connection string for the Census ledger |
+| Key                       | Description                                        |
+|---------------------------|----------------------------------------------------|
+| `Census:ConnectionString` | SQL Server connection string for the Census ledger |
 
 ### GOV.UK Notify (required)
 
 | Key                     | Required | Description |
 | ----------------------- | -------- | ----------- |
 | `GovNotify:ApiKey`      | Yes      | Notify API key. The sender address, reply-to and templates all come from the service this key belongs to |
+| `GovNotify:TemplateKey` | Yes      | Notify template to send. Must exist in the service the API key belongs to |
+| `GovNotify:SchoolAccountUrl` | Yes | Link the email sends people to, as the `school_account_url` field. Validated as a URL on start |
 | `GovNotify:DelayBetweenSendsInMs` | No | Pause between each send. Defaults to `0`. Nothing needs it at beta volumes, it's there to turn up if Notify starts rate limiting us |
 
 ### Azure App Configuration
@@ -80,15 +83,13 @@ All three are required. Each one fails quietly if it isn't set, so they're valid
 
 ```json
 {
-  "ConnectionStrings": {            // Required.
-    "LedgerDatabase": ""            // Required. Connection string to the ledger db.
-  },
   "GovNotify": {                    // Required.
     "ApiKey": ""                    // Required. Api from GovNotify.
   },
   "Census": {                       // Required.
     "AllowedStatuses": [],          // Required. The enum or int values of the ReturnStatueCodes which are allowed.
-    "JobName": ""                   // Required. Names this job's row in the ledger JobStatus table.
+    "JobName": "",                  // Required. Names this job's row in the ledger JobStatus table.
+    "ConnectionString": ""          // Required. Connection string to the ledger db.
   }
 }
 ```
@@ -118,7 +119,7 @@ The project has user secrets enabled. Keep API keys and connection strings out o
 
 ```bash
 dotnet user-secrets --project SchoolAccount.CollectNotifications set \"GovNotify:ApiKey\" \"<your-key>\"
-dotnet user-secrets --project SchoolAccount.CollectNotifications set \"ConnectionStrings:LedgerDatabase\" \"<connection-string>\"
+dotnet user-secrets --project SchoolAccount.CollectNotifications set \"Census:ConnectionString\" \"<connection-string>\"
 ```
 
 > User secrets are only loaded when the environment is `Development`. 
@@ -220,7 +221,7 @@ You can also do this via Docker by: Build from the repository root, as the Docke
 docker build -f SchoolAccount.CollectNotifications/Dockerfile -t schoolaccount-collect-notifications .
 
 docker run --rm \
-  -e ConnectionStrings__LedgerDatabase=\"<connection-string>\" \
+  -e Census__ConnectionString=\"<connection-string>\" \
   -e GovNotify__ApiKey=\"<your-key>\" \
   -v \"$(pwd)/data:/data:ro\" \
   schoolaccount-collect-notifications
