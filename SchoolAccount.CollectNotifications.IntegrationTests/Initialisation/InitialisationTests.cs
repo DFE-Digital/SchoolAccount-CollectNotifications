@@ -17,7 +17,7 @@ public partial class InitialisationTests
         "Server=localhost;Database=CollectStateLedger;User Id=sa;Password=test;TrustServerCertificate=true";
 
     private const string CensusJobName = "collect-notifications";
-    private const string CensusCollection = "SchoolCensus2025_Spring";
+    private const string CurrentOpenCensus = "SchoolCensus2025_Spring";
 
     private static readonly Dictionary<string, string?> ValidBaseConfiguration = new()
     {
@@ -26,7 +26,7 @@ public partial class InitialisationTests
         ["GovNotify:SchoolAccountUrl"] = SchoolAccountUrl,
         ["Census:ConnectionString"] = LedgerConnectionString,
         ["Census:JobName"] = CensusJobName,
-        ["Census:Collection"] = CensusCollection,
+        ["Census:CurrentOpenCensus"] = CurrentOpenCensus,
         ["Census:AllowedStatuses:0"] = "7",
         ["Census:AllowedStatuses:1"] = "10",
     };

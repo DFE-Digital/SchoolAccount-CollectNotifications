@@ -21,12 +21,12 @@ public sealed class CensusOptions
     public string JobName { get; init; } = string.Empty;
 
     /// <summary>
-    /// The collection to watch, matching the Collection column the ledger procedure writes,
+    /// The census to watch, matching the Collection column the ledger procedure writes,
     /// for example SchoolCensus2025_Spring. The ledger holds every collection, so without this
     /// a school's rows from different censuses rank against each other.
     /// </summary>
     [Required, MinLength(1)]
-    public string Collection { get; init; } = string.Empty;
+    public string CurrentOpenCensus { get; init; } = string.Empty;
 
     /// <summary>
     /// Db Connection string
