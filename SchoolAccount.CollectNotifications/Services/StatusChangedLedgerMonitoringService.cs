@@ -57,9 +57,11 @@ public class StatusChangedLedgerMonitoringService(
         log.ChangesFound(changes.Value.Count);
 
         // The query already pairs each change with its registered recipients, so a school with two
-        // registered contacts arrives here as two changes.
+        // registered contacts arrives here as two changes. Oldest first, so that after a missed run
+        // the backlog goes out in the order the statuses actually changed.
         var whatToNotify = changes
-            .Value.Select(change => new Notification(
+            .Value.OrderBy(change => change.UpdatedAt)
+            .Select(change => new Notification(
                 change.LaeStab,
                 change.Email,
                 change.ReturnStatusCode.GetHumanName(),

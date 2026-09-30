@@ -47,7 +47,8 @@ public class StatusChangedLedgerMonitoringServiceTests
         string laeStab,
         string email,
         ReturnStatusCodes status = ReturnStatusCodes.Authorised,
-        string schoolName = "A test School"
+        string schoolName = "A test School",
+        DateTime? updatedAt = null
     ) =>
         new()
         {
@@ -56,7 +57,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             Email = email,
             ReturnStatusCode = status,
             PreviousReturnStatusCode = ReturnStatusCodes.LoadedAndValidated,
-            UpdatedAt = new DateTime(2026, 9, 21, 22, 0, 0, DateTimeKind.Utc),
+            UpdatedAt = updatedAt ?? new DateTime(2026, 9, 21, 22, 0, 0, DateTimeKind.Utc),
             Collection = "SchoolCensus2025_Spring",
             DcId = 1172,
         };
@@ -212,6 +213,61 @@ public class StatusChangedLedgerMonitoringServiceTests
         await _lastRanService
             .Received(1)
             .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task InvokeAsync_should_send_the_oldest_change_first_when_runs_were_missed()
+    {
+        // Arrange
+        var firstNight = new DateTime(2026, 9, 21, 22, 0, 0, DateTimeKind.Utc);
+        var secondNight = firstNight.AddDays(1);
+
+        GivenChanges(
+            AChange(
+                "1111111",
+                "head@school1.sch.uk",
+                ReturnStatusCodes.Authorised,
+                "School One",
+                secondNight
+            ),
+            AChange(
+                "1111111",
+                "head@school1.sch.uk",
+                ReturnStatusCodes.Submitted,
+                "School One",
+                firstNight
+            )
+        );
+
+        _govNotifyService
+            .SendMessage(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<Dictionary<string, dynamic>>()
+            )
+            .Returns(Result.Success(new NotificationResult()));
+
+        // Act
+        await _sut.InvokeAsync(_cancellationToken);
+
+        // Assert
+        Received.InOrder(() =>
+        {
+            _govNotifyService.SendMessage(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Is<Dictionary<string, dynamic>>(d =>
+                    MatchesPersonalisation(d, "Submitted", "School One")
+                )
+            );
+            _govNotifyService.SendMessage(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Is<Dictionary<string, dynamic>>(d =>
+                    MatchesPersonalisation(d, "Authorised", "School One")
+                )
+            );
+        });
     }
 
     [Fact]
