@@ -79,20 +79,16 @@ All three are required. Each one fails quietly if it isn't set, so they're valid
 | `Census:JobName`           | Names this job's row in the ledger's `JobStatus` table, where the last run date lives |
 | `Census:AllowedStatuses`   | The statuses that make a change notifiable at either end of the transition (`ReturnStatusCodes`) |
 
-### Example `appsettings.Development.json`
+### Local settings
 
-```json
-{
-  "GovNotify": {                    // Required.
-    "ApiKey": ""                    // Required. Api from GovNotify.
-  },
-  "Census": {                       // Required.
-    "AllowedStatuses": [],          // Required. The enum or int values of the ReturnStatueCodes which are allowed.
-    "JobName": "",                  // Required. Names this job's row in the ledger JobStatus table.
-    "ConnectionString": ""          // Required. Connection string to the ledger db.
-  }
-}
-```
+`appsettings.Development.json` holds the settings that aren't secret, so a local run only needs these in user
+secrets (see [Secrets](#secrets)):
+
+- `GovNotify:ApiKey`
+- `GovNotify:TemplateKey`
+- `Census:ConnectionString`
+
+Change `Census:CurrentOpenCensus` if your local ledger has a different collection in it.
 
 ## Running locally
 
@@ -118,8 +114,9 @@ needed to run the integration tests.
 The project has user secrets enabled. Keep API keys and connection strings out of source control by setting them there:
 
 ```bash
-dotnet user-secrets --project SchoolAccount.CollectNotifications set \"GovNotify:ApiKey\" \"<your-key>\"
-dotnet user-secrets --project SchoolAccount.CollectNotifications set \"Census:ConnectionString\" \"<connection-string>\"
+dotnet user-secrets --project SchoolAccount.CollectNotifications set 'GovNotify:ApiKey' '<your-key>'
+dotnet user-secrets --project SchoolAccount.CollectNotifications set 'Census:ConnectionString' '<connection-string>'
+dotnet user-secrets --project SchoolAccount.CollectNotifications set 'GovNotify:TemplateKey' '<template-id>'
 ```
 
 > User secrets are only loaded when the environment is `Development`. 
