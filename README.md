@@ -126,11 +126,12 @@ dotnet user-secrets --project SchoolAccount.CollectNotifications set \"Census:Co
 
 ### Run
 
-```bash
-DOTNET_ENVIRONMENT=Development dotnet run --project SchoolAccount.CollectNotifications
-```
+Use the `SchoolAccount.CollectNotifications` profile in `Properties/launchSettings.json`, which sets
+`DOTNET_ENVIRONMENT=Development` for you:
 
-> If you are using a run profile ensure you have `DOTNET_ENVIRONMENT=Development` set iwthin your enviroment variables.
+```bash
+dotnet run --project SchoolAccount.CollectNotifications --launch-profile SchoolAccount.CollectNotifications
+```
 
 ## Testing
 
@@ -211,7 +212,8 @@ Once they are, drop `LEDGER_DATABASE_REF` from the workflow so it tracks the def
 
 ### Rider / IDEs
 
-You should be able to run this via a run profile which will be automatically built by your IDE.
+Rider and Visual Studio pick up the `SchoolAccount.CollectNotifications` profile from `Properties/launchSettings.json`,
+so the run configuration is already set to `Development` and user secrets get loaded.
 
 ### Docker
 
