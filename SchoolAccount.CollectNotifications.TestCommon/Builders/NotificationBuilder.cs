@@ -7,7 +7,10 @@ public class NotificationBuilder
     private string _laeStab = "1234567";
     private string _recipient = "head@school.sch.uk";
     private string _status = "10";
+    private string _statusDescriptor = string.Empty;
     private string _school = "Default Test School";
+
+    public static implicit operator Notification(NotificationBuilder builder) => builder.Build();
 
     public static NotificationBuilder ANotification()
     {
@@ -32,6 +35,12 @@ public class NotificationBuilder
         return this;
     }
 
+    public NotificationBuilder WithStatusDescriptor(string statusDescriptor)
+    {
+        _statusDescriptor = statusDescriptor;
+        return this;
+    }
+
     public NotificationBuilder WithSchool(string school)
     {
         _school = school;
@@ -40,8 +49,6 @@ public class NotificationBuilder
 
     public Notification Build()
     {
-        return new Notification(_laeStab, _recipient, _status, _school);
+        return new Notification(_laeStab, _recipient, _status, _statusDescriptor, _school);
     }
-
-    public static implicit operator Notification(NotificationBuilder builder) => builder.Build();
 }
