@@ -55,7 +55,7 @@ public sealed partial class StatusChangedLedgerMonitoringServiceInstrumentation(
     )]
     public partial void CouldNotRecordRun(string? error);
 
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Notifying a recipient for {LaeStab}")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Notifying a recipient for {LaeStab}")]
     public partial void NotifyingRecipient(string laeStab);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Notification not delivered: {Error}")]
