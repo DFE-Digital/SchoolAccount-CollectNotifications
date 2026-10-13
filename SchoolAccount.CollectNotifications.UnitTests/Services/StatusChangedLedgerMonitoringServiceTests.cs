@@ -140,8 +140,8 @@ public class StatusChangedLedgerMonitoringServiceTests
             .SendMessage(
                 CommonProperties.TemplateKey,
                 "head@school1.sch.uk",
-                Arg.Is<Dictionary<string, dynamic>>(d =>
-                    MatchesPersonalisation(d, "Authorised", _authorised, "School One")
+                Arg.Is<Dictionary<string, dynamic>>(templateValues =>
+                    MatchesPersonalisation(templateValues, "Authorised", _authorised, "School One")
                 )
             );
 
@@ -150,8 +150,8 @@ public class StatusChangedLedgerMonitoringServiceTests
             .SendMessage(
                 CommonProperties.TemplateKey,
                 "office@school1.sch.uk",
-                Arg.Is<Dictionary<string, dynamic>>(d =>
-                    MatchesPersonalisation(d, "Authorised", _authorised, "School One")
+                Arg.Is<Dictionary<string, dynamic>>(templateValues =>
+                    MatchesPersonalisation(templateValues, "Authorised", _authorised, "School One")
                 )
             );
 
@@ -160,8 +160,8 @@ public class StatusChangedLedgerMonitoringServiceTests
             .SendMessage(
                 CommonProperties.TemplateKey,
                 "admin@school2.sch.uk",
-                Arg.Is<Dictionary<string, dynamic>>(d =>
-                    MatchesPersonalisation(d, "Submitted", _submitted, "School Two")
+                Arg.Is<Dictionary<string, dynamic>>(templateValues =>
+                    MatchesPersonalisation(templateValues, "Submitted", _submitted, "School Two")
                 )
             );
 
@@ -354,8 +354,13 @@ public class StatusChangedLedgerMonitoringServiceTests
             .SendMessage(
                 CommonProperties.TemplateKey,
                 "head@school1.sch.uk",
-                Arg.Is<Dictionary<string, dynamic>>(d =>
-                    MatchesPersonalisation(d, "Rejected_by_collector", string.Empty, "School One")
+                Arg.Is<Dictionary<string, dynamic>>(templateValues =>
+                    MatchesPersonalisation(
+                        templateValues,
+                        "Rejected_by_collector",
+                        string.Empty,
+                        "School One"
+                    )
                 )
             );
     }
