@@ -8,6 +8,7 @@ using SchoolAccount.CollectNotifications.Models.Enums;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services;
 using SchoolAccount.CollectNotifications.TestCommon;
+using static SchoolAccount.CollectNotifications.Models.Enums.ReturnStatusCodes;
 
 namespace SchoolAccount.CollectNotifications.UnitTests.Services;
 
@@ -117,10 +118,10 @@ public class StatusChangedLedgerMonitoringServiceTests
         // contacts arrives as two changes and becomes two emails.
 
         // Arrange
-        GivenChanges(
-            AChange("1111111", "head@school1.sch.uk", schoolName: "School One"),
-            AChange("1111111", "office@school1.sch.uk", schoolName: "School One"),
-            AChange("2222222", "admin@school2.sch.uk", ReturnStatusCodes.Submitted, "School Two")
+        GivenStateLedgerChanges(
+            AStatusChange("1111111", "head@school1.sch.uk", schoolName: "School One"),
+            AStatusChange("1111111", "office@school1.sch.uk", schoolName: "School One"),
+            AStatusChange("2222222", "admin@school2.sch.uk", Submitted, "School Two")
         );
 
         _govNotifyService
@@ -177,7 +178,10 @@ public class StatusChangedLedgerMonitoringServiceTests
         // recipient and not a reason to stop telling everybody else.
 
         // Arrange
-        GivenChanges(AChange("1111111", "bad-address"), AChange("2222222", "fine@school.sch.uk"));
+        GivenStateLedgerChanges(
+            AStatusChange("1111111", "bad-address"),
+            AStatusChange("2222222", "fine@school.sch.uk")
+        );
 
         _govNotifyService
             .SendMessage(Arg.Any<string>(), "bad-address", Arg.Any<Dictionary<string, dynamic>>())
@@ -213,9 +217,9 @@ public class StatusChangedLedgerMonitoringServiceTests
         // through the rest of the list.
 
         // Arrange
-        GivenChanges(
-            AChange("1111111", "first@school.sch.uk"),
-            AChange("2222222", "second@school.sch.uk")
+        GivenStateLedgerChanges(
+            AStatusChange("1111111", "first@school.sch.uk"),
+            AStatusChange("2222222", "second@school.sch.uk")
         );
 
         _govNotifyService
@@ -246,9 +250,9 @@ public class StatusChangedLedgerMonitoringServiceTests
         // every notification after the one that threw.
 
         // Arrange
-        GivenChanges(
-            AChange("1111111", "throws@school.sch.uk"),
-            AChange("2222222", "fine@school.sch.uk")
+        GivenStateLedgerChanges(
+            AStatusChange("1111111", "throws@school.sch.uk"),
+            AStatusChange("2222222", "fine@school.sch.uk")
         );
 
         _govNotifyService
@@ -292,10 +296,10 @@ public class StatusChangedLedgerMonitoringServiceTests
         const int delayMs = 100;
         var sut = CreateService(delayMs);
 
-        GivenChanges(
-            AChange("1111111", "first@school.sch.uk"),
-            AChange("2222222", "second@school.sch.uk"),
-            AChange("3333333", "third@school.sch.uk")
+        GivenStateLedgerChanges(
+            AStatusChange("1111111", "first@school.sch.uk"),
+            AStatusChange("2222222", "second@school.sch.uk"),
+            AStatusChange("3333333", "third@school.sch.uk")
         );
 
         _govNotifyService
@@ -328,13 +332,8 @@ public class StatusChangedLedgerMonitoringServiceTests
     public async Task InvokeAsync_should_hide_what_this_means_when_the_status_has_no_descriptor()
     {
         // Arrange
-        GivenChanges(
-            AChange(
-                "1111111",
-                "head@school1.sch.uk",
-                ReturnStatusCodes.RejectedByCollector,
-                "School One"
-            )
+        GivenStateLedgerChanges(
+            AStatusChange("1111111", "head@school1.sch.uk", RejectedByCollector, "School One")
         );
 
         _govNotifyService
@@ -365,10 +364,10 @@ public class StatusChangedLedgerMonitoringServiceTests
             );
     }
 
-    private static CensusStatusChange AChange(
+    private static CensusStatusChange AStatusChange(
         string laeStab,
         string email,
-        ReturnStatusCodes status = ReturnStatusCodes.Authorised,
+        ReturnStatusCodes status = Authorised,
         string schoolName = "A test School"
     ) =>
         new()
@@ -377,7 +376,7 @@ public class StatusChangedLedgerMonitoringServiceTests
             LaeStab = laeStab,
             Email = email,
             ReturnStatusCode = status,
-            PreviousReturnStatusCode = ReturnStatusCodes.LoadedAndValidated,
+            PreviousReturnStatusCode = LoadedAndValidated,
             UpdatedAt = new DateTime(2026, 9, 21, 22, 0, 0, DateTimeKind.Utc),
             Collection = "SchoolCensus2025_Spring",
             DcId = 1172,
@@ -446,14 +445,16 @@ public class StatusChangedLedgerMonitoringServiceTests
             )
         );
 
-    private void GivenChanges(params CensusStatusChange[] changes)
+    private void GivenStateLedgerChanges(params CensusStatusChange[] changes)
     {
         _lastRanService
             .GetTimestampAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<DateTime?>(DateTime.UtcNow.AddDays(-1)));
+
         _ledgerStore
             .GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success(changes.ToList()));
+
         _lastRanService
             .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success());
