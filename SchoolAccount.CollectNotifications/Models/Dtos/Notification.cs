@@ -5,5 +5,5 @@ public sealed record Notification(
     string Recipient,
     string Status,
     string StatusDescriptor,
-    string School
+    string SchoolName
 );

@@ -111,7 +111,7 @@ public class StatusChangedLedgerMonitoringService(
                             "has_status_descriptor",
                             string.IsNullOrEmpty(notify.StatusDescriptor) ? "no" : "yes"
                         },
-                        { "school_name", notify.School },
+                        { "school_name", notify.SchoolName },
                         { "school_account_url", govNotifyOptions.Value.SchoolAccountUrl },
                     }
                 );
