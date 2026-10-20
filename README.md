@@ -81,12 +81,13 @@ All three are required. Each one fails quietly if it isn't set, so they're valid
 
 ### Local settings
 
-`appsettings.Development.json` holds the settings that aren't secret, so a local run only needs these in user
-secrets (see [Secrets](#secrets)):
+`appsettings.Development.json` holds the settings that aren't secret, and the launch profile sets
+`Census:ConnectionString` to the `CollectStateLedger` database on the
+[SchoolAccount-LocalDevTools](https://github.com/DFE-Digital/SchoolAccount-LocalDevTools) SQL Server, using its default
+`sa` password. A local run only needs these in user secrets (see [Secrets](#secrets)):
 
 - `GovNotify:ApiKey`
 - `GovNotify:TemplateKey`
-- `Census:ConnectionString`
 
 Change `Census:CurrentOpenCensus` if your local ledger has a different collection in it.
 
@@ -115,7 +116,6 @@ The project has user secrets enabled. Keep API keys and connection strings out o
 
 ```bash
 dotnet user-secrets --project SchoolAccount.CollectNotifications set 'GovNotify:ApiKey' '<your-key>'
-dotnet user-secrets --project SchoolAccount.CollectNotifications set 'Census:ConnectionString' '<connection-string>'
 dotnet user-secrets --project SchoolAccount.CollectNotifications set 'GovNotify:TemplateKey' '<template-id>'
 ```
 
@@ -123,8 +123,10 @@ dotnet user-secrets --project SchoolAccount.CollectNotifications set 'GovNotify:
 
 ### Run
 
-Use the `SchoolAccount.CollectNotifications` profile in `Properties/launchSettings.json`, which sets
-`DOTNET_ENVIRONMENT=Development` for you:
+Start the database from SchoolAccount-LocalDevTools and create `CollectStateLedger` in it with the scripts from
+[SchoolAccount-CollectStateLedgerDatabase](https://github.com/DFE-Digital/SchoolAccount-CollectStateLedgerDatabase).
+Then use the `SchoolAccount.CollectNotifications` profile in `Properties/launchSettings.json`, which sets
+`DOTNET_ENVIRONMENT=Development` and the connection string for you:
 
 ```bash
 dotnet run --project SchoolAccount.CollectNotifications --launch-profile SchoolAccount.CollectNotifications
