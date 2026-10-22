@@ -4,8 +4,7 @@
     "SchoolAccount.CollectNotifications": {
       "commandName": "Project",
       "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development",
-        "Census__ConnectionString": "Server=localhost,1433;Database=CollectStateLedger;User Id=sa;Password=MyStrongPassword123!;TrustServerCertificate=true"
+        "DOTNET_ENVIRONMENT": "Development"
       }
     }
   }
