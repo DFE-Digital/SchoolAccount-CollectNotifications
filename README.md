@@ -29,11 +29,13 @@ flowchart LR
 
 The template (`GovNotifyTemplates.CensusStatusChange`) is sent with these personalisation fields:
 
-| Field                | Value                                                           |
-|----------------------|-----------------------------------------------------------------|
-| `status`             | The new `ReturnStatusCode` in a human-readable format           |
-| `school_name`        | The school name from the ledger row                             |
-| `school_account_url` | From `GovNotify:SchoolAccountUrl`, the same for every recipient |
+| Field                   | Value                                                                                                                                             |
+|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| `status`                | The new `ReturnStatusCode` in a human-readable format                                                                                             |
+| `status_descriptor`     | What the new status means for the school. Set for No Data, Loaded, Submitted, Amended by Source, Approved and Authorised, empty for anything else |
+| `has_status_descriptor` | `yes` or `no`. Lets the template hide the "What this means" heading when `status_descriptor` is empty                                             |
+| `school_name`           | The school name from the ledger row                                                                                                               |
+| `school_account_url`    | From `GovNotify:SchoolAccountUrl`, the same for every recipient                                                                                   |
 
 ## Configuration
 

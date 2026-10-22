@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Options;
-using SchoolAccount.CollectNotifications.Extensions;
 using SchoolAccount.CollectNotifications.Interfaces;
 using SchoolAccount.CollectNotifications.Models;
 using SchoolAccount.CollectNotifications.Models.Dtos;
@@ -59,12 +58,18 @@ public class StatusChangedLedgerMonitoringService(
         // The query already pairs each change with its registered recipients, so a school with two
         // registered contacts arrives here as two changes.
         var whatToNotify = changes
-            .Value.Select(change => new Notification(
-                change.LaeStab,
-                change.Email,
-                change.ReturnStatusCode.GetHumanName(),
-                change.SchoolName
-            ))
+            .Value.Select(change =>
+            {
+                var wording = StatusWordings.For(change.ReturnStatusCode);
+
+                return new Notification(
+                    change.LaeStab,
+                    change.Email,
+                    wording.Name,
+                    wording.Descriptor,
+                    change.SchoolName
+                );
+            })
             .ToList();
 
         var timestampUpdate = await lastRanService.SetTimestampAsync(runningAt, cancellationToken);
@@ -101,7 +106,12 @@ public class StatusChangedLedgerMonitoringService(
                     new Dictionary<string, dynamic>
                     {
                         { "status", notify.Status },
-                        { "school_name", notify.School },
+                        { "status_descriptor", notify.StatusDescriptor },
+                        {
+                            "has_status_descriptor",
+                            string.IsNullOrEmpty(notify.StatusDescriptor) ? "no" : "yes"
+                        },
+                        { "school_name", notify.SchoolName },
                         { "school_account_url", govNotifyOptions.Value.SchoolAccountUrl },
                     }
                 );

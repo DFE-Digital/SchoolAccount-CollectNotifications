@@ -2,13 +2,14 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
-    <PackageVersion Include="Dapper" Version="2.1.86" />
+    <PackageVersion Include="Dapper" Version="2.1.89" />
     <PackageVersion Include="GovukNotify" Version="8.2.0" />
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.0" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.1" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" Version="8.6.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
@@ -18,11 +19,22 @@
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.11.2" />
     <PackageVersion Include="Microsoft.Testing.Extensions.GitHubActionsReport" Version="2.4.1" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.4.0" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.4.1" />
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
-    <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.33.0.1635" />
-    <PackageVersion Include="xunit.v3.mtp-v2" Version="4.0.0" />
+    <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.35.0.4138" />
+    <PackageVersion Include="xunit.v3.mtp-v2" Version="4.0.1" />
+  </ItemGroup>
+
+  <!-- Security pins. These packages are not referenced directly; they come in
+       through Microsoft.Data.SqlClient, whose current version still asks for a
+       vulnerable release (GHSA advisories published 13 October 2026). With
+       transitive pinning, these versions override that. Pinned at 10.0.13 to
+       match SchoolAccount-Web, rather than 9.0.21, the patched release on the
+       9.0 line SqlClient asks for. Remove them once Microsoft.Data.SqlClient
+       depends on a patched version. -->
+  <ItemGroup Label="Security pins">
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
   </ItemGroup>
 
 </Project>

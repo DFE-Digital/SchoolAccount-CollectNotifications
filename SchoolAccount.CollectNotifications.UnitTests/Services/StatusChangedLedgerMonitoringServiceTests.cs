@@ -8,11 +8,18 @@ using SchoolAccount.CollectNotifications.Models.Enums;
 using SchoolAccount.CollectNotifications.Models.Options;
 using SchoolAccount.CollectNotifications.Services;
 using SchoolAccount.CollectNotifications.TestCommon;
+using static SchoolAccount.CollectNotifications.Models.Enums.ReturnStatusCodes;
 
 namespace SchoolAccount.CollectNotifications.UnitTests.Services;
 
 public class StatusChangedLedgerMonitoringServiceTests
 {
+    private const string _authorised =
+        "DfE has accepted your data. You do not need to do anything else unless DfE contacts you.";
+
+    private const string _submitted =
+        "You have submitted your data. Your local authority or DfE will now check it.";
+
     private readonly CancellationToken _cancellationToken = TestContext.Current.CancellationToken;
     private readonly ILastRanService _lastRanService = Substitute.For<ILastRanService>();
     private readonly ILedgerStore _ledgerStore = Substitute.For<ILedgerStore>();
@@ -22,56 +29,6 @@ public class StatusChangedLedgerMonitoringServiceTests
     public StatusChangedLedgerMonitoringServiceTests()
     {
         _sut = CreateService();
-    }
-
-    private StatusChangedLedgerMonitoringService CreateService(int delayBetweenSendsInMs = 0) =>
-        new(
-            new StatusChangedLedgerMonitoringServiceInstrumentation(
-                NullLogger<StatusChangedLedgerMonitoringService>.Instance
-            ),
-            _lastRanService,
-            _ledgerStore,
-            _govNotifyService,
-            Options.Create(
-                new GovNotifyOptions
-                {
-                    ApiKey = "test-key",
-                    TemplateKey = CommonProperties.TemplateKey,
-                    SchoolAccountUrl = CommonProperties.SchoolAccountUrl,
-                    DelayBetweenSendsInMs = delayBetweenSendsInMs,
-                }
-            )
-        );
-
-    private static CensusStatusChange AChange(
-        string laeStab,
-        string email,
-        ReturnStatusCodes status = ReturnStatusCodes.Authorised,
-        string schoolName = "A test School"
-    ) =>
-        new()
-        {
-            SchoolName = schoolName,
-            LaeStab = laeStab,
-            Email = email,
-            ReturnStatusCode = status,
-            PreviousReturnStatusCode = ReturnStatusCodes.LoadedAndValidated,
-            UpdatedAt = new DateTime(2026, 9, 21, 22, 0, 0, DateTimeKind.Utc),
-            Collection = "SchoolCensus2025_Spring",
-            DcId = 1172,
-        };
-
-    private void GivenChanges(params CensusStatusChange[] changes)
-    {
-        _lastRanService
-            .GetTimestampAsync(Arg.Any<CancellationToken>())
-            .Returns(Result.Success<DateTime?>(DateTime.UtcNow.AddDays(-1)));
-        _ledgerStore
-            .GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Success(changes.ToList()));
-        _lastRanService
-            .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Success());
     }
 
     [Fact]
@@ -161,10 +118,10 @@ public class StatusChangedLedgerMonitoringServiceTests
         // contacts arrives as two changes and becomes two emails.
 
         // Arrange
-        GivenChanges(
-            AChange("1111111", "head@school1.sch.uk", schoolName: "School One"),
-            AChange("1111111", "office@school1.sch.uk", schoolName: "School One"),
-            AChange("2222222", "admin@school2.sch.uk", ReturnStatusCodes.Submitted, "School Two")
+        GivenStateLedgerChanges(
+            AStatusChange("1111111", "head@school1.sch.uk", schoolName: "School One"),
+            AStatusChange("1111111", "office@school1.sch.uk", schoolName: "School One"),
+            AStatusChange("2222222", "admin@school2.sch.uk", Submitted, "School Two")
         );
 
         _govNotifyService
@@ -184,8 +141,8 @@ public class StatusChangedLedgerMonitoringServiceTests
             .SendMessage(
                 CommonProperties.TemplateKey,
                 "head@school1.sch.uk",
-                Arg.Is<Dictionary<string, dynamic>>(d =>
-                    MatchesPersonalisation(d, "Authorised", "School One")
+                Arg.Is<Dictionary<string, dynamic>>(templateValues =>
+                    MatchesPersonalisation(templateValues, "Authorised", _authorised, "School One")
                 )
             );
 
@@ -194,8 +151,8 @@ public class StatusChangedLedgerMonitoringServiceTests
             .SendMessage(
                 CommonProperties.TemplateKey,
                 "office@school1.sch.uk",
-                Arg.Is<Dictionary<string, dynamic>>(d =>
-                    MatchesPersonalisation(d, "Authorised", "School One")
+                Arg.Is<Dictionary<string, dynamic>>(templateValues =>
+                    MatchesPersonalisation(templateValues, "Authorised", _authorised, "School One")
                 )
             );
 
@@ -204,8 +161,8 @@ public class StatusChangedLedgerMonitoringServiceTests
             .SendMessage(
                 CommonProperties.TemplateKey,
                 "admin@school2.sch.uk",
-                Arg.Is<Dictionary<string, dynamic>>(d =>
-                    MatchesPersonalisation(d, "Submitted", "School Two")
+                Arg.Is<Dictionary<string, dynamic>>(templateValues =>
+                    MatchesPersonalisation(templateValues, "Submitted", _submitted, "School Two")
                 )
             );
 
@@ -221,7 +178,10 @@ public class StatusChangedLedgerMonitoringServiceTests
         // recipient and not a reason to stop telling everybody else.
 
         // Arrange
-        GivenChanges(AChange("1111111", "bad-address"), AChange("2222222", "fine@school.sch.uk"));
+        GivenStateLedgerChanges(
+            AStatusChange("1111111", "bad-address"),
+            AStatusChange("2222222", "fine@school.sch.uk")
+        );
 
         _govNotifyService
             .SendMessage(Arg.Any<string>(), "bad-address", Arg.Any<Dictionary<string, dynamic>>())
@@ -257,9 +217,9 @@ public class StatusChangedLedgerMonitoringServiceTests
         // through the rest of the list.
 
         // Arrange
-        GivenChanges(
-            AChange("1111111", "first@school.sch.uk"),
-            AChange("2222222", "second@school.sch.uk")
+        GivenStateLedgerChanges(
+            AStatusChange("1111111", "first@school.sch.uk"),
+            AStatusChange("2222222", "second@school.sch.uk")
         );
 
         _govNotifyService
@@ -290,9 +250,9 @@ public class StatusChangedLedgerMonitoringServiceTests
         // every notification after the one that threw.
 
         // Arrange
-        GivenChanges(
-            AChange("1111111", "throws@school.sch.uk"),
-            AChange("2222222", "fine@school.sch.uk")
+        GivenStateLedgerChanges(
+            AStatusChange("1111111", "throws@school.sch.uk"),
+            AStatusChange("2222222", "fine@school.sch.uk")
         );
 
         _govNotifyService
@@ -336,10 +296,10 @@ public class StatusChangedLedgerMonitoringServiceTests
         const int delayMs = 100;
         var sut = CreateService(delayMs);
 
-        GivenChanges(
-            AChange("1111111", "first@school.sch.uk"),
-            AChange("2222222", "second@school.sch.uk"),
-            AChange("3333333", "third@school.sch.uk")
+        GivenStateLedgerChanges(
+            AStatusChange("1111111", "first@school.sch.uk"),
+            AStatusChange("2222222", "second@school.sch.uk"),
+            AStatusChange("3333333", "third@school.sch.uk")
         );
 
         _govNotifyService
@@ -368,9 +328,64 @@ public class StatusChangedLedgerMonitoringServiceTests
             );
     }
 
+    [Fact]
+    public async Task InvokeAsync_should_hide_what_this_means_when_the_status_has_no_descriptor()
+    {
+        // Arrange
+        GivenStateLedgerChanges(
+            AStatusChange("1111111", "head@school1.sch.uk", RejectedByCollector, "School One")
+        );
+
+        _govNotifyService
+            .SendMessage(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<Dictionary<string, dynamic>>()
+            )
+            .Returns(Result.Success(new NotificationResult()));
+
+        // Act
+        await _sut.InvokeAsync(_cancellationToken);
+
+        // Assert
+        await _govNotifyService
+            .Received(1)
+            .SendMessage(
+                CommonProperties.TemplateKey,
+                "head@school1.sch.uk",
+                Arg.Is<Dictionary<string, dynamic>>(templateValues =>
+                    MatchesPersonalisation(
+                        templateValues,
+                        "Rejected_by_collector",
+                        string.Empty,
+                        "School One"
+                    )
+                )
+            );
+    }
+
+    private static CensusStatusChange AStatusChange(
+        string laeStab,
+        string email,
+        ReturnStatusCodes status = Authorised,
+        string schoolName = "A test School"
+    ) =>
+        new()
+        {
+            SchoolName = schoolName,
+            LaeStab = laeStab,
+            Email = email,
+            ReturnStatusCode = status,
+            PreviousReturnStatusCode = LoadedAndValidated,
+            UpdatedAt = new DateTime(2026, 9, 21, 22, 0, 0, DateTimeKind.Utc),
+            Collection = "SchoolCensus2025_Spring",
+            DcId = 1172,
+        };
+
     private static bool MatchesPersonalisation(
         Dictionary<string, dynamic>? dict,
         string expectedStatus,
+        string expectedDescriptor,
         string expectedSchoolName
     )
     {
@@ -384,6 +399,24 @@ public class StatusChangedLedgerMonitoringServiceTests
             return false;
         }
 
+        if (
+            !dict.TryGetValue("status_descriptor", out var descriptor)
+            || !Equals(descriptor, expectedDescriptor)
+        )
+        {
+            return false;
+        }
+
+        var expectedHasDescriptor = expectedDescriptor.Length > 0 ? "yes" : "no";
+
+        if (
+            !dict.TryGetValue("has_status_descriptor", out var hasDescriptor)
+            || !Equals(hasDescriptor, expectedHasDescriptor)
+        )
+        {
+            return false;
+        }
+
         if (!dict.TryGetValue("school_name", out var school) || !Equals(school, expectedSchoolName))
         {
             return false;
@@ -391,5 +424,39 @@ public class StatusChangedLedgerMonitoringServiceTests
 
         return dict.TryGetValue("school_account_url", out var url)
             && Equals(url, CommonProperties.SchoolAccountUrl);
+    }
+
+    private StatusChangedLedgerMonitoringService CreateService(int delayBetweenSendsInMs = 0) =>
+        new(
+            new StatusChangedLedgerMonitoringServiceInstrumentation(
+                NullLogger<StatusChangedLedgerMonitoringService>.Instance
+            ),
+            _lastRanService,
+            _ledgerStore,
+            _govNotifyService,
+            Options.Create(
+                new GovNotifyOptions
+                {
+                    ApiKey = "test-key",
+                    TemplateKey = CommonProperties.TemplateKey,
+                    SchoolAccountUrl = CommonProperties.SchoolAccountUrl,
+                    DelayBetweenSendsInMs = delayBetweenSendsInMs,
+                }
+            )
+        );
+
+    private void GivenStateLedgerChanges(params CensusStatusChange[] changes)
+    {
+        _lastRanService
+            .GetTimestampAsync(Arg.Any<CancellationToken>())
+            .Returns(Result.Success<DateTime?>(DateTime.UtcNow.AddDays(-1)));
+
+        _ledgerStore
+            .GetWhatHasChangedAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Success(changes.ToList()));
+
+        _lastRanService
+            .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Success());
     }
 }
