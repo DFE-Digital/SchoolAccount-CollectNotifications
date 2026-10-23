@@ -52,7 +52,7 @@ public class StatusWordingsTests
     [InlineData(NoData, "Nothing has been uploaded to COLLECT yet. You need to upload your data.")]
     [InlineData(
         LoadedAndValidated,
-        "Your data has been uploaded to COLLECT. You need to submit it."
+        "Your data has been uploaded to COLLECT and automatically checked. You need to resolve any errors or queries then submit your return."
     )]
     [InlineData(
         Submitted,
@@ -69,6 +69,14 @@ public class StatusWordingsTests
     [InlineData(
         Authorised,
         "DfE has accepted your data. You do not need to do anything else unless DfE contacts you."
+    )]
+    [InlineData(
+        AmendedByAgent,
+        "Your local authority has made changes to your data. Contact your local authority if you want to know what they changed."
+    )]
+    [InlineData(
+        AmendedByCollector,
+        "DfE has changed or rechecked your data. Check COLLECT for any notes, errors or queries you need to resolve."
     )]
     public void Getting_wording_should_explain_what_the_status_means(
         ReturnStatusCodes status,
