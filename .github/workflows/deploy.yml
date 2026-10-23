@@ -23,6 +23,9 @@ on:
 env:
   IMAGE_NAME: ghcr.io/dfe-digital/schoolaccount-collectnotifications
 
+# Azure login uses a service principal secret, so the job needs no GITHUB_TOKEN scopes.
+permissions: {}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

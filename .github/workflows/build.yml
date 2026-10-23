@@ -16,6 +16,9 @@ env:
   IMAGE_NAME: ghcr.io/dfe-digital/schoolaccount-collectnotifications
   LEDGER_DATABASE_PASSWORD: "MyStrongPassword123!"
 
+# Jobs that need the token declare their own permissions; everything else gets none.
+permissions: {}
+
 jobs:
   test:
     name: Build & Test
