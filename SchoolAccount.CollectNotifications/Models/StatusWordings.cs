@@ -10,8 +10,8 @@ public static class StatusWordings
 
     private static readonly Dictionary<ReturnStatusCodes, StatusWording> _wordings = new()
     {
-        [AmendedByAgent] = new("Amended_by_agent"),
-        [AmendedByCollector] = new("Amended_by_collector"),
+        [AmendedByAgent] = new("Amended_by_agent", Descriptor.AmendedByAgent),
+        [AmendedByCollector] = new("Amended_by_collector", Descriptor.AmendedByCollector),
         [AmendedBySource] = new("Amended_by_source", Descriptor.AmendedBySource),
         [ApprovalInProgress] = new("Approval_in_Progress"),
         [Approved] = new("Approved", Descriptor.Approved),
