@@ -1,6 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 
+// ReSharper disable ContextualLoggerProblem
+
 namespace SchoolAccount.CollectNotifications.Services;
 
 [SuppressMessage(
