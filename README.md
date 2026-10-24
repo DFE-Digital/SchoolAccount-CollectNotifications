@@ -83,8 +83,8 @@ All three are required. Each one fails quietly if it isn't set, so they're valid
 
 ### Local settings
 
-`appsettings.Development.json` holds the settings that aren't secret, and the launch profile sets
-`Census:ConnectionString` to the `CollectStateLedger` database on the
+`appsettings.Development.json` holds the settings that aren't secret, including `Census:ConnectionString`, which points
+at the `CollectStateLedger` database on the
 [SchoolAccount-LocalDevTools](https://github.com/DFE-Digital/SchoolAccount-LocalDevTools) SQL Server, using its default
 `sa` password. A local run only needs these in user secrets (see [Secrets](#secrets)):
 
@@ -128,7 +128,7 @@ dotnet user-secrets --project SchoolAccount.CollectNotifications set 'GovNotify:
 Start the database from SchoolAccount-LocalDevTools and create `CollectStateLedger` in it with the scripts from
 [SchoolAccount-CollectStateLedgerDatabase](https://github.com/DFE-Digital/SchoolAccount-CollectStateLedgerDatabase).
 Then use the `SchoolAccount.CollectNotifications` profile in `Properties/launchSettings.json`, which sets
-`DOTNET_ENVIRONMENT=Development` and the connection string for you:
+`DOTNET_ENVIRONMENT=Development` for you:
 
 ```bash
 dotnet run --project SchoolAccount.CollectNotifications --launch-profile SchoolAccount.CollectNotifications
