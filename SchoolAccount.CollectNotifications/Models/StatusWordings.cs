@@ -26,7 +26,7 @@ public static class StatusWordings
         [FileUploadFailed] = new("File_Upload_Failed"),
         [FileUploadInProgress] = new("File_Upload_in_Progress"),
         [FileUploaded] = new("File_Uploaded"),
-        [LoadedAndValidated] = new("Loaded_and_Validated", Descriptor.Loaded),
+        [LoadedAndValidated] = new("Loaded_and_Validated", Descriptor.LoadedAndValidated),
         [MatchingFailed] = new("Matching_Failed"),
         [MatchingInProgress] = new("Matching_in_Progress"),
         [NoData] = new("No_Data", Descriptor.NoData),

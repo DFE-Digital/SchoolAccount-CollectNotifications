@@ -8,7 +8,7 @@ public static class StatusDescriptors
     public const string NoData =
         "Nothing has been uploaded to COLLECT yet. You need to upload your data.";
 
-    public const string Loaded =
+    public const string LoadedAndValidated =
         "Your data has been uploaded to COLLECT and automatically checked. You need to resolve any "
         + "errors or queries then submit your return.";
 
