@@ -10,8 +10,8 @@ public static class StatusWordings
 
     private static readonly Dictionary<ReturnStatusCodes, StatusWording> _wordings = new()
     {
-        [AmendedByAgent] = new("Amended_by_agent"),
-        [AmendedByCollector] = new("Amended_by_collector"),
+        [AmendedByAgent] = new("Amended_by_agent", Descriptor.AmendedByAgent),
+        [AmendedByCollector] = new("Amended_by_collector", Descriptor.AmendedByCollector),
         [AmendedBySource] = new("Amended_by_source", Descriptor.AmendedBySource),
         [ApprovalInProgress] = new("Approval_in_Progress"),
         [Approved] = new("Approved", Descriptor.Approved),
@@ -26,7 +26,7 @@ public static class StatusWordings
         [FileUploadFailed] = new("File_Upload_Failed"),
         [FileUploadInProgress] = new("File_Upload_in_Progress"),
         [FileUploaded] = new("File_Uploaded"),
-        [LoadedAndValidated] = new("Loaded_and_Validated", Descriptor.Loaded),
+        [LoadedAndValidated] = new("Loaded_and_Validated", Descriptor.LoadedAndValidated),
         [MatchingFailed] = new("Matching_Failed"),
         [MatchingInProgress] = new("Matching_in_Progress"),
         [NoData] = new("No_Data", Descriptor.NoData),
