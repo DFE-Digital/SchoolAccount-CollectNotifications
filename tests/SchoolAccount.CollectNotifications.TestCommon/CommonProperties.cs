@@ -4,5 +4,5 @@ public static class CommonProperties
 {
     public const string TemplateKey = "test-template-key";
 
-    public const string SchoolAccountUrl = "https://school-account.test";
+    public const string SchoolAccountUrl = $"https://school-account.test";
 }

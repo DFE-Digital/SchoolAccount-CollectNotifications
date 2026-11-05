@@ -131,7 +131,7 @@ Then use the `SchoolAccount.CollectNotifications` profile in `Properties/launchS
 `DOTNET_ENVIRONMENT=Development` for you:
 
 ```bash
-dotnet run --project SchoolAccount.CollectNotifications --launch-profile SchoolAccount.CollectNotifications
+dotnet run --project src/SchoolAccount.CollectNotifications --launch-profile SchoolAccount.CollectNotifications
 ```
 
 ## Testing
@@ -161,12 +161,12 @@ dotnet test
 
 #### Run only unit tests:
 ```bash
-dotnet test SchoolAccount.CollectNotifications.UnitTests
+dotnet test src/SchoolAccount.CollectNotifications.UnitTests
 ```
 
 #### Run only integration tests:
 ```bash
-dotnet test SchoolAccount.CollectNotifications.IntegrationTests
+dotnet test src/SchoolAccount.CollectNotifications.IntegrationTests
 ```
 
 #### In CI
