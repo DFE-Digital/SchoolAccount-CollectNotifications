@@ -255,7 +255,7 @@ The run date is stored in UTC, so the `UpdatedAt` values in the ledger are expec
 src/
 └── SchoolAccount.CollectNotifications/
     ├── Extensions/        # Host, configuration and dependency injection setup
-    ├── Interfaces/        # IDbConnectionFactory, IGovNotifyService, ILastRanService, ILedgerStore
+    ├── Interfaces/        # Contracts for the services and stores
     ├── Models/            # DTOs, options, status wording and the Result type
     ├── Services/          # The main workflow (StatusChangedLedgerMonitoringService), GOV.UK Notify and last run tracking
     ├── Stores/            # Status change query against the ledger
