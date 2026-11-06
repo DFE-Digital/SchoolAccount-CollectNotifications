@@ -1,11 +1,11 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src\SchoolAccount.CollectNotifications\SchoolAccount.CollectNotifications.csproj" />
+    <Project Path="src/SchoolAccount.CollectNotifications/SchoolAccount.CollectNotifications.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests\SchoolAccount.CollectNotifications.TestCommon\SchoolAccount.CollectNotifications.TestCommon.csproj" />
-    <Project Path="tests\SchoolAccount.CollectNotifications.UnitTests\SchoolAccount.CollectNotifications.UnitTests.csproj" />
-    <Project Path="tests\SchoolAccount.CollectNotifications.IntegrationTests\SchoolAccount.CollectNotifications.IntegrationTests.csproj" />
+    <Project Path="tests/SchoolAccount.CollectNotifications.TestCommon/SchoolAccount.CollectNotifications.TestCommon.csproj" />
+    <Project Path="tests/SchoolAccount.CollectNotifications.UnitTests/SchoolAccount.CollectNotifications.UnitTests.csproj" />
+    <Project Path="tests/SchoolAccount.CollectNotifications.IntegrationTests/SchoolAccount.CollectNotifications.IntegrationTests.csproj" />
   </Folder>
   <Folder Name="/solution/">
     <File Path=".gitignore" />
