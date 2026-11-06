@@ -161,12 +161,12 @@ dotnet test
 
 #### Run only unit tests:
 ```bash
-dotnet test src/SchoolAccount.CollectNotifications.UnitTests
+dotnet test tests/SchoolAccount.CollectNotifications.UnitTests
 ```
 
 #### Run only integration tests:
 ```bash
-dotnet test src/SchoolAccount.CollectNotifications.IntegrationTests
+dotnet test tests/SchoolAccount.CollectNotifications.IntegrationTests
 ```
 
 #### In CI
