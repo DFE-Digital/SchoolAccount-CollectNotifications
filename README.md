@@ -131,7 +131,7 @@ Then use the `SchoolAccount.CollectNotifications` profile in `Properties/launchS
 `DOTNET_ENVIRONMENT=Development` for you:
 
 ```bash
-dotnet run --project SchoolAccount.CollectNotifications --launch-profile SchoolAccount.CollectNotifications
+dotnet run --project src/SchoolAccount.CollectNotifications --launch-profile SchoolAccount.CollectNotifications
 ```
 
 ## Testing
@@ -161,12 +161,12 @@ dotnet test
 
 #### Run only unit tests:
 ```bash
-dotnet test SchoolAccount.CollectNotifications.UnitTests
+dotnet test tests/SchoolAccount.CollectNotifications.UnitTests
 ```
 
 #### Run only integration tests:
 ```bash
-dotnet test SchoolAccount.CollectNotifications.IntegrationTests
+dotnet test tests/SchoolAccount.CollectNotifications.IntegrationTests
 ```
 
 #### In CI
@@ -221,7 +221,7 @@ so the run configuration is already set to `Development` and user secrets get lo
 You can also do this via Docker by: Build from the repository root, as the Dockerfile expects the solution folder as its build context:
 
 ```bash
-docker build -f SchoolAccount.CollectNotifications/Dockerfile -t schoolaccount-collect-notifications .
+docker build -f src/SchoolAccount.CollectNotifications/Dockerfile -t schoolaccount-collect-notifications .
 
 docker run --rm \
   -e Census__ConnectionString=\"<connection-string>\" \
@@ -252,36 +252,20 @@ The run date is stored in UTC, so the `UpdatedAt` values in the ledger are expec
 ## Project structure
 
 ```
-SchoolAccount.CollectNotifications/
-├── Extensions/        # Dependency injection and options setup
-├── Interfaces/        # IDbConnectionFactory, IGovNotifyService, ILastRanService, ILedgerStore
-├── Models/
-│   ├── Databases/     # Marker types used to tell database connections apart
-│   ├── Dtos/          # CensusStatusChange, Notification, NotificationResult
-│   ├── Enums/         
-│   ├── Options/       # Strongly typed configuration
-│   └── Result.cs      # Result / Result<T> for handling errors without exceptions
-├── Services/
-│   ├── GovNotifyService.cs
-│   ├── LastRanService.cs   # Last run time, in the ledger JobStatus table
-│   ├── StatusChangedLedgerMonitoringService.cs  # Main workflow
-├── Stores/
-│   └── LedgerStore.cs # Status change query, joined to registered recipients
-├── Dockerfile
-└── Program.cs
+src/
+└── SchoolAccount.CollectNotifications/
+    ├── Extensions/        # Host, configuration and dependency injection setup
+    ├── Interfaces/        # Contracts for the services and stores
+    ├── Models/            # DTOs, options, status wording and the Result type
+    ├── Services/          # The main workflow (StatusChangedLedgerMonitoringService), GOV.UK Notify and last run tracking
+    ├── Stores/            # Status change query against the ledger
+    ├── Dockerfile
+    └── Program.cs
 
-SchoolAccount.CollectNotifications.TestCommon/
-└── Builders/          # Fluent test object builders
-
-SchoolAccount.CollectNotifications.UnitTests/
-├── Extensions/        # Options and validation unit tests
-├── Services/          # Unit tests for domain services
-└── Stores/            # Unit tests for store operations and extension filters
-
-SchoolAccount.CollectNotifications.IntegrationTests/
-├── Helpers/           # Database test connection, schema seeding, and cleanup helpers
-├── Initialisation/    # Host bootstrapping, DI resolution, and fail-fast validation tests
-└── Stores/            # Integration tests against local Docker SQL Server instance
+tests/
+├── SchoolAccount.CollectNotifications.TestCommon/        # Shared test builders
+├── SchoolAccount.CollectNotifications.UnitTests/         # No database or network needed
+└── SchoolAccount.CollectNotifications.IntegrationTests/  # Start-up checks and tests against the local ledger database
 ```
 
 ### Key packages
