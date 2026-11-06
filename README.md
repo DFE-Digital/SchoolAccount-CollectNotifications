@@ -261,11 +261,11 @@ src/
     ├── Stores/            # Status change query against the ledger
     ├── Dockerfile
     └── Program.cs
-    
+
 tests/
-├── SchoolAccount.CollectNotifications.TestCommon/          # Shared test builders
-├── SchoolAccount.CollectNotifications.UnitTests/
-└── SchoolAccount.CollectNotifications.IntegrationTests/
+├── SchoolAccount.CollectNotifications.TestCommon/        # Shared test builders
+├── SchoolAccount.CollectNotifications.UnitTests/         # No database or network needed
+└── SchoolAccount.CollectNotifications.IntegrationTests/  # Start-up checks and tests against the local ledger database
 ```
 
 ### Key packages
