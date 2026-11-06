@@ -252,36 +252,38 @@ The run date is stored in UTC, so the `UpdatedAt` values in the ledger are expec
 ## Project structure
 
 ```
-SchoolAccount.CollectNotifications/
-├── Extensions/        # Dependency injection and options setup
-├── Interfaces/        # IDbConnectionFactory, IGovNotifyService, ILastRanService, ILedgerStore
-├── Models/
-│   ├── Databases/     # Marker types used to tell database connections apart
-│   ├── Dtos/          # CensusStatusChange, Notification, NotificationResult
-│   ├── Enums/         
-│   ├── Options/       # Strongly typed configuration
-│   └── Result.cs      # Result / Result<T> for handling errors without exceptions
-├── Services/
-│   ├── GovNotifyService.cs
-│   ├── LastRanService.cs   # Last run time, in the ledger JobStatus table
-│   ├── StatusChangedLedgerMonitoringService.cs  # Main workflow
-├── Stores/
-│   └── LedgerStore.cs # Status change query, joined to registered recipients
-├── Dockerfile
-└── Program.cs
-
-SchoolAccount.CollectNotifications.TestCommon/
-└── Builders/          # Fluent test object builders
-
-SchoolAccount.CollectNotifications.UnitTests/
-├── Extensions/        # Options and validation unit tests
-├── Services/          # Unit tests for domain services
-└── Stores/            # Unit tests for store operations and extension filters
-
-SchoolAccount.CollectNotifications.IntegrationTests/
-├── Helpers/           # Database test connection, schema seeding, and cleanup helpers
-├── Initialisation/    # Host bootstrapping, DI resolution, and fail-fast validation tests
-└── Stores/            # Integration tests against local Docker SQL Server instance
+src/
+└── SchoolAccount.CollectNotifications/
+    ├── Extensions/        # Dependency injection and options setup
+    ├── Interfaces/        # IDbConnectionFactory, IGovNotifyService, ILastRanService, ILedgerStore
+    ├── Models/
+    │   ├── Databases/     # Marker types used to tell database connections apart
+    │   ├── Dtos/          # CensusStatusChange, Notification, NotificationResult
+    │   ├── Enums/         
+    │   ├── Options/       # Strongly typed configuration
+    │   └── Result.cs      # Result / Result<T> for handling errors without exceptions
+    ├── Services/
+    │   ├── GovNotifyService.cs
+    │   ├── LastRanService.cs   # Last run time, in the ledger JobStatus table
+    │   ├── StatusChangedLedgerMonitoringService.cs  # Main workflow
+    ├── Stores/
+    │   └── LedgerStore.cs # Status change query, joined to registered recipients
+    ├── Dockerfile
+    └── Program.cs
+    
+tests/
+├── SchoolAccount.CollectNotifications.TestCommon/
+│   └── Builders/          # Fluent test object builders
+│   
+├── SchoolAccount.CollectNotifications.UnitTests/
+│   ├── Extensions/        # Options and validation unit tests
+│   ├── Services/          # Unit tests for domain services
+│   └── Stores/            # Unit tests for store operations and extension filters
+│    
+└── SchoolAccount.CollectNotifications.IntegrationTests/
+    ├── Helpers/           # Database test connection, schema seeding, and cleanup helpers
+    ├── Initialisation/    # Host bootstrapping, DI resolution, and fail-fast validation tests
+    └── Stores/            # Integration tests against local Docker SQL Server instance
 ```
 
 ### Key packages
