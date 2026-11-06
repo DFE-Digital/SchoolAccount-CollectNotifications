@@ -254,36 +254,18 @@ The run date is stored in UTC, so the `UpdatedAt` values in the ledger are expec
 ```
 src/
 └── SchoolAccount.CollectNotifications/
-    ├── Extensions/        # Dependency injection and options setup
+    ├── Extensions/        # Host, configuration and dependency injection setup
     ├── Interfaces/        # IDbConnectionFactory, IGovNotifyService, ILastRanService, ILedgerStore
-    ├── Models/
-    │   ├── Databases/     # Marker types used to tell database connections apart
-    │   ├── Dtos/          # CensusStatusChange, Notification, NotificationResult
-    │   ├── Enums/         
-    │   ├── Options/       # Strongly typed configuration
-    │   └── Result.cs      # Result / Result<T> for handling errors without exceptions
-    ├── Services/
-    │   ├── GovNotifyService.cs
-    │   ├── LastRanService.cs   # Last run time, in the ledger JobStatus table
-    │   ├── StatusChangedLedgerMonitoringService.cs  # Main workflow
-    ├── Stores/
-    │   └── LedgerStore.cs # Status change query, joined to registered recipients
+    ├── Models/            # DTOs, options, status wording and the Result type
+    ├── Services/          # The main workflow (StatusChangedLedgerMonitoringService), GOV.UK Notify and last run tracking
+    ├── Stores/            # Status change query against the ledger
     ├── Dockerfile
     └── Program.cs
     
 tests/
-├── SchoolAccount.CollectNotifications.TestCommon/
-│   └── Builders/          # Fluent test object builders
-│   
+├── SchoolAccount.CollectNotifications.TestCommon/          # Shared test builders
 ├── SchoolAccount.CollectNotifications.UnitTests/
-│   ├── Extensions/        # Options and validation unit tests
-│   ├── Services/          # Unit tests for domain services
-│   └── Stores/            # Unit tests for store operations and extension filters
-│    
 └── SchoolAccount.CollectNotifications.IntegrationTests/
-    ├── Helpers/           # Database test connection, schema seeding, and cleanup helpers
-    ├── Initialisation/    # Host bootstrapping, DI resolution, and fail-fast validation tests
-    └── Stores/            # Integration tests against local Docker SQL Server instance
 ```
 
 ### Key packages
