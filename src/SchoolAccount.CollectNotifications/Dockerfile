@@ -6,8 +6,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
-COPY ["src/SchoolAccount.CollectNotifications/SchoolAccount.CollectNotifications.csproj", "SchoolAccount.CollectNotifications/"]
-RUN dotnet restore "SchoolAccount.CollectNotifications/SchoolAccount.CollectNotifications.csproj"
+COPY ["src/SchoolAccount.CollectNotifications/SchoolAccount.CollectNotifications.csproj", "src/SchoolAccount.CollectNotifications/"]
+RUN dotnet restore "src/SchoolAccount.CollectNotifications/SchoolAccount.CollectNotifications.csproj"
 COPY . .
 WORKDIR "/src/src/SchoolAccount.CollectNotifications"
 RUN dotnet build "./SchoolAccount.CollectNotifications.csproj" -c $BUILD_CONFIGURATION -o /app/build
