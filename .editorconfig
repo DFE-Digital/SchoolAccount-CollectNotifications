@@ -380,7 +380,7 @@ dotnet_diagnostic.S6781.severity = none
 
 # Test projects. They sit beside the app rather than under a tests folder, so the projects are
 # named here rather than matched by directory.
-[SchoolAccount.CollectNotifications.{TestCommon,UnitTests,IntegrationTests}/**.cs]
+[tests/SchoolAccount.CollectNotifications.{TestCommon,UnitTests,IntegrationTests}/**.cs]
 
 # S1075: Refactor your code not to use hardcoded absolute paths or URIs
 dotnet_diagnostic.S1075.severity = none
