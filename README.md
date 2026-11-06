@@ -221,7 +221,7 @@ so the run configuration is already set to `Development` and user secrets get lo
 You can also do this via Docker by: Build from the repository root, as the Dockerfile expects the solution folder as its build context:
 
 ```bash
-docker build -f SchoolAccount.CollectNotifications/Dockerfile -t schoolaccount-collect-notifications .
+docker build -f src/SchoolAccount.CollectNotifications/Dockerfile -t schoolaccount-collect-notifications .
 
 docker run --rm \
   -e Census__ConnectionString=\"<connection-string>\" \
