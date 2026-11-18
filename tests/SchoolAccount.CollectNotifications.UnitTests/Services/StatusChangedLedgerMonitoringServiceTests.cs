@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using SchoolAccount.CollectNotifications.Interfaces;
@@ -24,6 +23,7 @@ public class StatusChangedLedgerMonitoringServiceTests
     private readonly ILastRanService _lastRanService = Substitute.For<ILastRanService>();
     private readonly ILedgerStore _ledgerStore = Substitute.For<ILedgerStore>();
     private readonly IGovNotifyService _govNotifyService = Substitute.For<IGovNotifyService>();
+    private readonly DelayRecordingTimeProvider _timeProvider = new();
     private readonly StatusChangedLedgerMonitoringService _sut;
 
     public StatusChangedLedgerMonitoringServiceTests()
@@ -289,8 +289,9 @@ public class StatusChangedLedgerMonitoringServiceTests
     [Fact]
     public async Task InvokeAsync_should_wait_between_sends_when_a_delay_is_configured()
     {
-        // The lever for backing off if Notify ever starts rate limiting us. Asserts a lower bound
-        // only, so a slow machine can't make it fail.
+        // The lever for backing off if Notify ever starts rate limiting us. Checks the delays asked
+        // for rather than timing the run, as Task.Delay can finish a fraction of a millisecond
+        // early by the stopwatch.
 
         // Arrange
         const int delayMs = 100;
@@ -311,13 +312,14 @@ public class StatusChangedLedgerMonitoringServiceTests
             .Returns(Result.Success(new NotificationResult()));
 
         // Act
-        var stopwatch = Stopwatch.StartNew();
         await sut.InvokeAsync(_cancellationToken);
-        stopwatch.Stop();
 
         // Assert
         // Three sends means two gaps, so nothing before the first one.
-        stopwatch.Elapsed.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(delayMs * 2));
+        _timeProvider.Delays.ShouldBe([
+            TimeSpan.FromMilliseconds(delayMs),
+            TimeSpan.FromMilliseconds(delayMs),
+        ]);
 
         await _govNotifyService
             .Received(3)
@@ -442,7 +444,8 @@ public class StatusChangedLedgerMonitoringServiceTests
                     SchoolAccountUrl = CommonProperties.SchoolAccountUrl,
                     DelayBetweenSendsInMs = delayBetweenSendsInMs,
                 }
-            )
+            ),
+            _timeProvider
         );
 
     private void GivenStateLedgerChanges(params CensusStatusChange[] changes)
@@ -458,5 +461,22 @@ public class StatusChangedLedgerMonitoringServiceTests
         _lastRanService
             .SetTimestampAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success());
+    }
+
+    // Records each delay the service asks for and lets it finish straight away.
+    private sealed class DelayRecordingTimeProvider : TimeProvider
+    {
+        public List<TimeSpan> Delays { get; } = [];
+
+        public override ITimer CreateTimer(
+            TimerCallback callback,
+            object? state,
+            TimeSpan dueTime,
+            TimeSpan period
+        )
+        {
+            Delays.Add(dueTime);
+            return System.CreateTimer(callback, state, TimeSpan.Zero, period);
+        }
     }
 }
