@@ -16,8 +16,8 @@ public partial class GovNotifyService(
     IAsyncNotificationClient? client = null
 ) : IGovNotifyService
 {
-    private readonly IAsyncNotificationClient _client =
-        client ?? new NotificationClient(settings.Value.ApiKey);
+    private readonly IAsyncNotificationClient _client = client
+        ?? new NotificationClient(settings.Value.ApiKey);
 
     public async Task<Result<NotificationResult>> SendMessage(
         string templateId,
