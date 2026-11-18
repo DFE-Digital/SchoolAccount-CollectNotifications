@@ -11,9 +11,12 @@ public class StatusChangedLedgerMonitoringService(
     ILastRanService lastRanService,
     ILedgerStore ledgerStore,
     IGovNotifyService govNotifyService,
-    IOptions<GovNotifyOptions> govNotifyOptions
+    IOptions<GovNotifyOptions> govNotifyOptions,
+    TimeProvider? timeProvider = null
 )
 {
+    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
+
     public async Task InvokeAsync(CancellationToken cancellationToken = default)
     {
         var runningAt = DateTime.UtcNow;
@@ -90,7 +93,7 @@ public class StatusChangedLedgerMonitoringService(
 
             if (i > 0 && delayBetweenSends > TimeSpan.Zero)
             {
-                await Task.Delay(delayBetweenSends, cancellationToken);
+                await Task.Delay(delayBetweenSends, _timeProvider, cancellationToken);
             }
 
             var notify = whatToNotify[i];
