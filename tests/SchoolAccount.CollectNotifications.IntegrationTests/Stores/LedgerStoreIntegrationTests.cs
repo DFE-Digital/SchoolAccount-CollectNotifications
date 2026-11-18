@@ -59,8 +59,8 @@ public partial class LedgerStoreIntegrationTests : IAsyncLifetime
         var censusOptions = Options.Create(
             new CensusOptions
             {
-                AllowedStatuses =
-                    allowedStatuses ?? [ReturnStatusCodes.Authorised, ReturnStatusCodes.Approved],
+                AllowedStatuses = allowedStatuses
+                    ?? [ReturnStatusCodes.Authorised, ReturnStatusCodes.Approved],
                 CurrentOpenCensus = TestCollection,
             }
         );
