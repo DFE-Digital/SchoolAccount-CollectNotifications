@@ -134,6 +134,19 @@ Then use the `SchoolAccount.CollectNotifications` profile in `Properties/launchS
 dotnet run --project src/SchoolAccount.CollectNotifications --launch-profile SchoolAccount.CollectNotifications
 ```
 
+### Formatting
+
+Code is formatted with [CSharpier](https://csharpier.com/), installed as a local dotnet tool and enforced by the
+"Check formatting" step in the [build workflow](.github/workflows/build.yml). To format the solution locally:
+
+```bash
+dotnet csharpier format .
+```
+
+A pre-commit hook, managed by [Husky.NET](https://alirezanet.github.io/Husky.Net/) and configured in
+[.husky/task-runner.json](.husky/task-runner.json), formats staged C# files automatically before each commit.
+Run [init.sh](init.sh) once after cloning to restore the tools and install it.
+
 ## Testing
 
 The solution is divided into three test projects:
