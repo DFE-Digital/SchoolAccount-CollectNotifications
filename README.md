@@ -243,6 +243,40 @@ docker run --rm \
   schoolaccount-collect-notifications
 ```
 
+## Deployments
+
+### Versions
+
+Every push to `main` gets a version, `vYYYY.MM.DD.N`, where `N` counts up through the day (UTC), for example
+`v2026.11.18.2`. The version is a git tag and an image tag.
+
+### How a version is deployed
+
+The build starts the **Collect Notifications Deploy** workflow for dev from the new version tag. Each successful deploy
+starts the next: dev, then preprod, then prod. Preprod and prod wait for approval from `school-account-maintainers`.
+Each environment is its own run, so a failed deploy can be re-run on its own.
+
+A deploy sets the Container Apps Job's image. The job's next execution runs the new version.
+
+### What's deployed where
+
+- **GitHub:** the [Environments page](https://github.com/DFE-Digital/SchoolAccount-CollectNotifications/deployments)
+  shows the version in each environment.
+- **Prod:** [Releases](https://github.com/DFE-Digital/SchoolAccount-CollectNotifications/releases) lists every version
+  that has reached prod, with the PRs since the previous release. Redeploys and rollbacks don't create a release.
+- **Azure:** the job's image tag is the version.
+
+### Redeploy or roll back
+
+1. Go to **Actions → Collect Notifications Deploy → Run workflow**.
+2. In **Use workflow from**, pick the version tag under **Tags**.
+3. Pick the environment, leave **promote** unticked, and run it.
+
+To roll back, pick an older version. Settings are read when each execution starts, so an App Configuration fix doesn't
+need a redeploy.
+
+Only commits on `main` can be deployed.
+
 ## First run behaviour
 
 When this job has no row in `JobStatus`, everything in the ledger counts as new, which would email every school
